@@ -1,6 +1,5 @@
 # GCC flags
 CXX = g++
-FC = gfortran
 LD = $(CXX)
 
 CXXFLAGS += -std=c++11
@@ -10,13 +9,11 @@ CXXFLAGS += -pg -O0 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor
 
 # Optimised
 #CXXFLAGS += -O3 -DEIGEN_NO_DEBUG
-FFLAGS += -O3
 
 # Profiling
 CXXFLAGS += -pg
 
 # Shared object
 CXXFLAGS += -fPIC
-FFLAGS += -fPIC
 
-LDFLAGS += -L/usr/local/Cellar/gcc/7.2.0/lib/gcc/7/ -lgfortran
+LDFLAGS += -L/usr/local/Cellar/gcc/7.2.0/lib/gcc/7/
