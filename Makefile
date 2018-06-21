@@ -16,7 +16,7 @@ cpp_srcs = $(wildcard $(source_dir)/*.cpp)
 cpp_objs = $(cpp_srcs:%.cpp=$(build_dir)/%.o)
 cpp_deps = $(cpp_srcs:%.cpp=$(build_dir)/%.d)
 
-objs = $(cpp_objs) $(f90_objs)
+objs = $(cpp_objs)
 
 inc += -isystem$(external_dir)/Eigen
 
@@ -44,7 +44,6 @@ python $(libdir)/$(libname).so:
 
 # Compiling the main program
 main: $(binary_dir)/main
-make_licence: $(binary_dir)/make_licence
 lib$(libname): $(lib_dir)/lib$(libname).a
 lib$(libname): $(lib_dir)/lib$(libname).so
 
@@ -59,26 +58,20 @@ $(build_dir)/%.o: %.cpp
 
 all_srcs = $(shell find src -name '*.[ch]pp')
 
-# Build tags file
+# Build tags file for vim
 tags: $(all_srcs)
 	ctags --extra=+f $(all_srcs)
 
-# Generate documentation
-doc: Doxyfile $(all_srcs)
-	doxygen $<
-	 @echo Documentation in html format may be viewed by opening:
-	 @echo "	" file://$(PWD)/doc/html/index.html
-	 @echo in a browser
 
-.PHONY: clean main make_licence  lib$(libname) lib$(libname)_shared
+.PHONY: clean main lib$(libname)
 
 clean:
-	$(RM) $(cpp_objs) $(f90_objs) $(cpp_deps) main
+	$(RM) $(cpp_objs) $(cpp_deps) main
 
 purge: clean
 	$(RM) -r $(build_dir) $(lib_dir)
 	$(RM) -r __pycache__ doc/html
-	$(RM) doxygen_warning.log tags 
+	$(RM) tags 
 
 # Include the dependencies
 -include $(cpp_deps)
