@@ -25,7 +25,7 @@ libname = msms
 LDSHARED = $(LD) -shared
 
 #LDFLAGS += -pthread
-LDLIBS += -Wl,-Bstatic -l$(libname) -Wl,-Bdynamic
+LDLIBS +=  -l$(libname)
 
 all: main
 extra: tags doc
