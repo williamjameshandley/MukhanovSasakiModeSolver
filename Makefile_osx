@@ -16,4 +16,4 @@ CXXFLAGS += -pg
 # Shared object
 CXXFLAGS += -fPIC
 
-LDFLAGS += -L/usr/local/Cellar/gcc/7.2.0/lib/gcc/7/
+#LDFLAGS += -L/usr/local/Cellar/gcc/7.2.0/lib/gcc/7/
