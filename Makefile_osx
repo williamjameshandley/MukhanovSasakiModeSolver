@@ -1,5 +1,5 @@
 # GCC flags
-CXX = g++
+CXX = /usr/bin/g++
 LD = $(CXX)
 
 CXXFLAGS += -std=c++11
