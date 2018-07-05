@@ -4,21 +4,7 @@
 
 #include "BackgroundSolver.hpp"
 
-double H(double phi, double dphi)
-{
-    double H = sqrt((0.5 * dphi * dphi + 0.5 * phi * phi) / 3.0);
-    return H;
-}
-
-void Equations(const std::vector<double>& x, std::vector<double>& dx_dt, const double)
-{
-    dx_dt[0] = x[1];
-    dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + x[0]);
-    dx_dt[2] = H(x[0], x[1]);
-    dx_dt[3] = exp(-x[2]);
-}
-
-void BackgroundSolver(double t0, double t1, double phi_p, double dphi_p)
+void BackgroundSolver(double m, double t0, double t1, double phi_p, double dphi_p, class pot)
 {
     double t = t0;
     double dt = (t1 - t0) / 1e7;
@@ -41,3 +27,19 @@ void BackgroundSolver(double t0, double t1, double phi_p, double dphi_p)
 
 }
 
+
+double H(double phi, double dphi)
+{
+    double H = sqrt((0.5 * dphi * dphi + pot.V(phi)) / 3.0);
+    return H;
+}
+
+double
+
+void Equations(const std::vector<double>& x, std::vector<double>& dx_dt, const double)
+{
+    dx_dt[0] = x[1];
+    dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + pot.dV(x[0]));
+    dx_dt[2] = H(x[0], x[1]);
+    dx_dt[3] = exp(-x[2]);
+}
