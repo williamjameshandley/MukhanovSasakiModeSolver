@@ -18,7 +18,7 @@ cpp_deps = $(cpp_srcs:%.cpp=$(build_dir)/%.d)
 
 objs = $(cpp_objs)
 
-inc += -isystem$(external_dir)/Eigen
+inc += -isystem$(external_dir)
 
 libname = msms
 
