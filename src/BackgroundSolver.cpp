@@ -1,10 +1,10 @@
 #include <vector>
 #include <math.h>
 #include "ascent/Ascent.h"
-
+#include "Potential.hpp"
 #include "BackgroundSolver.hpp"
 
-void BackgroundSolver(double m, double t0, double t1, double phi_p, double dphi_p, class pot)
+void BackgroundSolver(double t0, double t1, double phi_p, double dphi_p, Poly pot)
 {
     double t = t0;
     double dt = (t1 - t0) / 1e7;
@@ -34,7 +34,6 @@ double H(double phi, double dphi)
     return H;
 }
 
-double
 
 void Equations(const std::vector<double>& x, std::vector<double>& dx_dt, const double)
 {

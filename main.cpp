@@ -1,6 +1,6 @@
 #include <iostream>
 #include "src/BackgroundSolver.cpp"
-#include "src/Potential.cpp"
+#include "src/Potential.hpp"
 
 
 int main()
@@ -13,7 +13,7 @@ int main()
     pot.m = 1.0;
     pot.lambda = 0;
     
-    BackgroundSolver(m, t0, t1, phi_p, dphi_p, pot);
+    BackgroundSolver(t0, t1, phi_p, dphi_p, pot);
     
     return 0;
 }
