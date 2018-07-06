@@ -38,7 +38,7 @@ double H(double phi, double dphi)
 void Equations(const std::vector<double>& x, std::vector<double>& dx_dt, const double)
 {
     dx_dt[0] = x[1];
-    dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + pot.dV(x[0]));
-    dx_dt[2] = H(x[0], x[1]);
+    dx_dt[1] = - (3 * H(pot, x[0], x[1]) * x[1] + pot.dV(x[0]));
+    dx_dt[2] = H(pot, x[0], x[1]);
     dx_dt[3] = exp(-x[2]);
 }
