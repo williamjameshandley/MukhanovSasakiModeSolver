@@ -15,12 +15,7 @@ class BackgroundSolver
         Poly pot;
     
         void Solve();
-        
-        class Equations
-        {
-            public:
-                double H(double phi, double dphi);
-                void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);
-        };
+        double H(double phi, double dphi);
+        void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);
     
 };
