@@ -13,13 +13,13 @@ void BackgroundSolver::Solve()
     
     asc::RK4 integrator;
     Equations eqs;
-    eqs.pot.m = m;
-    eqs.pot.lambda = lambda;
+    pot.m = m;
+    pot.lambda = lambda;
     
     std::ofstream fout;
     fout.open ("bin/output/phi.txt");
-    int count = 0;
     
+    int count = 0;
     while (t < t1)
     {
         count += 1;
