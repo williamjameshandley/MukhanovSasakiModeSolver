@@ -1,9 +1,10 @@
+#include <fstream>
 #include <math.h>
 #include "ascent/Ascent.h"
 #include "Potential.hpp"
 #include "BackgroundSolver.hpp"
 
-void BackgroundSolver(double t0, double t1, double phi_p, double dphi_p, Poly pot)
+void BackgroundSolver::Solve()
 {
     double t = t0;
     double dt = (t1 - t0) / 1e7;
@@ -12,32 +13,35 @@ void BackgroundSolver(double t0, double t1, double phi_p, double dphi_p, Poly po
     
     asc::RK4 integrator;
     Equations eqs;
-    eqs.pot.m = 1.;
-    eqs.pot.lambda = 0.;
+    eqs.pot.m = m;
+    eqs.pot.lambda = lambda;
     
+    std::ofstream fout;
+    fout.open ("bin/output/phi.txt");
     int count = 0;
     
     while (t < t1)
     {
         count += 1;
-        if(count % 10000 == 0)
+        if(count % 1000 == 0)
         {
-            std::cout<<t<<"   "<<x[0]<<"   "<<x[1]<<"   "<<x[2]<<"   "<<x[3]<<std::endl;
+            fout<<t<<"   "<<x[0]<<std::endl;
         }
         integrator(eqs, x, t, dt);
     }
+    fout.close();
 
 }
 
 
-double Equations::H(double phi, double dphi)
+double BackgroundSolver::Equations::H(double phi, double dphi)
 {
     double H = sqrt((0.5 * dphi * dphi + pot.V(phi)) / 3.0);
     return H;
 }
 
 
-void Equations::operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double)
+void BackgroundSolver::Equations::operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double)
 {
     dx_dt[0] = x[1];
     dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + pot.dV(x[0]));
