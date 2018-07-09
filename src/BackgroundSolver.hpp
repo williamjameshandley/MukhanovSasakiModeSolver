@@ -1,4 +1,5 @@
 #pragma once
+#include "ascent/Ascent.h"
 #include <iostream>
 #include "Potential.hpp"
 #include <vector>
@@ -14,7 +15,9 @@ class BackgroundSolver
         double lambda;
         Poly pot;
     
-        std::tuple<std::vector<double>, std::vector<double>> Solve();
+        template<class Integrator>
+        std::tuple<std::vector<double>, std::vector<double>> Solve(Integrator);
+
         double H(double phi, double dphi);
         double ddz(double phi, double dphi, double n);
         void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);

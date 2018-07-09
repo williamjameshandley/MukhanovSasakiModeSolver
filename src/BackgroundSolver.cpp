@@ -1,9 +1,9 @@
 #include <math.h>
-#include "ascent/Ascent.h"
 #include "Potential.hpp"
 #include "BackgroundSolver.hpp"
 
-std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve()
+template<class Integrator>
+std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
     double t = t0;
     double dt = (t1 - t0) / 1e7;
@@ -12,7 +12,6 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve()
     std::vector<double> DDZ;
     std::vector<double> ETA;
     
-    asc::RK4 integrator;
     pot.m = m;
     pot.lambda = lambda;
     

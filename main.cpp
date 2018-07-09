@@ -21,8 +21,9 @@ int main()
     
     std::vector<double> ddz;
     std::vector<double> eta;
+    asc::RK4 integrator;
     
-    std::tie(ddz, eta) = Solver.Solve();
+    std::tie(ddz, eta) = Solver.Solve(integrator);
     
     std::ofstream fout;
     fout.open ("bin/output/ddz.txt");
