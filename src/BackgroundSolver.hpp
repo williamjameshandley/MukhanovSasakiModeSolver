@@ -14,8 +14,9 @@ class BackgroundSolver
         double lambda;
         Poly pot;
     
-        void Solve();
+        std::tuple<std::vector<double>, std::vector<double>> Solve();
         double H(double phi, double dphi);
+        double ddz(double phi, double dphi, double n);
         void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);
     
 };

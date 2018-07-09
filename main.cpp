@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "src/BackgroundSolver.cpp"
 #include "src/Potential.hpp"
 
@@ -18,7 +19,20 @@ int main()
     Solver.m = 1.0;
     Solver.lambda = 0;
     
-    Solver.Solve();
+    std::vector<double> ddz;
+    std::vector<double> eta;
+    
+    std::tie(ddz, eta) = Solver.Solve();
+    
+    std::ofstream fout;
+    fout.open ("bin/output/ddz.txt");
+    
+    for(std::vector<double>::size_type i = 0; i < ddz.size(); i++)
+    {
+        fout<<eta[i]<<"   "<<ddz[i]<<std::endl;
+    }
+    
+    fout.close();
     
     return 0;
 }
