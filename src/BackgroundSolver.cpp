@@ -5,14 +5,15 @@ template<class Integrator>
 
 std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
+    int N = int(1e7);
     double t = t0;
-    double dt = (t1 - t0) / 1e7;
+    double dt = (t1 - t0) / N;
     double eta0 = 1.5 * t0, n0 = 0;
     std::vector<double> x = {phi_p, dphi_p, n0, eta0};
     std::vector<double> DDZ;
     std::vector<double> ETA;
     
-    for( size_t i=0 ; i<int(1e7) ; ++i,t+=dt)
+    for(int i=0 ; i<int(N) ; ++i,t+=dt)
     {
         if(i%1000 == 0)
         {
