@@ -10,18 +10,8 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     double dt = (t1 - t0) / N;
     double eta0 = 1.5 * t0, n0 = 0;
     std::vector<double> x = {phi_p, dphi_p, n0, eta0};
-    std::vector<double> DDZ;
-    std::vector<double> ETA;
     
-    for(int i=0 ; i<int(N) ; ++i,t+=dt)
-    {
-        if(i%1000 == 0)
-        {
-            DDZ.push_back(ddz(x[0], x[1], x[2]));
-            ETA.push_back(x[3]);
-        }
-        integrator.do_step(*this, x , t , dt);
-    }
+    integrate_const(integrator, *this, x , t0 , t1 , dt , write(x, t0));
 
     return std::make_tuple(DDZ, ETA);
 }
