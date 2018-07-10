@@ -1,8 +1,8 @@
 #include <math.h>
-#include "Potential.hpp"
 #include "BackgroundSolver.hpp"
 
 template<class Integrator>
+
 std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
     double t = t0;
@@ -11,9 +11,6 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     std::vector<double> x = {phi_p, dphi_p, n0, eta0};
     std::vector<double> DDZ;
     std::vector<double> ETA;
-    
-    pot.m = m;
-    pot.lambda = lambda;
     
     int count = 0;
     
@@ -50,4 +47,12 @@ void BackgroundSolver::operator() (const std::vector<double>& x, std::vector<dou
     dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + pot.dV(x[0]));
     dx_dt[2] = H(x[0], x[1]);
     dx_dt[3] = exp(-x[2]);
+}
+
+BackgroundSolver::BackgroundSolver(double a, double b, double c, double d, Poly potential) {
+    t0 = a;
+    t1 = b;
+    phi_p = c;
+    dphi_p = d;
+    pot = potential;
 }

@@ -11,16 +11,15 @@ int main()
     double phi_p = 23.0;
     double dphi_p = -sqrt(2.0/3.0) / t0;
     
-    BackgroundSolver Solver;
-    Solver.t0 = t0;
-    Solver.t1 = t1;
-    Solver.phi_p = phi_p;
-    Solver.dphi_p = dphi_p;
-    Solver.m = 1.0;
-    Solver.lambda = 0;
+    Poly pot;
+    pot.m = 1.0;
+    pot.lambda = 0;
+    
+    BackgroundSolver Solver(t0, t1, phi_p, dphi_p, pot);
     
     std::vector<double> ddz;
     std::vector<double> eta;
+    
     asc::RK4 integrator;
     
     std::tie(ddz, eta) = Solver.Solve(integrator);

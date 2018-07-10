@@ -15,6 +15,8 @@ class BackgroundSolver
         double lambda;
         Poly pot;
     
+        BackgroundSolver(double a, double b, double c, double d, Poly potential);
+    
         template<class Integrator>
         std::tuple<std::vector<double>, std::vector<double>> Solve(Integrator);
 
