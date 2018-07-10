@@ -15,14 +15,14 @@ int main()
     pot.m = 1.0;
     pot.lambda = 0;
     
-    BackgroundSolver Solver(t0, t1, phi_p, dphi_p, pot);
+    BackgroundSolver BackgroundVar(t0, t1, phi_p, dphi_p, pot);
     
     std::vector<double> ddz;
     std::vector<double> eta;
     
-    asc::RK4 integrator;
+    boost::numeric::odeint::runge_kutta4<std::vector<double>> integrator;
     
-    std::tie(ddz, eta) = Solver.Solve(integrator);
+    std::tie(ddz, eta) = BackgroundVar.Solve(integrator);
     
     std::ofstream fout;
     fout.open ("bin/output/ddz.txt");

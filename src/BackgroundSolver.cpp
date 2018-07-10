@@ -12,17 +12,14 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     std::vector<double> DDZ;
     std::vector<double> ETA;
     
-    int count = 0;
-    
-    while (t < t1)
+    for( size_t i=0 ; i<int(1e7) ; ++i,t+=dt)
     {
-        if(count%1000 == 0)
+        if(i%1000 == 0)
         {
             DDZ.push_back(ddz(x[0], x[1], x[2]));
             ETA.push_back(x[3]);
         }
-        count += 1;
-        integrator(*this, x, t, dt);
+        integrator.do_step(*this, x , t , dt);
     }
 
     return std::make_tuple(DDZ, ETA);
