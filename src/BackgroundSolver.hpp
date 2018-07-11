@@ -25,9 +25,7 @@ struct Solutions
 {
     std::vector< std::vector<double> > x_sol;
     std::vector< double > t_sol;
-    
-    Solutions();
-    
+  
     void operator()( const std::vector<double> &x , double t )
     {
         x_sol.push_back( x );
