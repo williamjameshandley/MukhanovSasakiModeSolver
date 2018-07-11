@@ -8,18 +8,17 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     double eta0 = 1.5 * t0, n0 = 0;
     
     std::vector<double> x0 = {phi_p, dphi_p, n0, eta0};
-    
-    std::vector<double> times;
-    std::vector<std::vector<double>> x_sol;
 
-    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, push_back_state_and_time(x_sol, times));
+    Solutions Sol;
+    
+    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, Sol);
 
     std::vector<double> DDZ, ETA;
     
     for(size_t i=0; i<=steps; i++)
     {
-        DDZ.push_back(ddz(x_sol[i][0], x_sol[i][1], x_sol[i][2]));
-        ETA.push_back(x_sol[i][3]);
+        DDZ.push_back(ddz(Sol.x_sol[i][0], Sol.x_sol[i][1], Sol.x_sol[i][2]));
+        ETA.push_back(Sol.x_sol[i][3]);
     }
     
     return std::make_tuple(DDZ, ETA);
@@ -44,13 +43,5 @@ void BackgroundSolver::operator() (const std::vector<double>& x, std::vector<dou
     dx_dt[1] = - (3 * H(x[0], x[1]) * x[1] + pot.dV(x[0]));
     dx_dt[2] = H(x[0], x[1]);
     dx_dt[3] = exp(-x[2]);
-}
-
-BackgroundSolver::BackgroundSolver(double a, double b, double c, double d, Poly potential) {
-    t0 = a;
-    t1 = b;
-    phi_p = c;
-    dphi_p = d;
-    pot = potential;
 }
 

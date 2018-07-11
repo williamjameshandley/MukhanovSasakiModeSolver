@@ -10,7 +10,7 @@ class BackgroundSolver
         double t0, t1, phi_p, dphi_p;
         Poly pot;
     
-        BackgroundSolver(double a, double b, double c, double d, Poly potential);
+        BackgroundSolver(double a, double b, double c, double d, Poly potential): t0(a), t1(b), phi_p(c), dphi_p(d), pot(potential) { }
     
         template<class Integrator>
         std::tuple<std::vector<double>, std::vector<double>> Solve(Integrator);
@@ -21,17 +21,16 @@ class BackgroundSolver
     
 };
 
-struct push_back_state_and_time
+struct Solutions
 {
-    std::vector< std::vector<double> >& m_states;
-    std::vector< double >& m_times;
+    std::vector< std::vector<double> > x_sol;
+    std::vector< double > t_sol;
     
-    push_back_state_and_time( std::vector< std::vector<double> > &states , std::vector< double > &times )
-    : m_states( states ) , m_times( times ) { }
+    Solutions();
     
     void operator()( const std::vector<double> &x , double t )
     {
-        m_states.push_back( x );
-        m_times.push_back( t );
+        x_sol.push_back( x );
+        t_sol.push_back( t );
     }
 };
