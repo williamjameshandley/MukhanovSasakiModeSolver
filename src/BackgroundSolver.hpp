@@ -14,8 +14,6 @@ class BackgroundSolver
         double m;
         double lambda;
         Poly pot;
-        std::vector<double> DDZ;
-        std::vector<double> ETA;
     
         BackgroundSolver(double a, double b, double c, double d, Poly potential);
     
@@ -26,11 +24,19 @@ class BackgroundSolver
         double ddz(double phi, double dphi, double n);
         void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);
     
-        void write(const std::vector<double>& x, double const)
-        {
-            DDZ.push_back(ddz(x[0], x[1], x[2]));
-            ETA.push_back(x[3]);
-        }
-    
 };
 
+struct push_back_state_and_time
+{
+    std::vector< std::vector<double> >& m_states;
+    std::vector< double >& m_times;
+    
+    push_back_state_and_time( std::vector< std::vector<double> > &states , std::vector< double > &times )
+    : m_states( states ) , m_times( times ) { }
+    
+    void operator()( const std::vector<double> &x , double t )
+    {
+        m_states.push_back( x );
+        m_times.push_back( t );
+    }
+};

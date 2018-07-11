@@ -3,6 +3,8 @@
 #include "src/BackgroundSolver.cpp"
 #include "src/Potential.hpp"
 
+using RK4 = boost::numeric::odeint::runge_kutta4<std::vector<double>>;
+using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
 int main()
 {
@@ -15,14 +17,14 @@ int main()
     pot.m = 1.0;
     pot.lambda = 0;
     
-    BackgroundSolver BackgroundVar(t0, t1, phi_p, dphi_p, pot);
+    BackgroundSolver variables(t0, t1, phi_p, dphi_p, pot);
+    
+    boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator;
     
     std::vector<double> ddz;
     std::vector<double> eta;
     
-    boost::numeric::odeint::runge_kutta4<std::vector<double>> integrator;
-    
-    std::tie(ddz, eta) = BackgroundVar.Solve(integrator);
+    std::tie(ddz, eta) = variables.Solve(integrator);
     
     std::ofstream fout;
     fout.open ("bin/output/ddz.txt");

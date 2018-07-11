@@ -2,17 +2,28 @@
 #include "BackgroundSolver.hpp"
 
 template<class Integrator>
-
 std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
-    int N = int(1e7);
     double t = t0;
-    double dt = (t1 - t0) / N;
+    double dt = (t1 - t0) / 1e7;
     double eta0 = 1.5 * t0, n0 = 0;
-    std::vector<double> x = {phi_p, dphi_p, n0, eta0};
     
-    integrate_const(integrator, *this, x , t0 , t1 , dt , write(x, t0));
+    std::vector<double> x0 = {phi_p, dphi_p, n0, eta0};
+    
+    std::vector<std::vector<double>> x_sol;
+    std::vector<double> times;
 
+    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, push_back_state_and_time(x_sol, times ));
+
+    std::vector<double> DDZ;
+    std::vector<double> ETA;
+    
+    for(size_t i=0; i<=steps; i++)
+    {
+        DDZ.push_back(ddz(x_sol[i][0], x_sol[i][1], x_sol[i][2]));
+        ETA.push_back(x_sol[i][3]);
+    }
+    
     return std::make_tuple(DDZ, ETA);
 }
 
@@ -44,3 +55,4 @@ BackgroundSolver::BackgroundSolver(double a, double b, double c, double d, Poly 
     dphi_p = d;
     pot = potential;
 }
+
