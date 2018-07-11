@@ -7,12 +7,7 @@
 class BackgroundSolver
 {
     public:
-        double t0;
-        double t1;
-        double phi_p;
-        double dphi_p;
-        double m;
-        double lambda;
+        double t0, t1, phi_p, dphi_p;
         Poly pot;
     
         BackgroundSolver(double a, double b, double c, double d, Poly potential);

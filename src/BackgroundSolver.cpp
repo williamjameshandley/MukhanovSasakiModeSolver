@@ -4,19 +4,17 @@
 template<class Integrator>
 std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
-    double t = t0;
-    double dt = (t1 - t0) / 1e7;
+    double dt = (t1 - t0) / 1e7; //used only once at the start of integration
     double eta0 = 1.5 * t0, n0 = 0;
     
     std::vector<double> x0 = {phi_p, dphi_p, n0, eta0};
     
-    std::vector<std::vector<double>> x_sol;
     std::vector<double> times;
+    std::vector<std::vector<double>> x_sol;
 
-    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, push_back_state_and_time(x_sol, times ));
+    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, push_back_state_and_time(x_sol, times));
 
-    std::vector<double> DDZ;
-    std::vector<double> ETA;
+    std::vector<double> DDZ, ETA;
     
     for(size_t i=0; i<=steps; i++)
     {
