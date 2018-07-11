@@ -9,16 +9,16 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     
     std::vector<double> x0 = {phi_p, dphi_p, n0, eta0};
 
-    Solutions Sol;
+    Solutions sol;
     
-    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, Sol);
+    size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, boost::ref(sol));
 
     std::vector<double> DDZ, ETA;
     
     for(size_t i=0; i<=steps; i++)
     {
-        DDZ.push_back(ddz(Sol.x_sol[i][0], Sol.x_sol[i][1], Sol.x_sol[i][2]));
-        ETA.push_back(Sol.x_sol[i][3]);
+        DDZ.push_back(ddz(sol.x[i][0], sol.x[i][1], sol.x[i][2]));
+        ETA.push_back(sol.x[i][3]);
     }
     
     return std::make_tuple(DDZ, ETA);
