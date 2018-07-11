@@ -19,7 +19,10 @@ int main()
     
     BackgroundSolver variables(t0, t1, phi_p, dphi_p, pot);
     
-    boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator;
+    double abs_err = 1.0e-5;
+    double rel_err = 1.0e-2;
+    
+    boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);
     
     std::vector<double> ddz;
     std::vector<double> eta;
@@ -33,6 +36,8 @@ int main()
     {
         fout<<eta[i]<<"   "<<ddz[i]<<std::endl;
     }
+    
+    std::cout<<ddz.size()<<std::endl;
     
     fout.close();
     
