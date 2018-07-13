@@ -29,7 +29,7 @@ size_t Transitions::search(std::vector<double> a, double b)
     return n;
 }
 
- std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double>> Transitions::Find()
+std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double>> Transitions::Find()
 {
     double dA = 0, F = 0, aa, bb, delta;
     size_t n = 0;

@@ -3,6 +3,7 @@
 #include "src/BackgroundSolver.cpp"
 #include "src/Transitions.cpp"
 #include "src/Potential.hpp"
+#include "src/linear_interpolation.hpp"
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
