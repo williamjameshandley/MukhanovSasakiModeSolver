@@ -23,6 +23,8 @@ int main()
     
     std::tie(ddz, eta) = variables.Solve(integrator);      //Solve Background Variables
     
+    std::cout<<ddz.size()<<std::endl;
+    
     //Transitions
     double eta_end = eta.back();
     double eta_i = 0.02 * eta_end;
@@ -34,12 +36,7 @@ int main()
     
     std::tie(a, b, delta, eta_step) = T.Find();        //Find Transitions
     
-    
-    
-    
-    
-    
-    
+    std::cout<<eta_step.size()<<std::endl;
     
     std::ofstream fout;
     fout.open ("bin/output/ddz.txt");

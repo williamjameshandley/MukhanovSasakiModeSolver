@@ -41,7 +41,7 @@ size_t Transitions::search(std::vector<double> a, double b)
     
     while(eta_step[n+1] < eta_f)
     {
-        while(dA < 0.000005)
+        while(dA < 0.0005)
         {
             eta_step[n+1] = eta_sol[i];
             F = integral(eta_step[n], eta_step[n+1]);
@@ -54,6 +54,7 @@ size_t Transitions::search(std::vector<double> a, double b)
         dA = 0;
         eta_step.push_back(eta_step[n+1]);
         n += 1;
+        std::cout<<n<<std::endl;
     }
     
     for(size_t l = 0; l < eta_step.size() - 1; l++)
