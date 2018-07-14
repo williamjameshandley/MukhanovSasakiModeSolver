@@ -3,20 +3,22 @@
 #include "src/BackgroundSolver.cpp"
 #include "src/Transitions.cpp"
 #include "src/Potential.hpp"
-#include "src/linear_interpolation.hpp"
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
 int main()
 {
-    double t0 = 1e-6, t1 = 20.0, phi_p = 23.0, dphi_p = -sqrt(2.0/3.0) / t0; //Background Initial Conditions
+    double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0; //Background Initial Conditions
     
     Poly pot;                                   //Set Potential
     pot.m = 1.0, pot.lambda = 0;
     
     BackgroundSolver variables(t0, t1, phi_p, dphi_p, pot);    //Background Solver Constructor
     
-    double abs_err = 1.0e-5, rel_err = 1.0e-3;
+    double abs_err = 1.0e-5, rel_err;
+    
+    std::cout<<"Integrator error: ";
+    std::cin>>rel_err;
     
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);   //Set Integrator
     
@@ -35,7 +37,12 @@ int main()
     
     Transitions T(eta_i, eta_f, eta_end, ddz, eta);     //Transitions Constructor
     
-    std::tie(a, b, delta, eta_step) = T.Find();        //Find Transitions
+    double error;
+    
+    std::cout<<"Linear segment error: ";
+    std::cin>>error;
+    
+    std::tie(a, b, delta, eta_step) = T.Find(error);        //Find Transitions
     
     std::cout<<eta_step.size()<<std::endl;
     
@@ -54,9 +61,9 @@ int main()
     
     for(size_t i = 0; i < eta_step.size(); i++)
     {
-        mout<<eta_step[i] / eta.back()<<"   "<<ddz[T.search(eta, eta_step[i])]<<std::endl;
+        mout<<eta_step[i] / eta.back()<<"   "<<ddz[static_cast<size_t>(std::lower_bound(eta.begin(), eta.end(), eta_step[i]) - eta.begin())]<<std::endl;
     }
-    
+
     mout.close();
     
     return 0;

@@ -1,4 +1,5 @@
 #include "Transitions.hpp"
+#include "linear_interpolation.hpp"
 #include <boost/math/tools/minima.hpp>
 #include <cmath>
 
@@ -6,8 +7,8 @@
 double Transitions::integral(double a, double b) {
     
     double area = 0.0;
-    size_t n_a = search(eta_sol, a);
-    size_t n_b = search(eta_sol, b);
+    size_t n_a = static_cast<size_t>(std::lower_bound(eta_sol.begin(), eta_sol.end(), a) - eta_sol.begin());
+    size_t n_b = static_cast<size_t>(std::lower_bound(eta_sol.begin(), eta_sol.end(), b) - eta_sol.begin());
     double dx = (b - a) / (n_b - n_a);
     
     area += ddz[n_a] * dx / 2.;
@@ -21,32 +22,30 @@ double Transitions::integral(double a, double b) {
     return area;
 }
 
-//Vector Search
-size_t Transitions::search(std::vector<double> a, double b)
-{
-    size_t n = 0;
-    while (a[n] < b) {n += 1;}
-    return n;
-}
-
-std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double>> Transitions::Find()
+std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double>> Transitions::Find(double error)
 {
     double dA = 0, F = 0, aa, bb, delta;
     size_t n = 0;
     std::vector<double> a, b, eta_step;
     
     eta_step.push_back(eta_i);
-    size_t i = search(eta_sol, eta_i) + 1;
+    size_t i = static_cast<size_t>(std::lower_bound(eta_sol.begin(), eta_sol.end(), eta_i) - eta_sol.begin()) + 1;
     eta_step.push_back(eta_sol[i]);
+    
+    LinearInterpolator<double, double> DDZ;
+    for(size_t o = 0; o < ddz.size(); o++)
+    {
+        DDZ.insert(eta_sol[o], ddz[o]);
+    }
     
     while(eta_step[n+1] < eta_f)
     {
-        while(dA < 0.0005)
+        while(dA < error)
         {
             eta_step[n+1] = eta_sol[i];
             F = integral(eta_step[n], eta_step[n+1]);
-            bb = (ddz[search(eta_sol, eta_step[n+1])] - ddz[search(eta_sol, eta_step[n])]) / (eta_step[n+1]-eta_step[n]);
-            aa = -bb * eta_step[n] + ddz[search(eta_sol, eta_step[n])];
+            bb = (DDZ(eta_step[n+1]) - DDZ(eta_step[n])) / (eta_step[n+1]-eta_step[n]);
+            aa = -bb * eta_step[n] + DDZ(eta_step[n]);
             dA = abs((F - (aa*(eta_step[n+1] - eta_step[n]) + 0.5 * bb * (eta_step[n+1] * eta_step[n+1] - eta_step[n] * eta_step[n]))) / F);
             i += 1;
             
@@ -54,16 +53,15 @@ std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double
         dA = 0;
         eta_step.push_back(eta_step[n+1]);
         n += 1;
-        std::cout<<n<<std::endl;
     }
     
     for(size_t l = 0; l < eta_step.size() - 1; l++)
     {
-        b.push_back((ddz[search(eta_sol, eta_step[l+1])] - ddz[search(eta_sol, eta_step[l])]) / (eta_step[l+1]-eta_step[l]));
-        a.push_back(-b[l] * eta_step[l] + ddz[search(eta_sol, eta_step[l])]);
+        b.push_back(( DDZ(eta_step[n+1]) -  DDZ(eta_step[n])) / (eta_step[l+1]-eta_step[l]));
+        a.push_back(-b[l] * eta_step[l] +  DDZ(eta_step[n]));
     }
     
-    delta = (ddz[search(eta_sol, eta_step.back())] / (2/((eta_step.back() - eta_end) * (eta_step.back() - eta_end))))  -  1;
+    delta = (DDZ(eta_step.back()) / (2/((eta_step.back() - eta_end) * (eta_step.back() - eta_end))))  -  1;
     
     return std::make_tuple(a, b, delta, eta_step);
     
