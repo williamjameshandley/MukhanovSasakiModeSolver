@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "src/BackgroundSolver.cpp"
+#include "src/ModeSolver.cpp"
 #include "src/Transitions.cpp"
 #include "src/Potential.hpp"
 
@@ -15,10 +16,7 @@ int main()
     
     BackgroundSolver variables(t0, t1, phi_p, dphi_p, pot);    //Background Solver Constructor
     
-    double abs_err = 1.0e-5, rel_err;
-    
-    std::cout<<"Integrator error: ";
-    std::cin>>rel_err;
+    double abs_err = 1.0e-5, rel_err = 1e-3;
     
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);   //Set Integrator
     
@@ -37,34 +35,22 @@ int main()
     
     Transitions T(eta_i, eta_f, eta_end, ddz, eta);     //Transitions Constructor
     
-    double error;
-    
-    std::cout<<"Linear segment error: ";
-    std::cin>>error;
-    
+    double error = 1e-4;
+
     std::tie(a, b, delta, eta_step) = T.Find(error);        //Find Transitions
     
     std::cout<<eta_step.size()<<std::endl;
     
-    std::ofstream fout;
-    fout.open ("bin/output/ddz.txt");
+    std::vector<double> k;
     
-    for(size_t i = 0; i < ddz.size(); i++)
+    for(size_t i = 0; i < 10000; i++)
     {
-        fout<<eta[i] / eta.back()<<"   "<<ddz[i]<<std::endl;
+        k.push_back(i * 1.0);
     }
     
-    fout.close();
+    ModeSolver ms(k, eta_step, a, b, delta, eta_end, ddz, ddz, ddz);
     
-    std::ofstream mout;
-    mout.open ("bin/output/segments.txt");
-    
-    for(size_t i = 0; i < eta_step.size(); i++)
-    {
-        mout<<eta_step[i] / eta.back()<<"   "<<ddz[static_cast<size_t>(std::lower_bound(eta.begin(), eta.end(), eta_step[i]) - eta.begin())]<<std::endl;
-    }
-
-    mout.close();
+    ms.Find_Mat();
     
     return 0;
 }
