@@ -29,8 +29,10 @@ std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double
     std::vector<double> a, b, eta_step;
     
     eta_step.push_back(eta_i);
-    size_t i = static_cast<size_t>(std::lower_bound(eta_sol.begin(), eta_sol.end(), eta_i) - eta_sol.begin()) + 1;
-    eta_step.push_back(eta_sol[i]);
+    
+    size_t p = static_cast<size_t>(std::lower_bound(eta_sol.begin(), eta_sol.end(), eta_i) - eta_sol.begin()) + 1;
+    
+    eta_step.push_back(eta_sol[p]);
     
     LinearInterpolator<double, double> DDZ;
     for(size_t o = 0; o < ddz.size(); o++)
@@ -40,25 +42,27 @@ std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double
     
     while(eta_step[n+1] < eta_f)
     {
+
         while(dA < error)
         {
-            eta_step[n+1] = eta_sol[i];
+            eta_step[n+1] = eta_sol[p];
             F = integral(eta_step[n], eta_step[n+1]);
             bb = (DDZ(eta_step[n+1]) - DDZ(eta_step[n])) / (eta_step[n+1]-eta_step[n]);
             aa = -bb * eta_step[n] + DDZ(eta_step[n]);
             dA = abs((F - (aa*(eta_step[n+1] - eta_step[n]) + 0.5 * bb * (eta_step[n+1] * eta_step[n+1] - eta_step[n] * eta_step[n]))) / F);
-            i += 1;
+            p += 1;
             
         }
+        
         dA = 0;
-        eta_step.push_back(eta_step[n+1]);
+        eta_step.push_back(eta_sol[p]);
         n += 1;
     }
     
     for(size_t l = 0; l < eta_step.size() - 1; l++)
     {
-        b.push_back(( DDZ(eta_step[n+1]) -  DDZ(eta_step[n])) / (eta_step[l+1]-eta_step[l]));
-        a.push_back(-b[l] * eta_step[l] +  DDZ(eta_step[n]));
+        b.push_back(( DDZ(eta_step[l+1]) -  DDZ(eta_step[l])) / (eta_step[l+1]-eta_step[l]));
+        a.push_back(-b[l] * eta_step[l] +  DDZ(eta_step[l]));
     }
     
     delta = (DDZ(eta_step.back()) / (2/((eta_step.back() - eta_end) * (eta_step.back() - eta_end))))  -  1;
