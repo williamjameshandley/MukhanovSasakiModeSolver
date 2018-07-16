@@ -189,7 +189,7 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
 std::vector<double> ModeSolver::PPS()
 {
     std::complex<double> a11, a12, a21, a22, A_z;
-    std::vector<double> PPS;
+    std::vector<double> PPS(k.size());
     double v = 1.5 * sqrt(1 + 8.0 * delta / 9);
     
     LinearInterpolator<double, double> DZ, Z;
