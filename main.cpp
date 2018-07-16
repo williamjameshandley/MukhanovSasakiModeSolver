@@ -42,15 +42,33 @@ int main()
     std::cout<<eta_step.size()<<std::endl;
     
     std::vector<double> k;
+    double k0 = 1.0, k1 = 1.0e4;
+    size_t N = 100;
     
-    for(size_t i = 0; i < 10000; i++)
+    for(size_t i = 0; i < N; i++)
     {
-        k.push_back(i * 1.0);
+        k.push_back(exp(i * (log(k1) - log(k0)) / N)); //logspace
     }
     
-    ModeSolver ms(k, eta_step, a, b, delta, eta_end, ddz, ddz, ddz);
+    ModeSolver ms(k, eta_step, a, b, delta, eta_end, ddz, ddz, ddz, eta);
     
     ms.Find_Mat();
+    
+    ms.Initial_Conditions("BD", 0.2 * eta_end);
+    
+    std::vector<double> PPS;
+    
+    PPS = ms.PPS();
+    
+    std::ofstream fout;
+    fout.open ("bin/output/PPS.txt");
+    
+    for(size_t i = 0; i < k.size(); i++)
+    {
+        fout<<k[i]<<"   "<<PPS[i]<<std::endl;
+    }
+    
+    fout.close();
     
     return 0;
 }
