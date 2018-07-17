@@ -14,7 +14,7 @@ class BackgroundSolver
             t0(a), t1(b), phi_p(c), dphi_p(d), pot(potential) {}
     
         template<class Integrator>
-        std::tuple<std::vector<double>, std::vector<double>> Solve(Integrator);
+        std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> Solve(Integrator);
 
         double H(double phi, double dphi);
         double ddz(double phi, double dphi, double n);

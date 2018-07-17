@@ -61,7 +61,7 @@ std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double
     
     for(size_t l = 0; l < eta_step.size() - 1; l++)
     {
-        b.push_back(( DDZ(eta_step[l+1]) -  DDZ(eta_step[l])) / (eta_step[l+1]-eta_step[l]));
+        b.push_back((DDZ(eta_step[l+1]) -  DDZ(eta_step[l])) / (eta_step[l+1]-eta_step[l]));
         a.push_back(-b[l] * eta_step[l] +  DDZ(eta_step[l]));
     }
     

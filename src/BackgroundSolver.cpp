@@ -2,7 +2,7 @@
 #include "BackgroundSolver.hpp"
 
 template<class Integrator>
-std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
+std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
 {
     double dt = (t1 - t0) / 1e7; //used only once at the start of integration
     double eta0 = 1.5 * t0, n0 = 0;
@@ -13,15 +13,17 @@ std::tuple<std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Int
     
     size_t steps = boost::numeric::odeint::integrate_adaptive(integrator, *this , x0, t0, t1, dt, boost::ref(sol));
 
-    std::vector<double> DDZ, ETA;
+    std::vector<double> Z, DZ, DDZ, ETA;
     
     for(size_t i=0; i<=steps; i++)
     {
+        Z.push_back(exp(sol.x[i][2]) * sol.x[i][1] / H(sol.x[i][0], sol.x[i][1]));
+        DZ.push_back(exp(2 * sol.x[i][2]) * (-2 * sol.x[i][1] - pot.dV(sol.x[i][0]) / H(sol.x[i][0], sol.x[i][1]) + std::pow(sol.x[i][1], 3) / (2 * H(sol.x[i][0], sol.x[i][1]) * H(sol.x[i][0], sol.x[i][1]))));
         DDZ.push_back(ddz(sol.x[i][0], sol.x[i][1], sol.x[i][2]));
         ETA.push_back(sol.x[i][3]);
     }
     
-    return std::make_tuple(DDZ, ETA);
+    return std::make_tuple(Z, DZ, DDZ, ETA);
 }
 
 

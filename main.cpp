@@ -20,16 +20,16 @@ int main()
     
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);   //Set Integrator
     
-    std::vector<double> ddz, eta;
+    std::vector<double> z, dz, ddz, eta;
     
-    std::tie(ddz, eta) = variables.Solve(integrator);      //Solve Background Variables
+    std::tie(z, dz, ddz, eta) = variables.Solve(integrator);      //Solve Background Variables
     
     std::cout<<ddz.size()<<std::endl;
     
     //Transitions
     double eta_end = eta.back();
     double eta_i = 0.02 * eta_end;
-    double eta_f = 0.95 * eta_end;
+    double eta_f = 0.99 * eta_end;
     std::vector<double> a, b, eta_step;
     double delta;
     
@@ -42,15 +42,15 @@ int main()
     std::cout<<eta_step.size()<<std::endl;
     
     std::vector<double> k;
-    double k0 = 1.0, k1 = 1.0e4;
-    size_t N = 100;
+    double k0 = 1.0, k1 = 1.0e6;
+    size_t N = 1000;
     
     for(size_t i = 0; i < N; i++)
     {
         k.push_back(exp(i * (log(k1) - log(k0)) / N)); //logspace
     }
     
-    ModeSolver ms(k, eta_step, a, b, delta, eta_end, ddz, ddz, ddz, eta);
+    ModeSolver ms(k, eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
     
     ms.Find_Mat();
     
@@ -60,15 +60,40 @@ int main()
     
     PPS = ms.PPS();
     
-    std::ofstream fout;
-    fout.open ("bin/output/PPS.txt");
     
-    for(size_t i = 0; i < k.size(); i++)
+    
+    
+    //Output
+    
+    std::ofstream fout;
+    fout.open("bin/output/ddz.txt");
+    
+    for(size_t n = 0; n < ddz.size(); n++)
     {
-        fout<<k[i]<<"   "<<PPS[i]<<std::endl;
+        fout<<eta[n]<<"  "<<ddz[n]<<std::endl;
     }
     
     fout.close();
+    
+    std::ofstream mout;
+    mout.open("bin/output/segments.txt");
+    
+    for(size_t n = 0; n < a.size(); n++)
+    {
+        mout<<eta_step[n]<<"  "<<a[n] + b[n] * eta_step[n]<<std::endl;
+    }
+    
+    mout.close();
+    
+    std::ofstream pout;
+    pout.open ("bin/output/PPS.txt");
+    
+    for(size_t i = 0; i < k.size(); i++)
+    {
+        pout<<k[i]<<"   "<<PPS[i]<<std::endl;
+    }
+    
+    pout.close();
     
     return 0;
 }

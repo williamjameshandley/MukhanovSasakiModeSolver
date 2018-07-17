@@ -12,17 +12,17 @@ void ModeSolver::Find_Mat()
     
     for(size_t i = 0; i < k.size(); i++)
     {
-        Ai0 = boost::math::airy_ai((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
-        Bi0 = boost::math::airy_bi((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
-        Aip0 = std::pow(b[Nstep - 2], 1.0/3) * boost::math::airy_ai_prime((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
-        Bip0 = std::pow(b[Nstep - 2], 1.0/3) * boost::math::airy_bi_prime((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
+        Ai0 = Airy_Ai((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
+        Bi0 = Airy_Bi((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
+        Aip0 = std::pow(b[Nstep - 2], 1.0/3) * Airy_Aip((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
+        Bip0 = std::pow(b[Nstep - 2], 1.0/3) * Airy_Bip((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 2]) / std::pow(b[Nstep - 2], 2.0/3));
         
-        Ai = boost::math::airy_ai((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
-        Bi = boost::math::airy_bi((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
-        Aip = std::pow(b[Nstep - 2], 1.0/3) * boost::math::airy_ai_prime((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
-        Bip = std::pow(b[Nstep - 2], 1.0/3) * boost::math::airy_bi_prime((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
+        Ai = Airy_Ai((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
+        Bi = Airy_Bi((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
+        Aip = std::pow(b[Nstep - 2], 1.0/3) * Airy_Aip((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
+        Bip = std::pow(b[Nstep - 2], 1.0/3) * Airy_Bip((a[Nstep - 2] - k[i] * k[i] + b[Nstep - 2] * eta_step[Nstep - 1]) / std::pow(b[Nstep - 2], 2.0/3));
         
-        det = Ai0 * Bip0 + Bi0 * Aip0;
+        det = Ai0 * Bip0 - Bi0 * Aip0;
         
         M(0,0) = (Ai*Bip0 - Bi*Aip0) / det;
         M(0,1) = (Bi*Ai0 - Ai*Bi0) / det;
@@ -33,17 +33,17 @@ void ModeSolver::Find_Mat()
         
         for(size_t j = Nstep - 3; j != static_cast<size_t>(-1); j--)
         {
-            Ai0 = boost::math::airy_ai((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
-            Bi0 = boost::math::airy_bi((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
-            Aip0 = std::pow(b[j], 1.0/3) * boost::math::airy_ai_prime((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
-            Bip0 = std::pow(b[j], 1.0/3) * boost::math::airy_bi_prime((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
+            Ai0 = Airy_Ai((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
+            Bi0 = Airy_Bi((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
+            Aip0 = std::pow(b[j], 1.0/3) * Airy_Aip((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
+            Bip0 = std::pow(b[j], 1.0/3) * Airy_Bip((a[j] - k[i] * k[i] + b[j] * eta_step[j]) / std::pow(b[j], 2.0/3));
             
-            Ai = boost::math::airy_ai((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
-            Bi = boost::math::airy_bi((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
-            Aip = std::pow(b[j], 1.0/3) * boost::math::airy_ai_prime((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
-            Bip = std::pow(b[j], 1.0/3) * boost::math::airy_bi_prime((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
+            Ai = Airy_Ai((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
+            Bi = Airy_Bi((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
+            Aip = std::pow(b[j], 1.0/3) * Airy_Aip((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
+            Bip = std::pow(b[j], 1.0/3) * Airy_Bip((a[j] - k[i] * k[i] + b[j] * eta_step[j+1]) / std::pow(b[j], 2.0/3));
             
-            det = Ai0 * Bip0 + Bi0 * Aip0;
+            det = Ai0 * Bip0 - Bi0 * Aip0;
             
             M(0,0) = (Ai*Bip0 - Bi*Aip0) / det;
             M(0,1) = (Bi*Ai0 - Ai*Bi0) / det;
@@ -59,6 +59,7 @@ void ModeSolver::Find_Mat()
     }
     
     Mat = Mat_vec;
+
 }
 
 void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
@@ -81,7 +82,7 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
     {
         for(size_t n = 0; n < k.size(); n++)
         {
-            dkin.push_back((0, -k[n] * kin[n]));
+            dkin.push_back(-ii * k[n] * kin[n]);
         }
     }
     else if(Vacuum == "HD")
@@ -93,7 +94,7 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
         }
         for(size_t n = 0; n < k.size(); n++)
         {
-            dkin.push_back((0, -sqrt(k[n] * k[n] - DDZ(eta_r)) * kin[n]));
+            dkin.push_back( -ii * sqrt(k[n] * k[n] - DDZ(eta_r)) * kin[n]);
         }
     }
     else if(Vacuum == "RSET")
@@ -106,7 +107,7 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
         }
         for(size_t n = 0; n < k.size(); n++)
         {
-            dkin.push_back((DZ(eta_r) * kin[n] / Z(eta_r), -k[n] * kin[n]));
+            dkin.push_back((DZ(eta_r) / Z(eta_r)  - ii * k[n]) * kin[n]);
         }
     }
     else
@@ -118,19 +119,19 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
     
     if(i == 0)
     {
-        double J0, Y0, dJ0, dY0, J, Y, dJ, dY;
+        std::complex<double> J0, Y0, dJ0, dY0, J, Y, dJ, dY;
         
         for(size_t n = 0; n < k.size(); n++)
         {
-            J0 = sqrt(eta_r) * boost::math::cyl_bessel_j(0, k[n] * eta_r);
-            Y0 = sqrt(eta_r) * boost::math::cyl_neumann(0, k[n] * eta_r);
-            dJ0 = 0.5 * boost::math::cyl_bessel_j(0, k[n] * eta_r) / sqrt(eta_r) - k[n] * sqrt(eta_r) * boost::math::cyl_bessel_j(1, k[n] * eta_r);
-            dY0 = 0.5 * boost::math::cyl_neumann(0, k[n] * eta_r) / sqrt(eta_r) - k[n] * sqrt(eta_r) * boost::math::cyl_neumann(1, k[n] * eta_r);
+            J0 = sqrt(eta_r) * Bessel_J(0, k[n] * eta_r);
+            Y0 = sqrt(eta_r) * Bessel_Y(0, k[n] * eta_r);
+            dJ0 = 0.5 * Bessel_J(0, k[n] * eta_r) / sqrt(eta_r) - k[n] * sqrt(eta_r) * Bessel_J(1, k[n] * eta_r);
+            dY0 = 0.5 * Bessel_Y(0, k[n] * eta_r) / sqrt(eta_r) - k[n] * sqrt(eta_r) * Bessel_Y(1, k[n] * eta_r);
             
-            J = sqrt(eta_step[0]) * boost::math::cyl_bessel_j(0, k[n] * eta_step[0]);
-            Y = sqrt(eta_step[0]) * boost::math::cyl_neumann(0, k[n] * eta_step[0]);
-            dJ = 0.5 * boost::math::cyl_bessel_j(0, k[n] * eta_step[0]) / sqrt(eta_step[0]) - k[n] * sqrt(eta_step[0]) * boost::math::cyl_bessel_j(1, k[n] * eta_step[0]);
-            dY = 0.5 * boost::math::cyl_neumann(0, k[n] * eta_step[0]) / sqrt(eta_step[0]) - k[n] * sqrt(eta_step[0]) * boost::math::cyl_neumann(1, k[n] * eta_step[0]);
+            J = sqrt(eta_step[0]) * Bessel_J(0, k[n] * eta_step[0]);
+            Y = sqrt(eta_step[0]) * Bessel_Y(0, k[n] * eta_step[0]);
+            dJ = 0.5 * Bessel_J(0, k[n] * eta_step[0]) / sqrt(eta_step[0]) - k[n] * sqrt(eta_step[0]) * Bessel_J(1, k[n] * eta_step[0]);
+            dY = 0.5 * Bessel_Y(0, k[n] * eta_step[0]) / sqrt(eta_step[0]) - k[n] * sqrt(eta_step[0]) * Bessel_Y(1, k[n] * eta_step[0]);
             
             t1[n] = ((J*dY0 - Y*dJ0)*kin[i] + (Y*J0 - J*Y0)*dkin[i]) / (J0 * dY0 - Y0 * dJ0);
             t2[n] = ((dJ*dY0 - dY*dJ0)*kin[i] + (dY*J0 - dJ*Y0)*dkin[i]) / (J0 * dY0 - Y0 * dJ0);
@@ -142,15 +143,15 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
         
         for(size_t n = 0; n < k.size(); n++)
         {
-            Ai0 = boost::math::airy_ai((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
-            Bi0 = boost::math::airy_bi((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
-            Aip0 = std::pow(b[i-1], 1.0/3) * boost::math::airy_ai_prime((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
-            Bip0 = std::pow(b[i-1], 1.0/3) * boost::math::airy_bi_prime((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
+            Ai0 = Airy_Ai((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
+            Bi0 = Airy_Bi((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
+            Aip0 = std::pow(b[i-1], 1.0/3) * Airy_Aip((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
+            Bip0 = std::pow(b[i-1], 1.0/3) * Airy_Bip((a[i-1] - k[n] * k[n] + b[i-1]*eta_r) / std::pow(b[i-1], 2.0/3));
             
-            Ai = boost::math::airy_ai((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
-            Bi = boost::math::airy_bi((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
-            Aip = std::pow(b[i-1], 1.0/3) * boost::math::airy_ai_prime((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
-            Bip = std::pow(b[i-1], 1.0/3) * boost::math::airy_bi_prime((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
+            Ai = Airy_Ai((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
+            Bi = Airy_Bi((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
+            Aip = std::pow(b[i-1], 1.0/3) * Airy_Aip((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
+            Bip = std::pow(b[i-1], 1.0/3) * Airy_Bip((a[i-1] - k[n] * k[n] + b[i-1]*eta_step[i]) / std::pow(b[i-1], 2.0/3));
             
             t1[n] = ((Ai*Bip0 - Bi*Aip0)*kin[n] + (Bi*Ai0 - Ai*Bi0)*dkin[n]) / (Ai0*Bip0 - Bi0*Aip0);
             t2[n] = ((Aip*Bip0 - Bip*Aip0)*kin[n] + (Bip*Ai0 - Aip*Bi0)*dkin[n]) / (Ai0*Bip0 - Bi0*Aip0);
@@ -166,19 +167,23 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
     }
     
     
+    
+    
     //MdS
     double v = 1.5 * sqrt(1 + 8.0 * delta / 9);
-    std::complex<double> x(eta_step.back() - eta_end,0), BJ, BY, dBJ, dBY;
+    std::complex<double> x(eta_step.back() - eta_end, 0), BJ, BY, dBJ, dBY;
     
     for(size_t n = 0; n < k.size(); n++)
     {
-        BJ = sqrt(x) * boost::math::cyl_bessel_j(v,k[n]*(eta_step.back() - eta_end));
-        BY = sqrt(x) * boost::math::cyl_neumann(v,k[n]*(eta_step.back() - eta_end));
-        dBJ = 0.5 * (sqrt(x) * k[n] * (boost::math::cyl_bessel_j(v-1,k[n]*(eta_step.back() - eta_end)) - boost::math::cyl_bessel_j(v+1,k[n]*(eta_step.back() - eta_end))) + boost::math::cyl_bessel_j(v,k[n]*(eta_step.back() - eta_end)) / sqrt(x));
-        dBY = 0.5 * (sqrt(x) * k[n] * (boost::math::cyl_neumann(v-1,k[n]*(eta_step.back() - eta_end)) - boost::math::cyl_neumann(v+1,k[n]*(eta_step.back() - eta_end))) + boost::math::cyl_neumann(v,k[n]*(eta_step.back() - eta_end)) / sqrt(x));
+        
+        BJ = std::pow(x, 0.5) * Bessel_J(v,k[n]*(eta_step.back() - eta_end));
+        BY = std::pow(x, 0.5) * Bessel_Y(v,k[n]*(eta_step.back() - eta_end));
+        dBJ = 0.5 * (std::pow(x, 0.5) * k[n] * (Bessel_J(v-1,k[n]*(eta_step.back() - eta_end)) - Bessel_J(v+1,k[n]*(eta_step.back() - eta_end))) + Bessel_J(v,k[n]*(eta_step.back() - eta_end)) * std::pow(x, -0.5));
+        dBY = 0.5 * (std::pow(x, 0.5) * k[n] * (Bessel_Y(v-1,k[n]*(eta_step.back() - eta_end)) - Bessel_Y(v+1,k[n]*(eta_step.back() - eta_end))) + Bessel_Y(v,k[n]*(eta_step.back() - eta_end)) * std::pow(x, -0.5));
         
         c[n] = (dBY*t1[n] - BY*t2[n]) / (BJ*dBY - BY*dBJ);
         d[n] = (-dBJ*t1[n] + BJ*t2[n]) / (BJ*dBY - BY*dBJ);
+        
     }
     
     C = c;
@@ -199,16 +204,19 @@ std::vector<double> ModeSolver::PPS()
         Z.insert(eta_sol[o], z[o]);
     }
     
-    a11 = std::pow((eta_step.back() - eta_end, 0), (0.5 - v));
-    a12 = std::pow((eta_step.back() - eta_end, 0), (0.5 + v));
-    a21 = (0.5 - v) * std::pow((eta_step.back() - eta_end, 0), (-0.5 - v));
-    a22 = (0.5 + v) * std::pow((eta_step.back() - eta_end, 0), (-0.5 + v));
+    std::complex<double> x(eta_step.back() - eta_end, 0);
+    
+    a11 = std::pow(x, (0.5 - v));
+    a12 = std::pow(x, (0.5 + v));
+    a21 = (0.5 - v) * std::pow(x, (-0.5 - v));
+    a22 = (0.5 + v) * std::pow(x, (-0.5 + v));
     
     A_z = (a22 * Z(eta_step.back()) - a12 * DZ(eta_step.back())) / (a11*a22 - a12*a21);
     
     for(size_t n = 0; n < k.size(); n++)
     {
-        PPS[n] = (std::pow(k[n], (3.-2*v)) / (2 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * tgamma(v) / (A_z * M_PI)) * (C[n] - D[n])), 2);
+        //PPS[n] = (std::pow(k[n], (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z * M_PI)) * (C[n] - D[n])), 2);
+        PPS[n] = std::pow(std::abs((C[n] - D[n])), -2);
     }
     
     return PPS;

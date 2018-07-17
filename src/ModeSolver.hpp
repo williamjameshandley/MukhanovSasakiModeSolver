@@ -1,7 +1,5 @@
 #pragma once
-#include <boost/math/special_functions/airy.hpp>
-#include <boost/math/special_functions/bessel.hpp>
-#include <boost/math/special_functions/gamma.hpp>
+#include "Special_Functions.hpp"
 #include "linear_interpolation.hpp"
 #include <iostream>
 #include <math.h>
