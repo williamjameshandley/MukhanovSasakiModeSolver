@@ -15,11 +15,10 @@ class ModeSolver
         double delta, eta_end;
         std::vector<double> z, dz, ddz, eta_sol;
     
-        std::vector<std::vector<Eigen::MatrixXd>> Mat;
+        std::vector<std::vector<Eigen::Matrix2d>> Mat;
         std::vector<std::complex<double>> c, d;
     
-        ModeSolver(std::vector<double> kk, std::vector<double> ee, std::vector<double> aa, std::vector<double> bb, double dd, double endend, std::vector<double> zz, std::vector<double> ddzz, std::vector<double> ddddzz, std::vector<double> esol):
-            k(kk), eta_step(ee), a(aa), b(bb), delta(dd), eta_end(endend), z(zz), dz(ddzz), ddz(ddddzz), eta_sol(esol) {}
+        ModeSolver(std::vector<double> kk, std::vector<double> ee, std::vector<double> aa, std::vector<double> bb, double dd, double endend, std::vector<double> zz, std::vector<double> ddzz, std::vector<double> ddddzz, std::vector<double> esol);
     
         void Find_Mat();
         void Initial_Conditions(std::string Vacuum, double eta_r);

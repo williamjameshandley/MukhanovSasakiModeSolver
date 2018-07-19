@@ -46,9 +46,7 @@ int main()
     size_t N = 1000;
     
     for(size_t i = 0; i < N; i++)
-    {
         k.push_back(exp(i * (log(k1) - log(k0)) / N)); //logspace
-    }
     
     ModeSolver ms(k, eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
     
@@ -66,32 +64,26 @@ int main()
     //Output
     
     std::ofstream fout;
-    fout.open("bin/output/ddz.txt");
+    fout.open("output/ddz.txt");
     
     for(size_t n = 0; n < ddz.size(); n++)
-    {
         fout<<eta[n]<<"  "<<ddz[n]<<std::endl;
-    }
     
     fout.close();
     
     std::ofstream mout;
-    mout.open("bin/output/segments.txt");
+    mout.open("output/segments.txt");
     
     for(size_t n = 0; n < a.size(); n++)
-    {
         mout<<eta_step[n]<<"  "<<a[n] + b[n] * eta_step[n]<<std::endl;
-    }
     
     mout.close();
     
     std::ofstream pout;
-    pout.open ("bin/output/PPS.txt");
+    pout.open ("output/PPS.txt");
     
     for(size_t i = 0; i < k.size(); i++)
-    {
         pout<<k[i]<<"   "<<PPS[i]<<std::endl;
-    }
     
     pout.close();
     

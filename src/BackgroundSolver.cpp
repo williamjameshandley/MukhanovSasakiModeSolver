@@ -29,14 +29,12 @@ std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::v
 
 double BackgroundSolver::H(double phi, double dphi)
 {
-    double H = sqrt((0.5 * dphi * dphi + pot.V(phi)) / 3.0);
-    return H;
+    return sqrt((0.5 * dphi * dphi + pot.V(phi)) / 3.0);
 }
 
 double BackgroundSolver::ddz(double phi, double dphi, double n)
 {
-    double ddz = exp(2 * n) * (2 * H(phi, dphi) * H(phi, dphi)  - (7.0/2) * (dphi * dphi) - pot.ddV(phi) - 2 * dphi * pot.dV(phi) / H(phi, dphi) + 0.5 * (dphi * dphi * dphi * dphi) / (H(phi, dphi) * H(phi, dphi)));
-    return ddz;
+    return exp(2 * n) * (2 * H(phi, dphi) * H(phi, dphi)  - (7.0/2) * (dphi * dphi) - pot.ddV(phi) - 2 * dphi * pot.dV(phi) / H(phi, dphi) + 0.5 * (dphi * dphi * dphi * dphi) / (H(phi, dphi) * H(phi, dphi)));
 }
 
 void BackgroundSolver::operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double)
