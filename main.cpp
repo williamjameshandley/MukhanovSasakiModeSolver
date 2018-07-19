@@ -29,7 +29,7 @@ int main()
     //Transitions
     double eta_end = eta.back();
     double eta_i = 0.02 * eta_end;
-    double eta_f = 0.99 * eta_end;
+    double eta_f = 0.95 * eta_end;
     std::vector<double> a, b, eta_step;
     double delta;
     
@@ -54,7 +54,7 @@ int main()
     
     ms.Find_Mat();
     
-    ms.Initial_Conditions("BD", 0.2 * eta_end);
+    ms.Initial_Conditions("BD", 0.5 * eta_end);
     
     std::vector<double> PPS;
     
