@@ -41,18 +41,18 @@ int main()
     
     std::cout<<eta_step.size()<<std::endl;
     
-    std::vector<double> k;
-    double k0 = 1.0, k1 = 1.0e6;
     size_t N = 1000;
+    std::vector<double> k(N);
+    double k0 = 1.0, k1 = 1.0e6;
     
     for(size_t i = 0; i < N; i++)
-        k.push_back(exp(i * (log(k1) - log(k0)) / N)); //logspace
+        k[i] = (exp(i * (log(k1) - log(k0)) / N)); //logspace
     
     ModeSolver ms(k, eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
     
     ms.Find_Mat();
     
-    ms.Initial_Conditions("BD", 0.5 * eta_end);
+    ms.Initial_Conditions("BD", 0.8 * eta_end);
     
     std::vector<double> PPS;
     
@@ -67,16 +67,22 @@ int main()
     fout.open("output/ddz.txt");
     
     for(size_t n = 0; n < ddz.size(); n++)
-        fout<<eta[n]<<"  "<<ddz[n]<<std::endl;
+        fout<<eta[n]/eta_end<<"  "<<ddz[n] / (2. / pow(eta[n] - eta_end, 2))<<std::endl;
     
     fout.close();
     
+    
+    LinearInterpolator<double, double> DDZ;
+    for(size_t o = 0; o < ddz.size(); o++)
+        DDZ.insert(eta[o], ddz[o]);
+    
     std::ofstream mout;
     mout.open("output/segments.txt");
-    
+    mout.precision(17);
     for(size_t n = 0; n < a.size(); n++)
-        mout<<eta_step[n]<<"  "<<a[n] + b[n] * eta_step[n]<<std::endl;
+        mout<<eta_step[n]/eta_end<<"  "<<(a[n] + b[n] * eta_step[n]) / (2. / pow(eta_step[n] - eta_end, 2))<<std::endl;
     
+    mout<<1<<"   "<<1+delta<<std::endl;
     mout.close();
     
     std::ofstream pout;

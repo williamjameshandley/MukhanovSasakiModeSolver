@@ -10,7 +10,7 @@ ModeSolver::ModeSolver(std::vector<double> kk,
         std::vector<double> ddddzz, 
         std::vector<double> esol):
             k(kk), eta_step(ee), a(aa), b(bb), delta(dd), eta_end(endend), z(zz), dz(ddzz), ddz(ddddzz), eta_sol(esol), 
-            Mat(eta_step.size() - 1, std::vector<Eigen::Matrix2d>(k.size())), c{}, d{} 
+            Mat(eta_step.size() - 1, std::vector<Eigen::Matrix2d>(k.size())), c{}, d{}
 {}
 
 
@@ -22,15 +22,15 @@ void ModeSolver::Find_Mat()
         
         for(size_t j = Mat.size()-1; j != static_cast<size_t>(-1); j--)
         {
-            auto Ai0 = Airy_Ai((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Bi0 = Airy_Bi((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Aip0 = std::pow(b[j], 1.0/3) * Airy_Aip((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Bip0 = std::pow(b[j], 1.0/3) * Airy_Bip((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
+            auto Ai0 = Airy_Ai((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Bi0 = Airy_Bi((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Aip0 = pow(b[j], 1.0/3.0) * Airy_Aip((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Bip0 = pow(b[j], 1.0/3.0) * Airy_Bip((a[j] + b[j] * eta_step[j] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
             
-            auto Ai = Airy_Ai((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Bi = Airy_Bi((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Aip = std::pow(b[j], 1.0/3) * Airy_Aip((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
-            auto Bip = std::pow(b[j], 1.0/3) * Airy_Bip((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / std::pow(b[j], 2.0/3.0));
+            auto Ai = Airy_Ai((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Bi = Airy_Bi((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Aip = pow(b[j], 1.0/3.0) * Airy_Aip((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
+            auto Bip = pow(b[j], 1.0/3.0) * Airy_Bip((a[j] + b[j] * eta_step[j+1] - k[i] * k[i]) / pow(b[j], 2.0/3.0));
             
             auto det = Ai0 * Bip0 - Bi0 * Aip0;
             
@@ -82,39 +82,42 @@ void ModeSolver::Initial_Conditions(std::string Vacuum, double eta_r)
     else
         for(size_t n = 0; n < k.size(); n++)
         {
-            auto Ai0 = Airy_Ai((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_r) / std::pow(b[initial_index-1], 2.0/3));
-            auto Bi0 = Airy_Bi((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_r) / std::pow(b[initial_index-1], 2.0/3));
-            auto Aip0 = std::pow(b[initial_index-1], 1.0/3) * Airy_Aip((a[initial_index-1] - k[n] * k[n] + b[initial_index-1]*eta_r) / std::pow(b[initial_index-1], 2.0/3));
-            auto Bip0 = std::pow(b[initial_index-1], 1.0/3) * Airy_Bip((a[initial_index-1] - k[n] * k[n] + b[initial_index-1]*eta_r) / std::pow(b[initial_index-1], 2.0/3));
+            auto Ai0 = Airy_Ai((a[initial_index-1] + b[initial_index-1] * eta_r - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3.0));
+            auto Bi0 = Airy_Bi((a[initial_index-1] + b[initial_index-1] * eta_r - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3.0));
+            auto Aip0 = pow(b[initial_index-1], 1.0/3.0) * Airy_Aip((a[initial_index-1] + b[initial_index-1] * eta_r - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3.0));
+            auto Bip0 = pow(b[initial_index-1], 1.0/3.0) * Airy_Bip((a[initial_index-1] + b[initial_index-1] * eta_r - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3.0));
             
-            auto Ai = Airy_Ai((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_step[initial_index]) / std::pow(b[initial_index-1], 2.0/3));
-            auto Bi = Airy_Bi((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_step[initial_index]) / std::pow(b[initial_index-1], 2.0/3));
-            auto Aip = std::pow(b[initial_index-1], 1.0/3) * Airy_Aip((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_step[initial_index]) / std::pow(b[initial_index-1], 2.0/3));
-            auto Bip = std::pow(b[initial_index-1], 1.0/3) * Airy_Bip((a[initial_index-1] - k[n] * k[n] + b[initial_index-1] * eta_step[initial_index]) / std::pow(b[initial_index-1], 2.0/3));
+            auto Ai = Airy_Ai((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3));
+            auto Bi = Airy_Bi((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3));
+            auto Aip = pow(b[initial_index-1], 1.0/3.0) * Airy_Aip((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3));
+            auto Bip = pow(b[initial_index-1], 1.0/3.0) * Airy_Bip((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k[n] * k[n]) / pow(b[initial_index-1], 2.0/3));
             
             auto det = Ai0 * Bip0 - Bi0 * Aip0;
             
-            t1[n] = ((Ai*Bip0 - Bi*Aip0) * kin[n] + (Bi*Ai0 - Ai*Bi0) * dkin[n]) / det;
-            t2[n] = ((Aip*Bip0 - Bip*Aip0) * kin[n] + (Bip*Ai0 - Aip*Bi0) * dkin[n]) / det;
+            t1[n] = ((Ai * Bip0 - Bi * Aip0) * kin[n] + (Bi * Ai0 - Ai * Bi0) * dkin[n]) / det;
+            t2[n] = ((Aip * Bip0 - Bip * Aip0) * kin[n] + (Bip * Ai0 - Aip * Bi0) * dkin[n]) / det;
         }
+    
     
     std::vector<Eigen::Matrix2d> M_index = Mat[initial_index];
     for(size_t n = 0; n < k.size(); n++)
     {
-        t1[n] = M_index[n](0,0) * t1[n] + M_index[n](0,1) * t2[n];
-        t2[n] = M_index[n](1,0) * t1[n] + M_index[n](1,1) * t2[n];
+        auto temp1 = t1[n];
+        auto temp2 = t2[n];
+        t1[n] = M_index[n](0,0) * temp1 + M_index[n](0,1) * temp2;
+        t2[n] = M_index[n](1,0) * temp1 + M_index[n](1,1) * temp2;
     }
     
     //MdS
-    double v = 1.5;// * sqrt(1 + 8.0 * delta / 9);
+    double v = 1.5 * sqrt(1 + 8.0 * delta / 9);
     double x = eta_step.back() - eta_end;
     
     for(size_t n = 0; n < k.size(); n++)
     {
         auto H1 = I * sqrt(-x) * Hankel1(v, k[n] * x);
         auto H2 = I * sqrt(-x) * Hankel2(v, k[n] * x);
-        auto dH1 = 0.5 * I * (sqrt(-x) * k[n] * (Hankel1(v-1, k[n] * x) - Hankel1(v+1, k[n] * x)) + Hankel1(v, k[n] * x) / sqrt(-x));
-        auto dH2 = 0.5 * I * (sqrt(-x) * k[n] * (Hankel2(v-1, k[n] * x) - Hankel2(v+1, k[n] * x)) + Hankel2(v, k[n] * x) / sqrt(-x));
+        auto dH1 = 0.5 * I * (sqrt(-x) * k[n] * (Hankel1(v-1, k[n] * x) - Hankel1(v+1, k[n] * x)) - Hankel1(v, k[n] * x) / sqrt(-x));
+        auto dH2 = 0.5 * I * (sqrt(-x) * k[n] * (Hankel2(v-1, k[n] * x) - Hankel2(v+1, k[n] * x)) - Hankel2(v, k[n] * x) / sqrt(-x));
         
         c.push_back((dH2 * t1[n] - H2 * t2[n]) / (H1 * dH2 - H2 * dH1));
         d.push_back((-dH1 * t1[n] + H1 * t2[n]) / (H1 * dH2 - H2 * dH1));
