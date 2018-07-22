@@ -45,6 +45,13 @@ void ModeSolver::Initial_Conditions(std::string Vac, double eta_rr)
     eta_r = eta_rr;
     initial_index = static_cast<size_t>(std::lower_bound(eta_step.begin(), eta_step.end(), eta_r) - eta_step.begin());
     
+    for(size_t o = 0; o < dz.size(); o++)
+    {
+        DDZ.insert(eta_sol[o], ddz[o]);
+        DZ.insert(eta_sol[o], dz[o]);
+        Z.insert(eta_sol[o], z[o]);
+    }
+    
 }
 
 void ModeSolver::Match(double k)
@@ -57,21 +64,10 @@ void ModeSolver::Match(double k)
         dkin = -I * k * kin;
     else if(Vacuum == "HD")
     {
-        LinearInterpolator<double, double> DDZ;
-        for(size_t o = 0; o < dz.size(); o++)
-        {
-            DDZ.insert(eta_sol[o], ddz[o]);
-        }
         dkin = -I * std::pow(k * k - DDZ(eta_r), 0.5) * kin;
     }
     else if(Vacuum == "RSET")
     {
-        LinearInterpolator<double, double> DZ, Z;
-        for(size_t o = 0; o < dz.size(); o++)
-        {
-            DZ.insert(eta_sol[o], dz[o]);
-            Z.insert(eta_sol[o], z[o]);
-        }
         dkin = (-I * k + DZ(eta_r)/Z(eta_r)) * kin;
     }
     else
@@ -137,13 +133,6 @@ void ModeSolver::Match(double k)
 double ModeSolver::PPS(double k)
 {
     Match(k);
-    
-    LinearInterpolator<double, double> DZ, Z;
-    for(size_t o = 0; o < dz.size(); o++)
-    {
-        DZ.insert(eta_sol[o], dz[o]);
-        Z.insert(eta_sol[o], z[o]);
-    }
     
     std::complex<double> x(eta_step.back() - eta_end, 0);
     

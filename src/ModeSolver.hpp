@@ -15,6 +15,7 @@ class ModeSolver
         double delta, eta_end, eta_r;
         std::vector<double> z, dz, ddz, eta_sol;
         std::string Vacuum;
+        LinearInterpolator<double, double> DDZ, DZ, Z;
     
         Eigen::Matrix2d Mat;
         size_t initial_index;

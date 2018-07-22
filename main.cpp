@@ -55,22 +55,16 @@ int main()
     
     ms.Initial_Conditions("RSET", 0.1 * eta_end);
     
-    std::vector<double> PPS(k.size());
-    
-    for(size_t n = 0; n < N; n++)
-    {
-        PPS[n] = ms.PPS(k[n]);
-        if(n % 100 == 0)
-            std::cout<<k[n]<<std::endl;
-    }
-    
-    
     //Output
     std::ofstream pout;
     pout.open ("output/PPS.txt");
     
     for(size_t i = 0; i < k.size(); i++)
-        pout<<k[i]<<"   "<<PPS[i]<<std::endl;
+    {
+        pout<<k[i]<<"   "<<ms.PPS(k[i])<<std::endl;
+        if(i % 100 == 0)
+            std::cout<<k[i]<<std::endl;
+    }
     
     pout.close();
     
