@@ -9,6 +9,7 @@ using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<doubl
 
 int main()
 {
+    std::cout<<"Solving for Background"<<std::endl;
     double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0; //Background Initial Conditions
     
     Poly pot;                                   //Set Potential
@@ -24,9 +25,9 @@ int main()
     
     std::tie(z, dz, ddz, eta) = variables.Solve(integrator);      //Solve Background Variables
     
-    std::cout<<ddz.size()<<std::endl;
-    
     //Transitions
+    std::cout<<"Finding Transitions: ";
+    
     double eta_end = eta.back();
     double eta_i = 0.02 * eta_end;
     double eta_f = 0.95 * eta_end;
@@ -41,6 +42,8 @@ int main()
     
     std::cout<<eta_step.size()<<std::endl;
     
+    
+    std::cout<<"Finding PPS"<<std::endl;;
     size_t N = 1000;
     std::vector<double> k(N);
     double k0 = 1.0, k1 = 1.0e6;
@@ -48,43 +51,21 @@ int main()
     for(size_t i = 0; i < N; i++)
         k[i] = (exp(i * (log(k1) - log(k0)) / N)); //logspace
     
-    ModeSolver ms(k, eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
+    ModeSolver ms(eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
     
-    ms.Find_Mat();
+    ms.Initial_Conditions("RSET", 0.1 * eta_end);
     
-    ms.Initial_Conditions("BD", 0.8 * eta_end);
+    std::vector<double> PPS(k.size());
     
-    std::vector<double> PPS;
-    
-    PPS = ms.PPS();
-    
-    
+    for(size_t n = 0; n < N; n++)
+    {
+        PPS[n] = ms.PPS(k[n]);
+        if(n % 100 == 0)
+            std::cout<<k[n]<<std::endl;
+    }
     
     
     //Output
-    
-    std::ofstream fout;
-    fout.open("output/ddz.txt");
-    
-    for(size_t n = 0; n < ddz.size(); n++)
-        fout<<eta[n]/eta_end<<"  "<<ddz[n] / (2. / pow(eta[n] - eta_end, 2))<<std::endl;
-    
-    fout.close();
-    
-    
-    LinearInterpolator<double, double> DDZ;
-    for(size_t o = 0; o < ddz.size(); o++)
-        DDZ.insert(eta[o], ddz[o]);
-    
-    std::ofstream mout;
-    mout.open("output/segments.txt");
-    mout.precision(17);
-    for(size_t n = 0; n < a.size(); n++)
-        mout<<eta_step[n]/eta_end<<"  "<<(a[n] + b[n] * eta_step[n]) / (2. / pow(eta_step[n] - eta_end, 2))<<std::endl;
-    
-    mout<<1<<"   "<<1+delta<<std::endl;
-    mout.close();
-    
     std::ofstream pout;
     pout.open ("output/PPS.txt");
     

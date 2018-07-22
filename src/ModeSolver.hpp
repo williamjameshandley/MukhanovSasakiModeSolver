@@ -11,18 +11,21 @@ class ModeSolver
 {
     public:
     
-        std::vector<double> k, eta_step, a, b;
-        double delta, eta_end;
+        std::vector<double> eta_step, a, b;
+        double delta, eta_end, eta_r;
         std::vector<double> z, dz, ddz, eta_sol;
+        std::string Vacuum;
     
-        std::vector<std::vector<Eigen::Matrix2d>> Mat;
-        std::vector<std::complex<double>> c, d;
+        Eigen::Matrix2d Mat;
+        size_t initial_index;
+        std::complex<double> c, d;
     
-        ModeSolver(std::vector<double> kk, std::vector<double> ee, std::vector<double> aa, std::vector<double> bb, double dd, double endend, std::vector<double> zz, std::vector<double> ddzz, std::vector<double> ddddzz, std::vector<double> esol);
+        ModeSolver(std::vector<double> ee, std::vector<double> aa, std::vector<double> bb, double dd, double endend, std::vector<double> zz, std::vector<double> ddzz, std::vector<double> ddddzz, std::vector<double> esol);
     
-        void Find_Mat();
+        void Find_Mat(double k);
         void Initial_Conditions(std::string Vacuum, double eta_r);
+        void Match(double k);
     
-        std::vector<double> PPS();
+        double PPS(double k);
     
 };
