@@ -12,11 +12,9 @@ build_dir = build
 binary_dir = bin
 lib_dir = $(PWD)/lib
 
-cpp_srcs = $(wildcard $(source_dir)/*.cpp)
-cpp_objs = $(cpp_srcs:%.cpp=$(build_dir)/%.o)
-cpp_deps = $(cpp_srcs:%.cpp=$(build_dir)/%.d)
-
-objs = $(cpp_objs)
+src = $(wildcard $(source_dir)/*.cpp)
+objs = $(src:%.cpp=$(build_dir)/%.o)
+cpp_deps = $(src:%.cpp=$(build_dir)/%.d)
 
 inc += -isystem$(external_dir)
 
@@ -44,10 +42,8 @@ python $(libdir)/$(libname).so:
 
 # Compiling the main program
 main: $(binary_dir)/main
-lib$(libname): $(lib_dir)/lib$(libname).a
-lib$(libname): $(lib_dir)/lib$(libname).so
 
-$(binary_dir)/%: $(build_dir)/%.o lib$(libname)
+$(binary_dir)/%: $(build_dir)/%.o $(lib_dir)/lib$(libname).so
 	@mkdir -p $(@D)
 	$(LD) $< -o $@ $(LDFLAGS) -L$(lib_dir) $(LDLIBS) 
 
@@ -63,10 +59,10 @@ tags: $(all_srcs)
 	ctags --extra=+f $(all_srcs)
 
 
-.PHONY: clean main lib$(libname)
+.PHONY: clean main
 
 clean:
-	$(RM) $(cpp_objs) $(cpp_deps) main
+	$(RM) $(objs) $(deps) main
 
 purge: clean
 	$(RM) -r $(build_dir) $(lib_dir)
