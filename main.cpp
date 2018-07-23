@@ -4,24 +4,24 @@
 #include "src/ModeSolver.cpp"
 #include "src/Transitions.cpp"
 #include "src/Potential.hpp"
+#include "src/Special_Functions.hpp"
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
 int main()
 {
     std::cout<<"Solving for Background"<<std::endl;
-    double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0; //Background Initial Conditions
     
-    Poly pot;                                   //Set Potential
-    pot.m = 1.0, pot.lambda = 0;
-    
-    BackgroundSolver variables(t0, t1, phi_p, dphi_p, pot);    //Background Solver Constructor
     
     double abs_err = 1.0e-5, rel_err = 1e-3;
     
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);   //Set Integrator
     
-    auto background_sols = variables.Solve(integrator);      //Solve Background Variables
+    Polynomial pot(1.); //Set Potential
+
+    BackgroundSolver solver;    //Background Solver Constructor
+    double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0; //Background Initial Conditions
+    auto background_sols = solver.Solve(integrator, pot, t0, t1, phi_p, dphi_p);      //Solve Background Variables
     
     //Transitions
     std::cout<<"Finding Transitions: ";

@@ -5,7 +5,7 @@
 #include <boost/math/special_functions/bessel.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 
-const std::complex<double> I(0, 1);;
+const std::complex<double> I(0, 1);
 
 std::complex<double> Bessel_J(double v, double x);
 std::complex<double> Bessel_Y(double v, double x);

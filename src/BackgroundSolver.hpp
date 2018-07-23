@@ -17,18 +17,20 @@ struct BackgroundSolution
 
 struct BackgroundSolver
 {
-    double t0, t1, phi_p, dphi_p;
-    Poly pot;
+    BackgroundSolver():  pot{nullptr} {}
 
-    BackgroundSolver(double a, double b, double c, double d, Poly potential): 
-        t0(a), t1(b), phi_p(c), dphi_p(d), pot(potential) {}
+    template<class Integrator> BackgroundSolution Solve(Integrator, Potential&, double t0, double t1, double phi_p, double dphi_p);
 
-    template<class Integrator>
-    BackgroundSolution Solve(Integrator);
-
-    double H(double phi, double dphi);
-    double ddz(double phi, double dphi, double n);
     void operator() (const std::vector<double>& x, std::vector<double>& dx_dt, const double);
+
+
+    private:
+        double H(double phi, double dphi);
+        double ddz(double phi, double dphi, double n);
+        double V(double phi)   {return pot->V(phi);}
+        double dV(double phi)  {return pot->dV(phi);}
+        double ddV(double phi) {return pot->ddV(phi);}
+        Potential* pot;
 };
 
 struct Solutions
