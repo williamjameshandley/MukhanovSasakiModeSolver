@@ -21,20 +21,18 @@ int main()
     
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);   //Set Integrator
     
-    std::vector<double> z, dz, ddz, eta;
-    
-    std::tie(z, dz, ddz, eta) = variables.Solve(integrator);      //Solve Background Variables
+    auto background_sols = variables.Solve(integrator);      //Solve Background Variables
     
     //Transitions
     std::cout<<"Finding Transitions: ";
     
-    double eta_end = eta.back();
+    double eta_end = background_sols.eta.back();
     double eta_i = 0.02 * eta_end;
     double eta_f = 0.95 * eta_end;
     std::vector<double> a, b, eta_step;
     double delta;
     
-    Transitions T(eta_i, eta_f, eta_end, ddz, eta);     //Transitions Constructor
+    Transitions T(eta_i, eta_f, eta_end, background_sols.ddz, background_sols.eta);     //Transitions Constructor
     
     double error = 1e-4;
 
@@ -51,7 +49,7 @@ int main()
     for(size_t i = 0; i < N; i++)
         k[i] = (exp(i * (log(k1) - log(k0)) / N)); //logspace
     
-    ModeSolver ms(eta_step, a, b, delta, eta_end, z, dz, ddz, eta);
+    ModeSolver ms(eta_step, a, b, delta, eta_end, background_sols);
     
     ms.Initial_Conditions("RSET", 0.1 * eta_end);
     
@@ -65,6 +63,9 @@ int main()
         if(i % 100 == 0)
             std::cout<<k[i]<<std::endl;
     }
+
+    // for(auto k_i : k)
+    //     pout<<k_i<<"   "<<ms.PPS(k_i)<<std::endl;
     
     pout.close();
     

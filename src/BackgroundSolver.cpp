@@ -2,7 +2,7 @@
 #include "BackgroundSolver.hpp"
 
 template<class Integrator>
-std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>> BackgroundSolver::Solve(Integrator integrator)
+BackgroundSolution BackgroundSolver::Solve(Integrator integrator)
 {
     double dt = (t1 - t0) / 1e7; //used only once at the start of integration
     double eta0 = 1.5 * t0, n0 = 0;
@@ -23,7 +23,7 @@ std::tuple<std::vector<double>, std::vector<double>, std::vector<double>, std::v
         ETA.push_back(sol.x[i][3]);
     }
     
-    return std::make_tuple(Z, DZ, DDZ, ETA);
+    return BackgroundSolution(Z, DZ, DDZ, ETA);
 }
 
 
