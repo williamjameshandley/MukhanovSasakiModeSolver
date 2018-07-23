@@ -3,19 +3,31 @@
 #include <vector>
 #include <math.h>
 #include <tuple>
+#include "BackgroundSolver.hpp"
 
-class Transitions
+struct TransitionsSolution
 {
-    public:
-        double eta_i, eta_f, eta_end;
-        std::vector<double> ddz, eta_sol;
+    TransitionsSolution(double _delta, std::vector<double> _a, std::vector<double> _b, std::vector<double> _eta_step) :
+    delta{_delta}, a{_a}, b{_b}, eta_step{_eta_step} {}
     
-        Transitions(double a, double b, double c, std::vector<double> d, std::vector<double> e):
-            eta_i(a), eta_f(b), eta_end(c), ddz(d), eta_sol(e) { }
+    double delta;
+    std::vector<double> a;
+    std::vector<double> b;
+    std::vector<double> eta_step;
+};
 
-        double integral(double a, double b);
-    
-        std::tuple<std::vector<double>, std::vector<double>, double,  std::vector<double>> Find(double error);
+struct Transitions
+{
+   
+    double eta_i, eta_f;
+    BackgroundSolution Bsol;
+
+    Transitions(double _eta_i, double _eta_f, BackgroundSolution _Bsol):
+        eta_i(_eta_i), eta_f(_eta_f), Bsol{_Bsol} { }
+
+    double integral(double a, double b);
+
+    TransitionsSolution Find(double error);
     
 };
 

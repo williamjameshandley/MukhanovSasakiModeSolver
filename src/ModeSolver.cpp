@@ -1,32 +1,20 @@
 #include "ModeSolver.hpp"
 
-ModeSolver::ModeSolver(
-        std::vector<double> ee, 
-        std::vector<double> aa, 
-        std::vector<double> bb, 
-        double dd, 
-        double endend,
-        BackgroundSolution _sol
-        ):
-            eta_step(ee), a(aa), b(bb), delta(dd), eta_end(endend), sol{_sol}, Mat{}, c{}, d{}
-{}
-
-
 void ModeSolver::Find_Mat(double k)
 {
     Mat = Eigen::Matrix2d::Identity();
     
-    for(size_t j = eta_step.size() - 2; j != initial_index - 1; j--)
+    for(size_t j = Tsol.eta_step.size() - 2; j != initial_index - 1; j--)
     {
-        auto Ai0 = Airy_Ai((a[j] + b[j] * eta_step[j] - k * k) / pow(b[j], 2.0/3.0));
-        auto Bi0 = Airy_Bi((a[j] + b[j] * eta_step[j] - k * k) / pow(b[j], 2.0/3.0));
-        auto Aip0 = pow(b[j], 1.0/3.0) * Airy_Aip((a[j] + b[j] * eta_step[j] - k * k) / pow(b[j], 2.0/3.0));
-        auto Bip0 = pow(b[j], 1.0/3.0) * Airy_Bip((a[j] + b[j] * eta_step[j] - k * k) / pow(b[j], 2.0/3.0));
+        auto Ai0 = Airy_Ai((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Bi0 = Airy_Bi((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Aip0 = pow(Tsol.b[j], 1.0/3.0) * Airy_Aip((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Bip0 = pow(Tsol.b[j], 1.0/3.0) * Airy_Bip((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) / pow(Tsol.b[j], 2.0/3.0));
         
-        auto Ai = Airy_Ai((a[j] + b[j] * eta_step[j+1] - k * k) / pow(b[j], 2.0/3.0));
-        auto Bi = Airy_Bi((a[j] + b[j] * eta_step[j+1] - k * k) / pow(b[j], 2.0/3.0));
-        auto Aip = pow(b[j], 1.0/3.0) * Airy_Aip((a[j] + b[j] * eta_step[j+1] - k * k) / pow(b[j], 2.0/3.0));
-        auto Bip = pow(b[j], 1.0/3.0) * Airy_Bip((a[j] + b[j] * eta_step[j+1] - k * k) / pow(b[j], 2.0/3.0));
+        auto Ai = Airy_Ai((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Bi = Airy_Bi((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Aip = pow(Tsol.b[j], 1.0/3.0) * Airy_Aip((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        auto Bip = pow(Tsol.b[j], 1.0/3.0) * Airy_Bip((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) / pow(Tsol.b[j], 2.0/3.0));
         
         auto det = Ai0 * Bip0 - Bi0 * Aip0;
         
@@ -42,13 +30,13 @@ void ModeSolver::Initial_Conditions(std::string Vac, double eta_rr)
 {
     Vacuum = Vac;
     eta_r = eta_rr;
-    initial_index = static_cast<size_t>(std::lower_bound(eta_step.begin(), eta_step.end(), eta_r) - eta_step.begin());
+    initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
     
-    for(size_t o = 0; o < sol.dz.size(); o++)
+    for(size_t o = 0; o < Bsol.dz.size(); o++)
     {
-        DDZ.insert(sol.eta[o], sol.ddz[o]);
-        DZ.insert(sol.eta[o], sol.dz[o]);
-        Z.insert(sol.eta[o], sol.z[o]);
+        DDZ.insert(Bsol.eta[o], Bsol.ddz[o]);
+        DZ.insert(Bsol.eta[o], Bsol.dz[o]);
+        Z.insert(Bsol.eta[o], Bsol.z[o]);
     }
     
 }
@@ -79,10 +67,10 @@ void ModeSolver::Match(double k)
         auto dH10 = 0.5 * Hankel1(0, k * eta_r) / sqrt(eta_r) - k * sqrt(eta_r) * Hankel1(1, k * eta_r);
         auto dH20 = 0.5 * Hankel2(0, k * eta_r) / sqrt(eta_r) - k * sqrt(eta_r) * Hankel2(1, k * eta_r);
     
-        auto H1 = sqrt(eta_step[0]) * Hankel1(0, k * eta_step[0]);
-        auto H2 = sqrt(eta_step[0]) * Hankel2(0, k * eta_step[0]);
-        auto dH1 = 0.5 * Hankel1(0, k * eta_step[0]) / sqrt(eta_step[0]) - k * sqrt(eta_step[0]) * Hankel1(1, k * eta_step[0]);
-        auto dH2 = 0.5 * Hankel2(0, k * eta_step[0]) / sqrt(eta_step[0]) - k * sqrt(eta_step[0]) * Hankel2(1, k * eta_step[0]);
+        auto H1 = sqrt(Tsol.eta_step[0]) * Hankel1(0, k * Tsol.eta_step[0]);
+        auto H2 = sqrt(Tsol.eta_step[0]) * Hankel2(0, k * Tsol.eta_step[0]);
+        auto dH1 = 0.5 * Hankel1(0, k * Tsol.eta_step[0]) / sqrt(Tsol.eta_step[0]) - k * sqrt(Tsol.eta_step[0]) * Hankel1(1, k * Tsol.eta_step[0]);
+        auto dH2 = 0.5 * Hankel2(0, k * Tsol.eta_step[0]) / sqrt(Tsol.eta_step[0]) - k * sqrt(Tsol.eta_step[0]) * Hankel2(1, k * Tsol.eta_step[0]);
     
         auto det = (H10 * dH20 - H20 * dH10);
   
@@ -91,15 +79,15 @@ void ModeSolver::Match(double k)
     }
     else
     {
-        auto Ai0 = Airy_Ai((a[initial_index-1] + b[initial_index-1] * eta_r - k * k) / pow(b[initial_index-1], 2.0/3.0));
-        auto Bi0 = Airy_Bi((a[initial_index-1] + b[initial_index-1] * eta_r - k * k) / pow(b[initial_index-1], 2.0/3.0));
-        auto Aip0 = pow(b[initial_index-1], 1.0/3.0) * Airy_Aip((a[initial_index-1] + b[initial_index-1] * eta_r - k * k) / pow(b[initial_index-1], 2.0/3.0));
-        auto Bip0 = pow(b[initial_index-1], 1.0/3.0) * Airy_Bip((a[initial_index-1] + b[initial_index-1] * eta_r - k * k) / pow(b[initial_index-1], 2.0/3.0));
+        auto Ai0 = Airy_Ai((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) / pow(Tsol.b[initial_index-1], 2.0/3.0));
+        auto Bi0 = Airy_Bi((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) / pow(Tsol.b[initial_index-1], 2.0/3.0));
+        auto Aip0 = pow(Tsol.b[initial_index-1], 1.0/3.0) * Airy_Aip((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) / pow(Tsol.b[initial_index-1], 2.0/3.0));
+        auto Bip0 = pow(Tsol.b[initial_index-1], 1.0/3.0) * Airy_Bip((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) / pow(Tsol.b[initial_index-1], 2.0/3.0));
     
-        auto Ai = Airy_Ai((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k * k) / pow(b[initial_index-1], 2.0/3));
-        auto Bi = Airy_Bi((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k * k) / pow(b[initial_index-1], 2.0/3));
-        auto Aip = pow(b[initial_index-1], 1.0/3.0) * Airy_Aip((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k * k) / pow(b[initial_index-1], 2.0/3));
-        auto Bip = pow(b[initial_index-1], 1.0/3.0) * Airy_Bip((a[initial_index-1] + b[initial_index-1] * eta_step[initial_index] - k * k) / pow(b[initial_index-1], 2.0/3));
+        auto Ai = Airy_Ai((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * Tsol.eta_step[initial_index] - k * k) / pow(Tsol.b[initial_index-1], 2.0/3));
+        auto Bi = Airy_Bi((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * Tsol.eta_step[initial_index] - k * k) / pow(Tsol.b[initial_index-1], 2.0/3));
+        auto Aip = pow(Tsol.b[initial_index-1], 1.0/3.0) * Airy_Aip((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * Tsol.eta_step[initial_index] - k * k) / pow(Tsol.b[initial_index-1], 2.0/3));
+        auto Bip = pow(Tsol.b[initial_index-1], 1.0/3.0) * Airy_Bip((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * Tsol.eta_step[initial_index] - k * k) / pow(Tsol.b[initial_index-1], 2.0/3));
     
         auto det = Ai0 * Bip0 - Bi0 * Aip0;
     
@@ -115,8 +103,8 @@ void ModeSolver::Match(double k)
     t2 = Mat(1,0) * temp1 + Mat(1,1) * temp2;
     
     //MdS
-    double v = 1.5 * sqrt(1 + 8.0 * delta / 9);
-    double x = eta_step.back() - eta_end;
+    double v = 1.5 * sqrt(1 + 8.0 * Tsol.delta / 9);
+    double x = Tsol.eta_step.back() - Bsol.eta.back();
 
     auto H1 = I * sqrt(-x) * Hankel1(v, k * x);
     auto H2 = I * sqrt(-x) * Hankel2(v, k * x);
@@ -133,15 +121,15 @@ double ModeSolver::PPS(double k)
 {
     Match(k);
     
-    std::complex<double> x(eta_step.back() - eta_end, 0);
+    std::complex<double> x(Tsol.eta_step.back() - Bsol.eta.back(), 0);
     
-    auto v = 1.5 * sqrt(1 + 8.0 * delta / 9);
+    auto v = 1.5 * sqrt(1 + 8.0 * Tsol.delta / 9);
     auto a11 = std::pow(x, (0.5 - v));
     auto a12 = std::pow(x, (0.5 + v));
     auto a21 = (0.5 - v) * std::pow(x, (-0.5 - v));
     auto a22 = (0.5 + v) * std::pow(x, (-0.5 + v));
     
-    auto A_z = (a22 * Z(eta_step.back()) - a12 * DZ(eta_step.back())) / (a11*a22 - a12*a21);
+    auto A_z = (a22 * Z(Tsol.eta_step.back()) - a12 * DZ(Tsol.eta_step.back())) / (a11*a22 - a12*a21);
     
     return (std::pow(k, (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z * M_PI)) * (c - d)), 2);
 

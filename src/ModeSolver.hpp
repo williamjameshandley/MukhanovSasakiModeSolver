@@ -2,6 +2,7 @@
 #include "Special_Functions.hpp"
 #include "linear_interpolation.hpp"
 #include "BackgroundSolver.hpp"
+#include "Transitions.hpp"
 #include <iostream>
 #include <math.h>
 #include <Eigen/Dense>
@@ -12,18 +13,19 @@
 class ModeSolver
 {
     public:
+        BackgroundSolution Bsol;
+        TransitionsSolution Tsol;
     
-        std::vector<double> eta_step, a, b;
-        double delta, eta_end, eta_r;
-        BackgroundSolution sol;
+        double eta_r;
         std::string Vacuum;
+        size_t initial_index;
         LinearInterpolator<double, double> DDZ, DZ, Z;
     
         Eigen::Matrix2d Mat;
-        size_t initial_index;
         std::complex<double> c, d;
     
-        ModeSolver(std::vector<double> ee, std::vector<double> aa, std::vector<double> bb, double dd, double endend, BackgroundSolution sol);
+        ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol):
+            Bsol{_Bsol}, Tsol{_Tsol}, Mat{}, c{}, d{} {}
     
         void Find_Mat(double k);
         void Initial_Conditions(std::string Vacuum, double eta_r);
