@@ -7,24 +7,24 @@ void ModeSolver::Find_Mat(double k)
     for(size_t j = Tsol.eta_step.size() - 2; j != initial_index - 1; j--)
     {
         double Ai0, Bi0, Aip0, Bip0;
-        double x = ((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        double p = pow(Tsol.b[j], 1.0/3.0);
+        double x = ((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j] - k * k) /p/p);
         Airy(x, Ai0, Aip0, Bi0, Bip0);
-        Aip0 *= pow(Tsol.b[j], 1.0/3.0);
-        Bip0 *= pow(Tsol.b[j], 1.0/3.0);
+        Aip0 *= p;
+        Bip0 *= p;
         
         double Ai, Bi, Aip, Bip;
-        x = ((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) / pow(Tsol.b[j], 2.0/3.0));
+        x = ((Tsol.a[j] + Tsol.b[j] * Tsol.eta_step[j+1] - k * k) /p/p);
         Airy(x, Ai, Aip, Bi, Bip);
-        Aip *= pow(Tsol.b[j], 1.0/3.0);
-        Bip *= pow(Tsol.b[j], 1.0/3.0);
-        
-        auto det = Ai0 * Bip0 - Bi0 * Aip0;
+        Aip *= p;
+        Bip *= p;
         
         Eigen::Matrix2d M;
-        M << (Ai*Bip0 - Bi*Aip0) / det,   (Bi*Ai0 - Ai*Bi0) / det,
-             (Aip*Bip0 - Bip*Aip0) / det, (Bip*Ai0 - Aip*Bi0) / det;
+        M << (Ai*Bip0 - Bi*Aip0),   (Bi*Ai0 - Ai*Bi0),
+             (Aip*Bip0 - Bip*Aip0), (Bip*Ai0 - Aip*Bi0);
         
-        Mat = Mat * M;
+        auto det = Ai0 * Bip0 - Bi0 * Aip0;
+        Mat = Mat * M /det;
     }
 }
 
