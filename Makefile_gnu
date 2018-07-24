@@ -14,6 +14,8 @@ CFLAGS += -O3
 
 # Profiling
 CXXFLAGS += -pg
+CFLAGS += -pg
 
 # Shared object
 CXXFLAGS += -fPIC
+CFLAGS += -fPIC

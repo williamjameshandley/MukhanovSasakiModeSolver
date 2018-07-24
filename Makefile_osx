@@ -18,3 +18,4 @@ CFLAGS += -pg
 
 # Shared object
 CXXFLAGS += -fPIC
+CFLAGS += -fPIC
