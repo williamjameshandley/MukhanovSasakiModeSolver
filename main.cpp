@@ -5,6 +5,8 @@
 #include "src/Transitions.cpp"
 #include "src/Potential.hpp"
 #include "src/Special_Functions.hpp"
+#include "src/linear_interpolation.hpp"
+#include <utility>
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
@@ -44,31 +46,58 @@ int main()
     std::cout<<transitions_sols.eta_step.size()<<std::endl;
     
     //////////////////////////////////////////////////////////////////////////////////
-    std::cout<<"Finding PPS"<<std::endl;
-    size_t N = 1000;
-    std::vector<double> k(N);
-    double k0 = 1.0, k1 = 1.0e6;
-    
-    for(size_t i = 0; i < N; i++)
-        k[i] = (exp(i * (log(k1) - log(k0)) / N)); //logspace
+    std::cout<<"Finding PPS: ";
     
     ModeSolver ms(background_sols, transitions_sols);
-    
     ms.Initial_Conditions("BD", 0.1 * eta_end);
     
-    //Output
-    std::ofstream pout;
-    pout.open ("output/PPS.txt");
+    std::vector<std::pair<double, double>> k_pair;
+    double k0 = 1.0, k1 = 1.0e6;
+    k_pair.push_back(std::make_pair(k0, k1));
     
-    for(size_t i = 0; i < k.size(); i++)
+    LinearInterpolator<double, double> PS;
+    PS.insert(k_pair[0].first, ms.PPS(k_pair[0].first));
+    PS.insert(k_pair[0].second, ms.PPS(k_pair[0].second));
+    
+    auto count = 0;
+    
+    while(k_pair.size() != 0)
     {
-        pout<<k[i]<<"   "<<ms.PPS(k[i])<<std::endl;
+        for(size_t n = 0; n < k_pair.size(); n++)
+        {
+            auto k_m = exp((log(k_pair[n].first) + log(k_pair[n].second)) / 2.0);
+            auto temp_true = ms.PPS(k_m);
+            count += 1;
+            auto temp_approx = PS(k_m);
+            k_pair.erase(k_pair.begin() + n);
+            if(abs(temp_true - temp_approx) / temp_true > 0.0005)
+            {
+                k_pair.push_back(std::make_pair(k0, k_m));
+                k_pair.push_back(std::make_pair(k_m, k1));
+            }
+            PS.insert(k_m, temp_true);
+        }
     }
-
-    // for(auto k_i : k)
-    //     pout<<k_i<<"   "<<ms.PPS(k_i)<<std::endl;
+    std::cout<<count<<std::endl;
     
-    pout.close();
+    //////////////////////////////////////////////////////////////////////////////////
+    std::cout<<"Plotting..."<<std::endl;
+    size_t N = 10000;
+    std::vector<double> kplot(N);
+    
+    for(size_t n = 0; n < N; n++)
+    {
+        kplot[n] = exp(n * 1.0 * (log(k1) - log(k0)) / N);
+    }
+    
+    std::ofstream mout;
+    mout.open("output/PPS.txt");
+    for(size_t n = 0; n < N; n++)
+    {
+        mout<<kplot[n]<<"   "<<PS(kplot[n])<<std::endl;
+    }
+    mout.close();
+    
     
     return 0;
 }
