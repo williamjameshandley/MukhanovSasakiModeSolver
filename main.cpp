@@ -65,12 +65,12 @@ int main()
     {
         for(size_t n = 0; n < k_pair.size(); n++)
         {
-            auto k_m = (k_pair[n].first + k_pair[n].second) / 2.0;
+            auto k_m = exp((log(k_pair[n].first) + log(k_pair[n].second)) / 2.0);
             auto temp_true = ms.PPS(k_m);
             count += 1;
             auto temp_approx = PS(k_m);
             k_pair.erase(k_pair.begin() + n);
-            if(abs(temp_true - temp_approx) / temp_true > 0.00001)
+            if(abs(temp_true - temp_approx) / temp_true > 0.0005)
             {
                 k_pair.push_back(std::make_pair(k0, k_m));
                 k_pair.push_back(std::make_pair(k_m, k1));
