@@ -1,5 +1,6 @@
 # GCC flags
-CXX = g++ -ggdb
+CC = gcc
+CXX = g++
 LD = $(CXX)
 
 CXXFLAGS += -std=c++11
@@ -9,6 +10,7 @@ CXXFLAGS += -std=c++11
 
 # Optimised
 CXXFLAGS += -O3 -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE
+CFLAGS += -O3
 
 # Profiling
 CXXFLAGS += -pg

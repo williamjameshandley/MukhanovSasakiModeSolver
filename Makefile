@@ -12,9 +12,10 @@ build_dir = build
 binary_dir = bin
 lib_dir = $(PWD)/lib
 
-src = $(wildcard $(source_dir)/*.cpp)
-objs = $(src:%.cpp=$(build_dir)/%.o)
-cpp_deps = $(src:%.cpp=$(build_dir)/%.d)
+cpp_src = $(wildcard $(source_dir)/*.cpp)
+c_src = $(wildcard $(source_dir)/*.c)
+objs = $(cpp_src:%.cpp=$(build_dir)/%.o) $(c_src:%.c=$(build_dir)/%.o)
+deps = $(cpp_src:%.cpp=$(build_dir)/%.d) $(c_src:%.c=$(build_dir)/%.d)
 
 inc += -isystem$(external_dir)
 
@@ -52,7 +53,11 @@ $(build_dir)/%.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(inc) -MMD -c $< -o $@
 
-all_srcs = $(shell find src -name '*.[ch]pp')
+$(build_dir)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
+
+all_srcs = $(shell find src -name '*.[ch]{,pp}')
 
 # Build tags file for vim
 tags: $(all_srcs)
@@ -70,4 +75,4 @@ purge: clean
 	$(RM) tags 
 
 # Include the dependencies
--include $(cpp_deps)
+-include $(deps)
