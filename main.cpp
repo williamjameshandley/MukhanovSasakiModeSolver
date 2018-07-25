@@ -49,7 +49,7 @@ int main()
     std::cout<<"Finding PPS: ";
     
     ModeSolver ms(background_sols, transitions_sols);
-    ms.Initial_Conditions("BD", 0.1 * eta_end);
+    ms.Initial_Conditions(BD, 0.1 * eta_end);
     
     std::vector<std::pair<double, double>> k_pair;
     double k0 = 1.0, k1 = 1.0e6;

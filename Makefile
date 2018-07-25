@@ -57,7 +57,7 @@ $(build_dir)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
-all_srcs = $(shell find src -name '*.[ch]{,pp}')
+all_srcs = $(shell find src -name '*.[ch]pp')
 
 # Build tags file for vim
 tags: $(all_srcs)

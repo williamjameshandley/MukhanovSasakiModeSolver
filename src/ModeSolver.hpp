@@ -9,6 +9,7 @@
 #include <complex>
 #include <cmath>
 
+enum VacuumChoice { BD, HD, RST };
 
 class ModeSolver
 {
@@ -17,19 +18,21 @@ class ModeSolver
         TransitionsSolution Tsol;
     
         double eta_r;
-        std::string Vacuum;
+        VacuumChoice vacuum;
         size_t initial_index;
         LinearInterpolator<double, double> DDZ, DZ, Z;
     
-        Eigen::Matrix2d Mat;
-        std::complex<double> c, d;
-    
         ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol):
-            Bsol{_Bsol}, Tsol{_Tsol}, Mat{}, c{}, d{} {}
+            Bsol{_Bsol}, Tsol{_Tsol} {}
     
-        void Find_Mat(double k);
-        void Initial_Conditions(std::string Vacuum, double eta_r);
-        void Match(double k);
+        Eigen::Matrix2d Mat(double k);
+        Eigen::Vector2cd Match(double k);
+        void Initial_Conditions(VacuumChoice vacuum, double eta_r);
+
+        Eigen::Matrix2d A(double x, double p);
+        Eigen::Matrix2cd H(double eta, double k);
+        Eigen::Matrix2cd H(double x, double k, double v);
+        Eigen::Matrix2cd a(std::complex<double> x, double v);
     
         double PPS(double k);
     
