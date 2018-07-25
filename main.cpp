@@ -52,7 +52,7 @@ int main()
     ms.Initial_Conditions(BD, 0.1 * eta_end);
     
     std::vector<std::pair<double, double>> k_pair;
-    double k0 = 1.0, k1 = 1.0e6;
+    double k0 = 1.0, k1 = 1.0e6, lim = 1e-4;
     k_pair.push_back(std::make_pair(k0, k1));
     
     LinearInterpolator<double, double> PS;
@@ -68,18 +68,24 @@ int main()
             count += 1;
             k0 = k_pair[n].first;
             k1 = k_pair[n].second;
-            auto k_m = exp((log(k0) + log(k1)) / 2.0);
-            kplot.push_back(k_m);
-            auto temp_true = ms.PPS(k_m);
-            auto temp_approx = PS(k_m);
+            auto k_m1 = exp((2 * log(k0) + log(k1)) / 3.0);
+            auto k_m2 = exp((log(k0) + 2 * log(k1)) / 3.0);
+            kplot.push_back(k_m1);
+            kplot.push_back(k_m2);
+            auto temp_true1 = ms.PPS(k_m1);
+            auto temp_approx1 = PS(k_m1);
+            auto temp_true2 = ms.PPS(k_m2);
+            auto temp_approx2 = PS(k_m2);
             k_pair.erase(k_pair.begin() + n);
-            if(abs(temp_true - temp_approx) / temp_true > 1e-5)
+            if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
             {
-                k_pair.insert(k_pair.begin() + n, std::make_pair(k0, k_m));
-                k_pair.insert(k_pair.begin() + n + 1, std::make_pair(k_m, k1));
-                n += 1;
+                k_pair.insert(k_pair.begin() + n, std::make_pair(k0, k_m1));
+                k_pair.insert(k_pair.begin() + n + 1, std::make_pair(k_m1, k_m2));
+                k_pair.insert(k_pair.begin() + n + 1, std::make_pair(k_m2, k1));
+                n += 2;
             }
-            PS.insert(k_m, temp_true);
+            PS.insert(k_m1, temp_true1);
+            PS.insert(k_m2, temp_true2);
         }
     }
     std::cout<<count<<std::endl;
