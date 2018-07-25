@@ -86,7 +86,7 @@ double ModeSolver::PPS(double k)
     
     Eigen::Vector2cd A_z = a_.inverse() * z;
     
-    return (std::pow(k, (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z(1) * M_PI)) * (c - d)), 2);
+    return (std::pow(k, (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z(0) * M_PI)) * (c - d)), 2);
 
 }
 

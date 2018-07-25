@@ -60,20 +60,24 @@ int main()
     PS.insert(k_pair[0].second, ms.PPS(k_pair[0].second));
     
     auto count = 0;
-    
+    std::vector<double> kplot;
     while(k_pair.size() != 0)
     {
         for(size_t n = 0; n < k_pair.size(); n++)
         {
-            auto k_m = exp((log(k_pair[n].first) + log(k_pair[n].second)) / 2.0);
-            auto temp_true = ms.PPS(k_m);
             count += 1;
+            k0 = k_pair[n].first;
+            k1 = k_pair[n].second;
+            auto k_m = exp((log(k0) + log(k1)) / 2.0);
+            kplot.push_back(k_m);
+            auto temp_true = ms.PPS(k_m);
             auto temp_approx = PS(k_m);
             k_pair.erase(k_pair.begin() + n);
-            if(abs(temp_true - temp_approx) / temp_true > 0.0005)
+            if(abs(temp_true - temp_approx) / temp_true > 1e-5)
             {
-                k_pair.push_back(std::make_pair(k0, k_m));
-                k_pair.push_back(std::make_pair(k_m, k1));
+                k_pair.insert(k_pair.begin() + n, std::make_pair(k0, k_m));
+                k_pair.insert(k_pair.begin() + n + 1, std::make_pair(k_m, k1));
+                n += 1;
             }
             PS.insert(k_m, temp_true);
         }
@@ -82,17 +86,12 @@ int main()
     
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
-    size_t N = 10000;
-    std::vector<double> kplot(N);
     
-    for(size_t n = 0; n < N; n++)
-    {
-        kplot[n] = exp(n * 1.0 * (log(k1) - log(k0)) / N);
-    }
+    std::sort(kplot.begin(), kplot.end());
     
     std::ofstream mout;
     mout.open("output/PPS.txt");
-    for(size_t n = 0; n < N; n++)
+    for(size_t n = 0; n < kplot.size(); n++)
     {
         mout<<kplot[n]<<"   "<<PS(kplot[n])<<std::endl;
     }
