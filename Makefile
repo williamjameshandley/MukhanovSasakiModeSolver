@@ -12,10 +12,12 @@ build_dir = build
 binary_dir = bin
 lib_dir = $(PWD)/lib
 
-cpp_src = $(wildcard $(source_dir)/*.cpp)
-c_src = $(wildcard $(source_dir)/*.c)
-objs = $(cpp_src:%.cpp=$(build_dir)/%.o) $(c_src:%.c=$(build_dir)/%.o)
-deps = $(cpp_src:%.cpp=$(build_dir)/%.d) $(c_src:%.c=$(build_dir)/%.d)
+makefiles = $(wildcard Makefile*)
+
+src = $(wildcard $(source_dir)/*.cpp)
+cephes_src = $(wildcard $(source_dir)/cephes/*.c)
+objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o)
+deps = $(src:%.cpp=$(build_dir)/%.d) $(cephes_src:%.c=$(build_dir)/%.d)
 
 inc += -isystem$(external_dir)
 
@@ -44,16 +46,16 @@ python $(libdir)/$(libname).so:
 # Compiling the main program
 main: $(binary_dir)/main
 
-$(binary_dir)/%: $(build_dir)/%.o $(lib_dir)/lib$(libname).so
+$(binary_dir)/%: $(build_dir)/%.o $(objs)
 	@mkdir -p $(@D)
-	$(LD) $< -o $@ $(LDFLAGS) -L$(lib_dir) $(LDLIBS) 
+	$(LD) $^ -o $@ $(LDFLAGS)
 
 # Building general object files and dependencies
-$(build_dir)/%.o: %.cpp
+$(build_dir)/%.o: %.cpp $(makefiles)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(inc) -MMD -c $< -o $@
 
-$(build_dir)/%.o: %.c
+$(build_dir)/%.o: %.c $(makefiles)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
