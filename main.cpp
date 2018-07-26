@@ -40,23 +40,15 @@ int main()
     ms.Initial_Conditions(BD, eta_r);
     ms.Construct_PPS(k0, k1);
     
+    return 0;
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
     std::vector<double> kplot(10000);
     
     for(size_t n = 0; n < kplot.size(); n++)
-    {
-        kplot[n] = exp(n * 1.0 * (log(k1) - log(k0)) / kplot.size());
-    }
+        kplot[n] = exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
-    std::ofstream mout;
-    mout.open("output/PPS.txt");
-    for(size_t n = 0; n < kplot.size(); n++)
-    {
-        mout<<kplot[n]<<"   "<<ms.PPS(kplot[n])<<std::endl;
-    }
+    std::ofstream mout{"output/PPS.txt"};
+    for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
     mout.close();
-    
-    
-    return 0;
 }
