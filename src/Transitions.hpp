@@ -7,8 +7,7 @@
 
 struct TransitionsSolution
 {
-    TransitionsSolution(double _delta, std::vector<double> _a, std::vector<double> _b, std::vector<double> _eta_step) :
-    delta{_delta}, a{_a}, b{_b}, eta_step{_eta_step} {}
+    TransitionsSolution() = default ;
     
     double delta;
     std::vector<double> a;

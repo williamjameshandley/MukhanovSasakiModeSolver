@@ -10,7 +10,6 @@ Bsol{_Bsol}, Tsol{}, eta_r{0.5}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{},
         Z.insert(Bsol.eta[o], Bsol.z[o]);
     }
     
-    std::cout<<"Finding Transitions: ";
     //Transitions Conditions
     double eta_end = Bsol.eta.back();
     double eta_i = 0.02 * eta_end;
@@ -22,8 +21,6 @@ Bsol{_Bsol}, Tsol{}, eta_r{0.5}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{},
     //Find Transitions
     double error = 1e-4;
     Tsol = T.Find(error);
-    
-    std::cout<<Tsol.eta_step.size()<<std::endl;
 }
 
 
@@ -118,12 +115,10 @@ void ModeSolver::Construct_PPS(double k0, double k1)
     PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
     
-    auto count = 0;
     while(k_pair.size() != 0)
     {
         for(size_t n = 0; n < k_pair.size(); n++)
         {
-            count += 1;
             k0 = k_pair[n].first;
             k1 = k_pair[n].second;
             auto k_m1 = exp((2 * log(k0) + log(k1)) / 3.0);
@@ -156,8 +151,6 @@ void ModeSolver::Construct_PPS(double k0, double k1)
             PPS.insert(k_m2, (temp_true2));
         }
     }
-    std::cout<<count<<std::endl;
-    
 }
 
 Eigen::Matrix2d ModeSolver::A(double x, double p)

@@ -63,7 +63,13 @@ TransitionsSolution Transitions::Find(double error)
     
     auto delta = (DDZ(eta_step.back()) / (2/((eta_step.back() - Bsol.eta.back()) * (eta_step.back() - Bsol.eta.back()))))  -  1;
     
-    return TransitionsSolution(delta, a, b, eta_step);
+    TransitionsSolution Tsol;
+    Tsol.delta = delta;
+    Tsol.a = a;
+    Tsol.b = b;
+    Tsol.eta_step = eta_step;
+    
+    return Tsol;
     
 }
 
