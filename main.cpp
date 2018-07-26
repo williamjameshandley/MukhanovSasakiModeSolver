@@ -40,7 +40,6 @@ int main()
     ms.Initial_Conditions(BD, eta_r);
     ms.Construct_PPS(k0, k1);
     
-    return 0;
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
     std::vector<double> kplot(10000);
@@ -51,4 +50,5 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
     mout.close();
+    return 0;
 }
