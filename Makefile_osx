@@ -6,11 +6,11 @@ LD = $(CXX)
 CXXFLAGS += -std=c++11
 
 # Debugging
-#CXXFLAGS += -pg -O0 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs  -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused -Wconversion -Weffc++ -Wfatal-errors -ftemplate-backtrace-limit=0 #-Werror 
+CXXFLAGS += -pg -O0 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs  -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused -Wconversion -Weffc++ -Wfatal-errors -ftemplate-backtrace-limit=0 #-Werror 
 
 # Optimised
-CXXFLAGS += -O3 -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE
-CFLAGS += -O3
+#CXXFLAGS += -O3 -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE
+#CFLAGS += -O3
 
 # Profiling
 CXXFLAGS += -pg

@@ -1,5 +1,13 @@
 #include "ModeSolver.hpp"
 
+ModeSolver::ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol):
+    Bsol{_Bsol}, Tsol{_Tsol}, eta_r{0.5}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{} 
+{
+
+
+}
+
+
 Eigen::Matrix2d ModeSolver::Mat(double k)
 {
     Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
@@ -62,7 +70,7 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     else
     {
         double p = pow(Tsol.b[initial_index-1], 1.0/3.0);
-        double x = ((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) /p/p);
+        x = ((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * eta_r - k * k) /p/p);
         Eigen::Matrix2d A0 = A(x,p);
 
         x = ((Tsol.a[initial_index-1] + Tsol.b[initial_index-1] * Tsol.eta_step[initial_index] - k * k) /p/p);

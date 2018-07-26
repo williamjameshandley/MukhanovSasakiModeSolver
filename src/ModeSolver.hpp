@@ -22,8 +22,7 @@ class ModeSolver
         size_t initial_index;
         LinearInterpolator<double, double> DDZ, DZ, Z;
     
-        ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol):
-            Bsol{_Bsol}, Tsol{_Tsol} {}
+        ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol);
     
         Eigen::Matrix2d Mat(double k);
         Eigen::Vector2cd Match(double k);
