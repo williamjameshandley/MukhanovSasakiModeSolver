@@ -30,88 +30,27 @@ int main()
     auto background_sols = solver.Solve(integrator, pot, t0, t1, phi_p, dphi_p);
     
     //////////////////////////////////////////////////////////////////////////////////
-    std::cout<<"Finding Transitions: ";
-    //Transitions Conditions
-    double eta_end = background_sols.eta.back();
-    double eta_i = 0.02 * eta_end;
-    double eta_f = 0.95 * eta_end;
-    
-    //Transitions Constructor
-    Transitions T(eta_i, eta_f, background_sols);
-    
-    //Find Transitions
-    double error = 1e-4;
-    auto transitions_sols = T.Find(error);
-    
-    std::cout<<transitions_sols.eta_step.size()<<std::endl;
-    
-    //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Finding PPS: ";
-    
-    ModeSolver ms(background_sols, transitions_sols);
-    ms.Initial_Conditions(BD, 0.1 * eta_end);
-    
-    std::vector<std::pair<double, double>> k_pair;
-    double k0 = 1.0, k1 = 1.0e6, lim = 1e-3;
-    k_pair.push_back(std::make_pair(k0, k1));
-    
-    LinearInterpolator<double, double> PS;
-    PS.insert(k_pair[0].first, ms.PPS(k_pair[0].first));
-    PS.insert(k_pair[0].second, ms.PPS(k_pair[0].second));
-    
-    auto count = 0;
-    std::vector<double> kplot;
-    while(k_pair.size() != 0)
-    {
-        for(size_t n = 0; n < k_pair.size(); n++)
-        {
-            count += 1;
-            k0 = k_pair[n].first;
-            k1 = k_pair[n].second;
-            auto k_m1 = exp((2 * log(k0) + log(k1)) / 3.0);
-            auto k_m2 = exp((log(k0) + 2 * log(k1)) / 3.0);
-            kplot.push_back(k_m1);
-            kplot.push_back(k_m2);
-            auto temp_true1 = log(ms.PPS(k_m1));
-            auto temp_approx1 = log(PS(k_m1));
-            auto temp_true2 = log(ms.PPS(k_m2));
-            auto temp_approx2 = log(PS(k_m2));
-            k_pair.erase(k_pair.begin() + static_cast<int>(n));
-            if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m1));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_m2));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_m2, k1));
-                n += 2;
-            }
-            else if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 < lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m1));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k1));
-                n += 1;
-            }
-            else if(abs(temp_true1 - temp_approx1) / temp_true1 < lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m2));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m2, k1));
-                n += 1;
-            }
-            PS.insert(k_m1, exp(temp_true1));
-            PS.insert(k_m2, exp(temp_true2));
-        }
-    }
-    std::cout<<count<<std::endl;
+    double k0 = 1, k1 = 1e6;
+    double eta_r = 0.1 * background_sols.eta.back();
+    ModeSolver ms(background_sols);
+    ms.Initial_Conditions(BD, eta_r);
+    ms.Construct_PPS(k0, k1);
     
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
+    std::vector<double> kplot(10000);
     
-    std::sort(kplot.begin(), kplot.end());
+    for(size_t n = 0; n < kplot.size(); n++)
+    {
+        kplot[n] = exp(n * 1.0 * (log(k1) - log(k0)) / kplot.size());
+    }
     
     std::ofstream mout;
     mout.open("output/PPS.txt");
     for(size_t n = 0; n < kplot.size(); n++)
     {
-        mout<<kplot[n]<<"   "<<PS(kplot[n])<<std::endl;
+        mout<<kplot[n]<<"   "<<ms.PPS(kplot[n])<<std::endl;
     }
     mout.close();
     

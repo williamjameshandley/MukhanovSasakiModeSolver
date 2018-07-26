@@ -14,15 +14,15 @@ enum VacuumChoice { BD, HD, RST };
 class ModeSolver
 {
     public:
-        BackgroundSolution Bsol;
-        TransitionsSolution Tsol;
+        BackgroundSolution Bsol;    
+        TransitionsSolution Tsol;    
     
         double eta_r;
         VacuumChoice vacuum;
         size_t initial_index;
-        LinearInterpolator<double, double> DDZ, DZ, Z;
+        LinearInterpolator<double, double> DDZ, DZ, Z, PPS;
     
-        ModeSolver(BackgroundSolution _Bsol, TransitionsSolution _Tsol);
+        ModeSolver(BackgroundSolution _Bsol);
     
         Eigen::Matrix2d Mat(double k);
         Eigen::Vector2cd Match(double k);
@@ -33,6 +33,7 @@ class ModeSolver
         Eigen::Matrix2cd H(double x, double k, double v);
         Eigen::Matrix2cd a(std::complex<double> x, double v);
     
-        double PPS(double k);
+        double Find_PPS(double k);
+        void Construct_PPS(double k0, double k1);
     
 };
