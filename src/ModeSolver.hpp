@@ -31,7 +31,7 @@ class ModeSolver
         Eigen::Matrix2d A(double x, double p);
         Eigen::Matrix2cd H(double eta, double k);
         Eigen::Matrix2cd H(double x, double k, double v);
-        Eigen::Matrix2cd a(std::complex<double> x, double v);
+        Eigen::Matrix2cd z_Mat(std::complex<double> x, double v);
     
         double Find_PPS(double k);
         void Construct_PPS(double k0, double k1);

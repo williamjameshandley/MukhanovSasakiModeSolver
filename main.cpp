@@ -22,10 +22,10 @@ int main()
     boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);
     
     //Background Initial Conditions
-    double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0;
+    double t0 = 0.0000124037, t1 = 72.1795, phi_p = 14.86452, dphi_p = -sqrt(2.0/3.0) / t0;
     
     //Set Potential
-    Polynomial pot(1.0);
+    Starobinsky pot(1.9119);
     
     //Solve Background Variables
     auto background_sols = solver.Solve(integrator, pot, t0, t1, phi_p, dphi_p);
@@ -34,10 +34,10 @@ int main()
     std::cout<<"Finding PPS..."<<std::endl;
     
     double k0 = 1, k1 = 1e6;
-    double eta_r = 0.1 * background_sols.eta.back();
+    double eta_r = 0.2 * background_sols.eta.back();
     
     ModeSolver ms(background_sols);
-    ms.Initial_Conditions(BD, eta_r);
+    ms.Initial_Conditions(RST, eta_r);
     ms.Construct_PPS(k0, k1);
     
     //////////////////////////////////////////////////////////////////////////////////
@@ -50,5 +50,6 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
     mout.close();
+    
     return 0;
 }
