@@ -1,7 +1,7 @@
+#include <cmath>
+#include <boost/math/tools/minima.hpp>
 #include "Transitions.hpp"
 #include "linear_interpolation.hpp"
-#include <boost/math/tools/minima.hpp>
-#include <cmath>
 
 //Integral of ddz Function
 double Transitions::integral(double a, double b) {

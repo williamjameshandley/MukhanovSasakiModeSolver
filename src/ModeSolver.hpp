@@ -1,13 +1,13 @@
 #pragma once
-#include "Special_Functions.hpp"
-#include "linear_interpolation.hpp"
-#include "BackgroundSolver.hpp"
-#include "Transitions.hpp"
 #include <iostream>
 #include <math.h>
-#include <Eigen/Dense>
-#include <complex>
 #include <cmath>
+#include <complex>
+#include <Eigen/Dense>
+#include "Transitions.hpp"
+#include "BackgroundSolver.hpp"
+#include "Special_Functions.hpp"
+#include "linear_interpolation.hpp"
 
 enum VacuumChoice { BD, HD, RST };
 

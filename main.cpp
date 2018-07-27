@@ -1,13 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <boost/numeric/odeint.hpp>
 #include <utility>
+#include <boost/numeric/odeint.hpp>
 #include "src/BackgroundSolver.hpp"
 #include "src/ModeSolver.hpp"
-#include "src/Transitions.hpp"
 #include "src/Potential.hpp"
-#include "src/Special_Functions.hpp"
-#include "src/linear_interpolation.hpp"
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 

@@ -1,7 +1,5 @@
 #include "Special_Functions.hpp"
-#include "cephes.hpp"
-#include <boost/math/special_functions/airy.hpp>
-#include <boost/math/special_functions/bessel.hpp>
+
 
 std::complex<double> Bessel_J(double v, double x)
 {

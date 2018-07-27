@@ -1,6 +1,9 @@
 #pragma once
 #include <cmath>
 #include <complex>
+#include <boost/math/special_functions/airy.hpp>
+#include <boost/math/special_functions/bessel.hpp>
+#include "cephes.hpp"
 
 const std::complex<double> I(0, 1);
 
