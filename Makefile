@@ -15,7 +15,7 @@ lib_dir = $(PWD)/lib
 makefiles = $(wildcard Makefile*)
 
 src = $(wildcard $(source_dir)/*.cpp)
-cephes_src = $(wildcard $(source_dir)/cephes/*.c)
+cephes_src = $(wildcard $(external_dir)/cephes/*.c)
 objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o)
 deps = $(src:%.cpp=$(build_dir)/%.d) $(cephes_src:%.c=$(build_dir)/%.d)
 
