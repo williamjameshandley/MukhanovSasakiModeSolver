@@ -6,17 +6,21 @@ else ifeq ($(UNAME), Darwin)
 	include Makefile_osx
 endif
 
-source_dir = src
-external_dir = external
-build_dir = build
-binary_dir = bin
+source_dir = $(PWD)/src
+external_dir = $(PWD)/external
+cephes_dir = $(external_dir)/cephes
+odepack_dir = $(external_dir)/odepack
+build_dir = $(PWD)/build
+binary_dir = $(PWD)/bin
 lib_dir = $(PWD)/lib
 
 makefiles = $(wildcard Makefile*)
 
 src = $(wildcard $(source_dir)/*.cpp)
-cephes_src = $(wildcard $(external_dir)/cephes/*.c)
-objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o)
+cephes_src := $(wildcard $(cephes_dir)/*.c) 
+odepack_src := $(wildcard $(odepack_dir)/*.f) 
+
+objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o) $(odepack_src:%.f=$(build_dir)/%.o)
 deps = $(src:%.cpp=$(build_dir)/%.d) $(cephes_src:%.c=$(build_dir)/%.d)
 
 inc += -isystem$(external_dir)
@@ -57,7 +61,11 @@ $(build_dir)/%.o: %.cpp $(makefiles)
 
 $(build_dir)/%.o: %.c $(makefiles)
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -MMD -c $< -o $@
+	$(CC) $(CFLAGS) $(inc) -MMD -c $< -o $@
+
+$(build_dir)/%.o: %.f $(makefiles)
+	@mkdir -p $(@D)
+	$(FC) $(FFLAGS) -c $< -o $@
 
 all_srcs = $(shell find src -name '*.[ch]pp')
 
@@ -78,3 +86,6 @@ purge: clean
 
 # Include the dependencies
 -include $(deps)
+$(build_dir)/external/odepack/opkda1.o:
+$(build_dir)/external/odepack/opkda2.o:
+$(build_dir)/external/odepack/opkdmain.o:
