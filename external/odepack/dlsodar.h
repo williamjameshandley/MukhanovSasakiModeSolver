@@ -149,15 +149,15 @@ C                   MXORDS is held constant during the problem.
   double *rwork;
 } dlsodar_problem;
 
-extern "C" dlsodar_problem* dlsodar_problem_create
+dlsodar_problem* dlsodar_problem_create
 (int neq, int ng,
  int jac_type, int max_steps,
  double *atol, double *rtol);
 
-extern "C" int dlsodar_problem_init(dlsodar_problem *dls);
-extern "C" void dlsodar_problem_close(dlsodar_problem *dls);
+int dlsodar_problem_init(dlsodar_problem *dls);
+void dlsodar_problem_close(dlsodar_problem *dls);
 
-extern "C" int dlsodar_integrate
+int dlsodar_integrate
 (double t,
  double *t0, double *q,
  odepack_field_func f_func, odepack_jacobian_func j_func, odepack_root_func c_func,

@@ -1,6 +1,8 @@
 #include <iostream>
-#include <odepack/c-odepack.h>
+#include "src/c-odepack.hpp"
 #include <cmath>
+#define USR_FULL_JAC 1
+#define C_ODEPACK_SUCCESS 0
 
 void simple_pendulum_field(double *qdot,
 			   const double t, const double *q, void *data){
@@ -93,8 +95,8 @@ int main(){
 		      &parms, opkd);
     fprintf(data, "%.15lf\t%.15lf\t%.15lf\n", t + dt, q[0], q[1]);
     
-    if(opkd->jroot[0] == 1)
-      cyc += 1;
+    //if(opkd->jroot[0] == 1)
+    //  cyc += 1;
     if(cyc == 2)
       break;
   }
