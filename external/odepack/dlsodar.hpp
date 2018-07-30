@@ -2,9 +2,9 @@
 #include <vector>
 #include <functional>
 
-using odepack_field_func = std::function<void(double *qdot, const double t, const double *q, void *data)>;
-using odepack_jacobian_func = std::function<void(double *dfdq, const double t, const double *q, void *data)>;
-using odepack_root_func = std::function<void(double *g, const double t, const double *q, void *data)>;
+using Field = std::function<void(double *qdot, const double t, const double *q, void *data)>;
+using Jacobian = std::function<void(double *dfdq, const double t, const double *q, void *data)>;
+using Root = std::function<void(double *g, const double t, const double *q, void *data)>;
 
 class dlsodar
 {
@@ -29,7 +29,7 @@ class dlsodar
 
     public:
         dlsodar(int, int, int, int, std::vector<double>, std::vector<double>); 
-        void integrate(double t, double *t0, double *q, odepack_field_func f_func, odepack_jacobian_func j_func, odepack_root_func c_func, void *data);
+        void integrate(double t, double *t0, double *q, Field f_func, Jacobian j_func, Root c_func, void *data);
 
 };
 
