@@ -1,54 +1,107 @@
 #include <iostream>
-#include <fstream>
-#include <boost/numeric/odeint.hpp>
-#include <utility>
-#include "src/BackgroundSolver.hpp"
-#include "src/ModeSolver.hpp"
-#include "src/Transitions.hpp"
-#include "src/Potential.hpp"
-#include "src/Special_Functions.hpp"
-#include "src/linear_interpolation.hpp"
+#include <odepack/c-odepack.h>
+#include <cmath>
 
-using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
+void simple_pendulum_field(double *qdot,
+			   const double t, const double *q, void *data){
+  double *parms;
+  parms = (double *) data;
 
-int main()
-{
-    std::cout<<"Solving for Background..."<<std::endl;
-    //Background Solver Constructor
-    BackgroundSolver solver;
+  double alpha;
+  alpha = parms[0];
+
+  qdot[0] = q[1];
+  qdot[1] = - alpha * sin(q[0]);
+
+  return;
+}
+
+void simple_pendulum_jacobian(double *dfdq,
+			      const double t, const double *q, void *data){
+  double *parms;
+  parms = (double *) data;
+
+  double alpha;
+  alpha = parms[0];
+  
+/*Column ordered; ODEPACK is in FORTRAN 77.*/
+  dfdq[0] = 0.0; dfdq[2] = 1.0;
+  
+  dfdq[1] = - alpha * cos(q[0]); dfdq[3] = 0.0;
+
+  return;
+}
+
+void simple_pendulum_cycle(double *g,
+			   const double t, const double *q, void *data){
+  double *parms;
+  parms = (double *) data;
+  
+  double alpha;
+  alpha = parms[0];
+
+  double theta_0;
+  theta_0 = parms[1];
+/*-----------------------------------------------------------------------*/
+  g[0] = (q[0] - theta_0) * q[1];
+
+  /*Make sure the initial value is not detected!*/
+  if(t < 1e-2)
+    g[0] += 0.1;
+
+  return;
+}
+
+int main(){
+/*-----------------------------------------------------------------------*/  
+  double opkd_rtol = 0.0, opkd_atol = 1e-12;
+  dlsodar_problem *opkd;
+
+  opkd = dlsodar_problem_create(2, 1,
+				USR_FULL_JAC, 10000,
+				&opkd_atol, &opkd_rtol);
+
+  if(opkd == NULL)
+    return 1;
+  
+  if(dlsodar_problem_init(opkd) != C_ODEPACK_SUCCESS)
+    return 1;
+/*-----------------------------------------------------------------------*/
+  double q[2], t0, tf, dt, t;
+
+  t0 = 0.0;
+  tf = 100.0;
+  dt = 0.1;
+
+  q[0] = M_PI * 999/1000.0;
+  q[1] = 0.;
+
+  double alpha = 1.0;
+  double parms[2] = {alpha, q[0]};
+/*-----------------------------------------------------------------------*/  
+  FILE *data;
+  data = fopen("simple_pendulum_trajectory", "w");
+
+  int i = 0, cyc = 0;
+  t = t0;
+  
+  while(t < tf){    
+    dlsodar_integrate(t + dt,
+		      &t, q,
+		      &simple_pendulum_field, NULL// &simple_pendulum_jacobian
+		      , &simple_pendulum_cycle,
+		      &parms, opkd);
+    fprintf(data, "%.15lf\t%.15lf\t%.15lf\n", t + dt, q[0], q[1]);
     
-    //Set Integrator
-    double abs_err = 1.0e-5, rel_err = 1e-3;
-    boost::numeric::odeint::controlled_runge_kutta<RKCP54> integrator(abs_err, rel_err);
-    
-    //Background Initial Conditions
-    double t0 = 6.48757e-6, t1 = 20.0, phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0) / t0;
-    
-    //Set Potential
-    Polynomial pot(1.0);
-    
-    //Solve Background Variables
-    auto background_sols = solver.Solve(integrator, pot, t0, t1, phi_p, dphi_p);
-    
-    //////////////////////////////////////////////////////////////////////////////////
-    std::cout<<"Finding PPS..."<<std::endl;
-    
-    double k0 = 1, k1 = 1e6;
-    double eta_r = 0.1 * background_sols.eta.back();
-    
-    ModeSolver ms(background_sols);
-    ms.Initial_Conditions(BD, eta_r);
-    ms.Construct_PPS(k0, k1);
-    
-    //////////////////////////////////////////////////////////////////////////////////
-    std::cout<<"Plotting..."<<std::endl;
-    std::vector<double> kplot(10000);
-    
-    for(size_t n = 0; n < kplot.size(); n++)
-        kplot[n] = exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
-    
-    std::ofstream mout{"output/PPS.txt"};
-    for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
-    mout.close();
-    return 0;
+    if(opkd->jroot[0] == 1)
+      cyc += 1;
+    if(cyc == 2)
+      break;
+  }
+
+  fclose(data);
+/*-----------------------------------------------------------------------*/  
+  dlsodar_problem_close(opkd);
+
+  return 0;
 }
