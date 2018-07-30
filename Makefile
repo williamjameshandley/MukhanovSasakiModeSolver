@@ -18,10 +18,10 @@ makefiles = $(wildcard Makefile*)
 
 src = $(wildcard $(source_dir)/*.cpp)
 cephes_src := $(wildcard $(cephes_dir)/*.c) 
-odepack_c_src := $(wildcard $(odepack_dir)/*.c)
+odepack_cpp_src := $(wildcard $(odepack_dir)/*.cpp)
 odepack_f_src := $(wildcard $(odepack_dir)/*.f)
 
-objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o) $(odepack_f_src:%.f=$(build_dir)/%.o) $(odepack_c_src:%.c=$(build_dir)/%.o) 
+objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o) $(odepack_f_src:%.f=$(build_dir)/%.o) $(odepack_cpp_src:%.cpp=$(build_dir)/%.o) 
 deps = $(src:%.cpp=$(build_dir)/%.d) $(cephes_src:%.c=$(build_dir)/%.d)
 
 inc += -isystem$(external_dir)

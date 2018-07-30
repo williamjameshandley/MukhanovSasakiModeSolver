@@ -15,7 +15,6 @@ typedef void (*odepack_jacobian_func)(double *dfdq,
 typedef void (*odepack_root_func)(double *g,
 				  const double t, const double *q, void *data);
 
-#include "dlsode.h"
 #include "dlsodar.h"
 
 #endif

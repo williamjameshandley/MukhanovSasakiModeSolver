@@ -1,5 +1,5 @@
 #include <iostream>
-#include "src/c-odepack.hpp"
+#include <odepack/dlsodar.hpp>
 #include <cmath>
 #define USR_FULL_JAC 1
 #define C_ODEPACK_SUCCESS 0
@@ -56,18 +56,9 @@ void simple_pendulum_cycle(double *g,
 
 int main(){
 /*-----------------------------------------------------------------------*/  
-  double opkd_rtol = 0.0, opkd_atol = 1e-12;
-  dlsodar_problem *opkd;
+    std::vector<double> opkd_rtol {0.0}, opkd_atol{1e-12};
+  dlsodar opkd(2, 1, USR_FULL_JAC, 10000, opkd_atol, opkd_rtol);
 
-  opkd = dlsodar_problem_create(2, 1,
-				USR_FULL_JAC, 10000,
-				&opkd_atol, &opkd_rtol);
-
-  if(opkd == NULL)
-    return 1;
-  
-  if(dlsodar_problem_init(opkd) != C_ODEPACK_SUCCESS)
-    return 1;
 /*-----------------------------------------------------------------------*/
   double q[2], t0, tf, dt, t;
 
@@ -88,11 +79,11 @@ int main(){
   t = t0;
   
   while(t < tf){    
-    dlsodar_integrate(t + dt,
+      opkd.integrate(t + dt,
 		      &t, q,
 		      &simple_pendulum_field, NULL// &simple_pendulum_jacobian
 		      , &simple_pendulum_cycle,
-		      &parms, opkd);
+		      &parms);
     fprintf(data, "%.15lf\t%.15lf\t%.15lf\n", t + dt, q[0], q[1]);
     
     //if(opkd->jroot[0] == 1)
@@ -103,7 +94,6 @@ int main(){
 
   fclose(data);
 /*-----------------------------------------------------------------------*/  
-  dlsodar_problem_close(opkd);
 
   return 0;
 }
