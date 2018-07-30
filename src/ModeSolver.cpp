@@ -1,7 +1,7 @@
 #include "ModeSolver.hpp"
 
-ModeSolver::ModeSolver(BackgroundSolution _Bsol):
-Bsol{_Bsol}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{}, PPS{}
+ModeSolver::ModeSolver(BackgroundSolution _Bsol, double _PPS_error):
+Bsol{_Bsol}, PPS_error{_PPS_error}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{}, PPS{}
 {
     for(size_t o = 0; o < Bsol.dz.size(); o++)
     {
@@ -19,7 +19,7 @@ Bsol{_Bsol}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum{BD}, initial_index{0},
     Transitions T(eta_i, eta_f, Bsol);
     
     //Find Transitions
-    double error = 1e-4;
+    double error = pow(PPS_error * exp(-0.9882), 1.0 / 0.9803);
     Tsol = T.Find(error);
     
     initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
@@ -117,7 +117,7 @@ void ModeSolver::Construct_PPS(double k0, double k1)
     PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
     
-    double lim = 1e-3;
+    double lim = 1e-4;
     
     while(k_pair.size() != 0)
     {

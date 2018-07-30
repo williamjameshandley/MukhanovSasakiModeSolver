@@ -1,0 +1,8 @@
+set nokey
+set size ratio -1
+set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb"white" behind
+
+set logscale x
+set yrange [-0.07:0.07]
+
+plot "output/PPS.txt" u 1:2 w l

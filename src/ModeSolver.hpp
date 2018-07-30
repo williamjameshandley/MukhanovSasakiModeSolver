@@ -17,12 +17,12 @@ class ModeSolver
         BackgroundSolution Bsol;    
         TransitionsSolution Tsol;    
     
-        double eta_r;
+        double eta_r, PPS_error;
         VacuumChoice vacuum;
         size_t initial_index;
         LinearInterpolator<double, double> DDZ, DZ, Z, PPS;
     
-        ModeSolver(BackgroundSolution _Bsol);
+        ModeSolver(BackgroundSolution _Bsol, double PPS_error);
     
         Eigen::Matrix2d Mat(double k);
         Eigen::Vector2cd Match(double k);
