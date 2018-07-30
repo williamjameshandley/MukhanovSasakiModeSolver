@@ -24,11 +24,13 @@ class dlsodar
         int ng;
         std::vector<int> jroot;
 
+        void _integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]);
     public:
         dlsodar(int, int); 
 
         void integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]);
-        void integrate(double &t, double tout, double q[], Field f_func, Root g_func, double data[]);
+        void integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, double data[]);
+        void integrate(double &t, double tout, double q[], Field f_func, double data[]);
 
 };
 

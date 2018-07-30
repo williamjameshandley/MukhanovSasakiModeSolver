@@ -1,7 +1,7 @@
 #include "ModeSolver.hpp"
 
-ModeSolver::ModeSolver(BackgroundSolution _Bsol):
-Bsol{_Bsol}, Tsol{}, eta_r{0.5}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{}, PPS{}
+ModeSolver::ModeSolver(BackgroundSolution _Bsol, double _PPS_error):
+Bsol{_Bsol}, PPS_error{_PPS_error}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{}, PPS{}
 {
     for(size_t o = 0; o < Bsol.dz.size(); o++)
     {
@@ -19,8 +19,17 @@ Bsol{_Bsol}, Tsol{}, eta_r{0.5}, vacuum{BD}, initial_index{0}, DDZ{}, DZ{}, Z{},
     Transitions T(eta_i, eta_f, Bsol);
     
     //Find Transitions
-    double error = 1e-4;
+    double error = pow(PPS_error * exp(-0.9882), 1.0 / 0.9803);
     Tsol = T.Find(error);
+    
+    initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
+}
+
+void ModeSolver::Initial_Conditions(VacuumChoice vac, double eta_rr)
+{
+    vacuum = vac;
+    eta_r = eta_rr;
+    initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
 }
 
 
@@ -42,15 +51,10 @@ Eigen::Matrix2d ModeSolver::Mat(double k)
     return Mat;
 }
 
-void ModeSolver::Initial_Conditions(VacuumChoice vac, double eta_rr)
-{
-    vacuum = vac;
-    eta_r = eta_rr;
-    initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
-}
-
 Eigen::Vector2cd ModeSolver::Match(double k)
 {
+    //Setting Vacuum
+    //////////////////////////////////////////////////////////////////////////////
     Eigen::Vector2cd kin;
     
     kin[0] = 1.0 / sqrt(2 * k);
@@ -63,6 +67,7 @@ Eigen::Vector2cd ModeSolver::Match(double k)
         kin[1] = (-I * k + DZ(eta_r)/Z(eta_r)) * kin[0];
     else
         throw std::runtime_error("Initial conditions unknown");
+    //////////////////////////////////////////////////////////////////////////////
     
     double v = 1.5 * sqrt(1 + 8.0 * Tsol.delta / 9);
     double x = Tsol.eta_step.back() - Bsol.eta.back();
@@ -91,29 +96,28 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 double ModeSolver::Find_PPS(double k)
 {
     Eigen::Vector2cd cd = Match(k);
-    auto c = cd[0];
-    auto d = cd[1];
-    
+
     auto x = Tsol.eta_step.back() - Bsol.eta.back();
     auto v = 1.5 * sqrt(1 + 8.0 * Tsol.delta / 9);
-    Eigen::Matrix2cd a_ = a(x, v);
+    Eigen::Matrix2cd ZMat = z_Mat(x, v);
     Eigen::Vector2d z;
     z << Z(Tsol.eta_step.back()), DZ(Tsol.eta_step.back());
     
-    Eigen::Vector2cd A_z = a_.inverse() * z;
+    Eigen::Vector2cd A_z = ZMat.inverse() * z;
     
-    return (std::pow(k, (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z(0) * M_PI)) * (c - d)), 2);
-
+    return (std::pow(k, (3.0 - 2.0*v)) / (2.0 * M_PI * M_PI)) * std::pow(std::abs((std::pow(2, v) * Gamma(v) / (A_z(0) * M_PI)) * (cd[0] - cd[1])), 2);
 }
 
 void ModeSolver::Construct_PPS(double k0, double k1)
 {
     std::vector<std::pair<double, double>> k_pair;
+    
     k_pair.push_back(std::make_pair(k0, k1));
-    double lim = 1e-3;
     
     PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
+    
+    double lim = 1e-4;
     
     while(k_pair.size() != 0)
     {
@@ -121,13 +125,17 @@ void ModeSolver::Construct_PPS(double k0, double k1)
         {
             k0 = k_pair[n].first;
             k1 = k_pair[n].second;
+            
             auto k_m1 = exp((2 * log(k0) + log(k1)) / 3.0);
             auto k_m2 = exp((log(k0) + 2 * log(k1)) / 3.0);
-            auto temp_true1 = (Find_PPS(k_m1));
+            
             auto temp_approx1 = (PPS(k_m1));
-            auto temp_true2 = (Find_PPS(k_m2));
             auto temp_approx2 = (PPS(k_m2));
+            auto temp_true1 = (Find_PPS(k_m1));
+            auto temp_true2 = (Find_PPS(k_m2));
+
             k_pair.erase(k_pair.begin() + static_cast<int>(n));
+            
             if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
             {
                 k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m1));
@@ -161,15 +169,15 @@ Eigen::Matrix2d ModeSolver::A(double x, double p)
     Aip *= p;
     Bip *= p;
 
-    A  << Ai,   Bi,
-          Aip,  Bip;
+    A  << Ai,  Bi,
+          Aip, Bip;
 
     return A;
 }
 
 Eigen::Matrix2cd ModeSolver::H(double eta, double k)
 {
-    auto x = k*eta;
+    auto x = k * eta;
     auto p = sqrt(eta);
     auto H1 = p * Hankel1(0,x);
     auto H2 = p * Hankel2(0,x);
@@ -197,16 +205,16 @@ Eigen::Matrix2cd ModeSolver::H(double x, double k, double v)
     return H;
 }
 
-Eigen::Matrix2cd ModeSolver::a(std::complex<double> x, double v)
+Eigen::Matrix2cd ModeSolver::z_Mat(std::complex<double> x, double v)
 {
-    auto a11 = std::pow(x, (0.5 - v));
-    auto a12 = std::pow(x, (0.5 + v));
-    auto a21 = (0.5 - v) * std::pow(x, (-0.5 - v));
-    auto a22 = (0.5 + v) * std::pow(x, (-0.5 + v));
+    auto z11 = std::pow(x, (0.5 - v));
+    auto z12 = std::pow(x, (0.5 + v));
+    auto z21 = (0.5 - v) * std::pow(x, (-0.5 - v));
+    auto z22 = (0.5 + v) * std::pow(x, (-0.5 + v));
 
-    Eigen::Matrix2cd a;
-    a  << a11, a12,
-          a21, a22;
+    Eigen::Matrix2cd z_Mat;
+    z_Mat << z11, z12,
+             z21, z22;
 
-    return a;
+    return z_Mat;
 }

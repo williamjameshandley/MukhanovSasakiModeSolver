@@ -17,34 +17,23 @@ dlsodar::dlsodar(int neq_, int ng_):
         jt{2},
         ng{ng_},
         jroot(static_cast<size_t>(ng))
-{ }
+{}
 
-void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Root g_func, double data[]){
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, double data[])
+{ jt = 2; int ng_ = ng; ng = 0; _integrate(t, tout, q, f_func, nullptr, nullptr, data); ng = ng_; }
 
-    auto f = [&](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
-    auto g = [&](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
-    jt = 2;
-    dlsodar_(
-            function_ptr(f),
-            &neq, q, &t, &tout,
-            &itol, &rtol[0], &atol[0],
-            &itask, &istate, &iopt,
-            &rwork[0], &lrw, &iwork[0], &liw,
-            nullptr, &jt,
-            function_ptr(g), &ng,
-            &jroot[0]
-            );
-    // @todo istate processing
-}
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Root g_func, double data[])
+{ jt = 2; _integrate(t, tout, q, f_func, nullptr, g_func, data); }
 
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[])
+{ jt = 1; _integrate(t, tout, q, f_func, j_func, g_func, data); }
 
-void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]){
+void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]){
 
     auto f = [&](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
     auto j = [&](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
     auto g = [&](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
 
-    jt = 1;
     dlsodar_(
             function_ptr(f),
             &neq, q, &t, &tout,

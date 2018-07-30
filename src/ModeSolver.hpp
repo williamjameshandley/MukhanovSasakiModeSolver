@@ -1,13 +1,13 @@
 #pragma once
-#include "Special_Functions.hpp"
-#include "linear_interpolation.hpp"
-#include "BackgroundSolver.hpp"
-#include "Transitions.hpp"
 #include <iostream>
 #include <math.h>
-#include <Eigen/Dense>
-#include <complex>
 #include <cmath>
+#include <complex>
+#include <Eigen/Dense>
+#include "Transitions.hpp"
+#include "BackgroundSolver.hpp"
+#include "Special_Functions.hpp"
+#include "linear_interpolation.hpp"
 
 enum VacuumChoice { BD, HD, RST };
 
@@ -17,12 +17,12 @@ class ModeSolver
         BackgroundSolution Bsol;    
         TransitionsSolution Tsol;    
     
-        double eta_r;
+        double eta_r, PPS_error;
         VacuumChoice vacuum;
         size_t initial_index;
         LinearInterpolator<double, double> DDZ, DZ, Z, PPS;
     
-        ModeSolver(BackgroundSolution _Bsol);
+        ModeSolver(BackgroundSolution _Bsol, double PPS_error);
     
         Eigen::Matrix2d Mat(double k);
         Eigen::Vector2cd Match(double k);
@@ -31,7 +31,7 @@ class ModeSolver
         Eigen::Matrix2d A(double x, double p);
         Eigen::Matrix2cd H(double eta, double k);
         Eigen::Matrix2cd H(double x, double k, double v);
-        Eigen::Matrix2cd a(std::complex<double> x, double v);
+        Eigen::Matrix2cd z_Mat(std::complex<double> x, double v);
     
         double Find_PPS(double k);
         void Construct_PPS(double k0, double k1);

@@ -1,8 +1,8 @@
 #pragma once
-#include <boost/numeric/odeint.hpp>
 #include <iostream>
-#include "Potential.hpp"
 #include <vector>
+#include <boost/numeric/odeint.hpp>
+#include "Potential.hpp"
 
 struct BackgroundSolution
 {
