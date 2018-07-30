@@ -2,42 +2,33 @@
 #include <vector>
 #include <functional>
 
-using Field = std::function<void(double *qdot, const double t, const double *q, void *data)>;
-using Jacobian = std::function<void(double *dfdq, const double t, const double *q, void *data)>;
-using Root = std::function<void(double *g, const double t, const double *q, void *data)>;
+using Field    = std::function<void(double qdot[], const double t, const double q[], double data[])>;
+using Jacobian = std::function<void(double dfdq[], const double t, const double q[], double data[])>;
+using Root     = std::function<void(double root[], const double t, const double q[], double data[])>;
 
 class dlsodar
 {
     private:
-        int neq, ng;
-
-        int jac_type, jac_lower_bandwidth, jac_upper_bandwidth;
-
+        int neq;
         int itol;
-
-        std::vector<double> rtol, atol;
-
+        std::vector<double> rtol;
+        std::vector<double> atol;
         int itask;
-        double t_critical;
-
-        double init_step_size, max_step_size, min_step_size;
-        int max_steps, max_order_stiff, max_order_non_stiff, print_at_switch, max_num_messages; 
-
-        int iopt, istate, liw, lrw, jt;
-        std::vector<int> iwork, jroot;
+        int istate;
+        int iopt;
         std::vector<double> rwork;
+        int lrw;
+        std::vector<int> iwork;
+        int liw;
+        int jt;
+        int ng;
+        std::vector<int> jroot;
 
     public:
-        dlsodar(int, int, int, int, std::vector<double>, std::vector<double>); 
-        void integrate(double t, double *t0, double *q, Field f_func, Jacobian j_func, Root c_func, void *data);
+        dlsodar(int, int); 
+
+        void integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]);
+        void integrate(double &t, double tout, double q[], Field f_func, Root g_func, double data[]);
 
 };
 
-extern "C" void dlsodar_(void (*f)(const int *neq, const double *t, const double *y, double *ydot),
-		const int *neq, double *y, double *t, const double *tout,
-		const int *itol, const double *rtol, const double *atol,
-		const int *itask, int *istate, const int *iopt,
-		double *rwork, const int *lrw, int *iwork, const int *liw,
-		void (*jac)(const int *neq, const double *t, const double *y, const int *ml, const int *mu, double *pd, const int *nrowpd), const int *jt,
-		void (*g)(const int *neq, const double *t, const double *y, const int *ng, double *gout), const int *ng,
-		int *jroot);

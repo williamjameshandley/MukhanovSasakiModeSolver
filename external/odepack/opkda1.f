@@ -1252,7 +1252,8 @@ C-----------------------------------------------------------------------
       IPFLAG = 0
 C Call DPREP to do matrix preprocessing operations. --------------------
       CALL DPREP (NEQ, Y, RWORK(LYH), RWORK(LSAVF), RWORK(LEWT),
-     1   RWORK(LACOR), IA, JA, RWORK(LWM), RWORK(LWM), IPFLAG, F, JAC)
+     1   RWORK(LACOR), IA, JA, RWORK(LWM), INT(RWORK(LWM:LWM)), 
+     2   IPFLAG, F, JAC)
       LENWK = MAX(LREQ,LWMIN)
       IF (IPFLAG .LT. 0) RETURN
 C If DPREP was successful, move YH to end of required space for WM. ----
@@ -9495,8 +9496,8 @@ C-----------------------------------------------------------------------
       IPFLAG = 0
 C Call DPREPI to do matrix preprocessing operations. -------------------
       CALL DPREPI (NEQ, Y, S, RWORK(LYH), RWORK(LSAVF), RWORK(LEWT),
-     1   RWORK(LACOR), IA, JA, IC, JC, RWORK(LWM), RWORK(LWM), IPFLAG,
-     2   RES, JAC, ADDA)
+     1   RWORK(LACOR), IA, JA, IC, JC, RWORK(LWM), INT(RWORK(LWM:LWM)),
+     2   IPFLAG, RES, JAC, ADDA)
       LENWK = MAX(LREQ,LWMIN)
       IF (IPFLAG .LT. 0) RETURN
 C If DPREPI was successful, move YH to end of required space for WM. ---
