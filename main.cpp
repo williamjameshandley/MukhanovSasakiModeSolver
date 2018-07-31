@@ -2,7 +2,6 @@
 #include <fstream>
 #include <odepack/dlsodar.hpp>
 #include <cmath>
-
 #include <utility>
 #include <boost/numeric/odeint.hpp>
 #include "src/BackgroundSolver.hpp"
@@ -11,9 +10,11 @@
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
-void simple_pendulum_field(double qdot[], const double t, const double y[], double params[]);
-void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], double params[]);
-void simple_pendulum_cycle(double g[], const double t, const double y[], double params[]);
+void simple_pendulum_field(double qdot[], const double t, const double y[], double params[])
+{
+    qdot[0] = y[1];
+    qdot[1] = - sin(y[0]);
+}
 
 int main()
 {
@@ -22,21 +23,15 @@ int main()
 
     // Initialise at a angle very close to pi
     double y[2] = {M_PI * 99999/100000.0, 0.};
-    auto t = 0.0;
-    auto tf = 1000.0;
-    auto dt = 0.1;
+    double t = 0;
     double alpha = 1.0;
     double theta0 = 0.0;
     double params[2] = {alpha, theta0};
 
-    // Integrate until the first zero is reached
-    desolver.integrate(t, tf, y, simple_pendulum_field, simple_pendulum_cycle, params);
-    std::cout << t << " " << y[0] << " " << y[1] << std::endl;
-
     // now output a few oscillations to file
-    std::ofstream fout{"simple_pendulum_trajectory"};
-    while(t < tf){    
-        desolver.integrate( t, t+dt, y, simple_pendulum_field, params);
+    std::ofstream fout{"simple_pendulum_trajectory.txt"};
+    while(y[0] > theta0){
+        desolver.integrate(t, t + 0.1, y, simple_pendulum_field, params);
         fout << t << " " << y[0] << " " << y[1] << std::endl;
     }
 
@@ -77,48 +72,11 @@ int main()
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
     std::ofstream mout{"output/PPS.txt"};
-   // for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
-  //  mout.close();
+    for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
+    mout.close();
     
-    FILE *test;
-    test = fopen("output/test.txt", "r");
-    
-    double x = 0;
-    for(int n = 0; n < 10000; n++)
-    {
-        fscanf(test,"%lf",&x);
-        double k = x;// - 0.01 / (2 * x);
-        fscanf(test,"%lf",&x);
-        double PPS_true = x;
-        
-        mout<<k<<"   "<<(PPS_true - ms.PPS(k)) / PPS_true<<std::endl;
-        if(n == 0)
-        {
-            std::cout<<(PPS_true - ms.PPS(k)) / PPS_true<<std::endl;
-        }
-    }
     return 0;
 }
 
 
-void simple_pendulum_field(double qdot[], const double t, const double y[], double params[])
-{
-    auto alpha = params[0];
-    qdot[0] = y[1];
-    qdot[1] = - alpha * sin(y[0]);
-}
 
-void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], double params[])
-{
-    auto alpha = params[0];
-    /*Column ordered; ODEPACK is in FORTRAN 77.*/
-    dfdq[0] = 0.0;                 dfdq[2] = 1.0;
-    dfdq[1] = - alpha * cos(y[0]); dfdq[3] = 0.0;
-    std::cout << "Jacobian " << dfdq[1] << std::endl;
-}
-
-void simple_pendulum_cycle(double g[], const double t, const double y[], double params[])
-{
-    auto theta_0 = params[1];
-    g[0] = (y[0] - theta_0);
-}

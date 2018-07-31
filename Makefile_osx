@@ -1,7 +1,7 @@
 # GCC flags
 CC = /usr/bin/gcc
 CXX = /usr/bin/g++
-FC = /usr/bin/gfortran
+FC = /usr/local/bin/gfortran
 LD = $(CXX)
 
 CXXFLAGS += -std=c++11
@@ -23,4 +23,5 @@ CFLAGS += -pg
 CXXFLAGS += -fPIC
 CFLAGS += -fPIC
 
-LDFLAGS += -lgfortran -std=legacy
+#LDFLAGS += -lgfortran -std=legacy
+LDFLAGS = -L/usr/local/Cellar/gcc/8.2.0/lib/gcc/8 -lgfortran
