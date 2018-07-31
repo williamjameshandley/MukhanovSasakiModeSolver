@@ -19,9 +19,9 @@ Bsol{_Bsol}, PPS_error{_PPS_error}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum
     Transitions T(eta_i, eta_f, Bsol);
     
     //Find Transitions
-    double error = pow(PPS_error * exp(-0.9882), 1.0 / 0.9803);
+    double error = 1e-5; //pow(PPS_error * exp(-0.9882), 1.0 / 0.9803);
     Tsol = T.Find(error);
-    
+
     initial_index = static_cast<size_t>(std::lower_bound(Tsol.eta_step.begin(), Tsol.eta_step.end(), eta_r) - Tsol.eta_step.begin());
 }
 
