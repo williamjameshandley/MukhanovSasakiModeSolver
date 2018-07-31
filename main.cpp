@@ -11,9 +11,9 @@
 
 using RKCP54 = boost::numeric::odeint::runge_kutta_cash_karp54<std::vector<double>>;
 
-void simple_pendulum_field(double qdot[], const double t, const double y[], double params[]);
-void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], double params[]);
-void simple_pendulum_cycle(double g[], const double t, const double y[], double params[]);
+void simple_pendulum_field(double qdot[], const double t, const double y[], void *params);
+void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], void *params);
+void simple_pendulum_cycle(double g[], const double t, const double y[], void *params);
 
 int main()
 {
@@ -101,24 +101,24 @@ int main()
 }
 
 
-void simple_pendulum_field(double qdot[], const double t, const double y[], double params[])
+void simple_pendulum_field(double qdot[], const double t, const double y[], void *params)
 {
-    auto alpha = params[0];
+    auto alpha = static_cast<double*>(params)[0];
     qdot[0] = y[1];
     qdot[1] = - alpha * sin(y[0]);
 }
 
-void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], double params[])
+void simple_pendulum_jacobian(double dfdq[], const double t, const double y[], void *params)
 {
-    auto alpha = params[0];
+    auto alpha = static_cast<double*>(params)[0];
     /*Column ordered; ODEPACK is in FORTRAN 77.*/
     dfdq[0] = 0.0;                 dfdq[2] = 1.0;
     dfdq[1] = - alpha * cos(y[0]); dfdq[3] = 0.0;
     std::cout << "Jacobian " << dfdq[1] << std::endl;
 }
 
-void simple_pendulum_cycle(double g[], const double t, const double y[], double params[])
+void simple_pendulum_cycle(double g[], const double t, const double y[], void *params)
 {
-    auto theta_0 = params[1];
+    auto theta_0 = static_cast<double*>(params)[1];
     g[0] = (y[0] - theta_0);
 }

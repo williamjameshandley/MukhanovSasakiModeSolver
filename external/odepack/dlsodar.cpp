@@ -19,16 +19,16 @@ dlsodar::dlsodar(int neq_, int ng_):
         jroot(static_cast<size_t>(ng))
 {}
 
-void dlsodar::integrate(double &t, double tout, double q[], Field f_func, double data[])
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, void *data)
 { jt = 2; int ng_ = ng; ng = 0; _integrate(t, tout, q, f_func, nullptr, nullptr, data); ng = ng_; }
 
-void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Root g_func, double data[])
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Root g_func, void *data)
 { jt = 2; _integrate(t, tout, q, f_func, nullptr, g_func, data); }
 
-void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[])
+void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data)
 { jt = 1; _integrate(t, tout, q, f_func, j_func, g_func, data); }
 
-void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, double data[]){
+void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data){
 
     auto f = [&](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
     auto j = [&](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
