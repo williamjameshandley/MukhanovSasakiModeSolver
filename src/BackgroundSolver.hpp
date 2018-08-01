@@ -33,4 +33,4 @@ struct BackgroundSolution
     std::vector<double> eta;
 };
 
-BackgroundSolution solve_equations(Potential* pot, double t0, double phi_p, double dphi_p);
+BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p);
