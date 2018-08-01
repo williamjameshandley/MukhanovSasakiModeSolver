@@ -22,7 +22,7 @@ void equations(double dx_dt[], const double t, const double x[], void* data)
 
 BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p)
 {
-    double t0 = 1.0, dt = 1e-5;
+    double t0 = 1.0, dt = 1e-3;
     std::vector<double> x = {phi_p, dphi_p, 0, 1.5 * t0};
     
     Solutions sol;

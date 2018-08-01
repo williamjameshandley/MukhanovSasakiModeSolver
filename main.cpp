@@ -13,7 +13,7 @@ int main()
 
     std::cout<<"Solving for Background..."<<std::endl;
     //Background Initial Conditions
-    double phi_p = 23.08546, dphi_p = -10 * sqrt(2.0/3.0);
+    double phi_p = 23.08546, dphi_p = -sqrt(2.0/3.0);
     
     //Set Potential
     Polynomial pot(6.48757e-6);
@@ -28,7 +28,7 @@ int main()
     double k0 = 1e-6, k1 = 1;
     double eta_r = 0.1 * background_sols.eta.back();
     
-    ModeSolver ms(background_sols, 0);
+    ModeSolver ms(background_sols, 0.002);
     ms.Initial_Conditions(BD, eta_r);
     ms.Construct_PPS(k0, k1);
     
@@ -40,9 +40,9 @@ int main()
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
     std::ofstream mout{"output/PPS.txt"};
-    for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
-    mout.close();
-    /*
+    //for(auto k : kplot) mout << k << " " << ms.PPS(k) << std::endl;
+    //mout.close();
+    
     FILE *test;
     test = fopen("output/test.txt", "r");
     
@@ -60,7 +60,7 @@ int main()
             std::cout<<(PPS_true - ms.PPS(k)) / PPS_true<<std::endl;
         }
     }
-    */
+    
     return 0;
 }
 
