@@ -24,9 +24,10 @@ struct Solutions
 
 struct BackgroundSolution
 {
-    BackgroundSolution(std::vector<double> _z, std::vector<double> _dz,std::vector<double>_ddz, std::vector<double> _eta) :
-    z{_z}, dz{_dz}, ddz{_ddz}, eta{_eta} {}
+    BackgroundSolution(double _a_end, std::vector<double> _z, std::vector<double> _dz,std::vector<double>_ddz, std::vector<double> _eta) :
+    a_end{_a_end}, z{_z}, dz{_dz}, ddz{_ddz}, eta{_eta} {}
 
+    double a_end;
     std::vector<double> z;
     std::vector<double> dz;
     std::vector<double> ddz;

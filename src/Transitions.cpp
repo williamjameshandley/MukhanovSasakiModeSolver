@@ -57,8 +57,8 @@ TransitionsSolution Transitions::Find(double error)
     std::vector<double> a, b;
     for(size_t l = 0; l < eta_step.size() - 1; l++)
     {
-        b.push_back((DDZ(eta_step[l+1]) -  DDZ(eta_step[l])) / (eta_step[l+1]-eta_step[l]));
-        a.push_back(-b[l] * eta_step[l] +  DDZ(eta_step[l]));
+        b.push_back((DDZ(eta_step[l+1]) - DDZ(eta_step[l])) / (eta_step[l+1]-eta_step[l]));
+        a.push_back(-b[l] * eta_step[l] + DDZ(eta_step[l]));
     }
     
     auto delta = (DDZ(eta_step.back()) / (2/((eta_step.back() - Bsol.eta.back()) * (eta_step.back() - Bsol.eta.back()))))  -  1;

@@ -5,7 +5,7 @@ Bsol{_Bsol}, PPS_error{_PPS_error}, Tsol{}, eta_r{0.5 * Bsol.eta.back()}, vacuum
 {
     for(size_t o = 0; o < Bsol.dz.size(); o++)
     {
-        DDZ.insert(Bsol.eta[o], Bsol.ddz[o]);
+        DDZ.insert(Bsol.eta[o], pow(Bsol.a_end, 2) * Bsol.ddz[o]);
         DZ.insert(Bsol.eta[o], Bsol.dz[o]);
         Z.insert(Bsol.eta[o], Bsol.z[o]);
     }
@@ -62,7 +62,7 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     if(vacuum == BD)
         kin[1] = -I * k * kin[0];
     else if(vacuum == HD)
-        kin[1] = -I * std::pow(k * k - DDZ(eta_r), 0.5) * kin[0];
+        kin[1] = -I * std::pow(k * k - pow(Bsol.a_end, 2) * DDZ(eta_r), 0.5) * kin[0];
     else if(vacuum == RST)
         kin[1] = (-I * k + DZ(eta_r)/Z(eta_r)) * kin[0];
     else
@@ -95,11 +95,11 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 
 double ModeSolver::Find_PPS(double k)
 {
-    Eigen::Vector2cd cd = Match(k);
+    Eigen::Vector2cd cd = Match(k / Bsol.a_end);
 
     auto x = Tsol.eta_step.back() - Bsol.eta.back();
     auto v = 1.5 * sqrt(1 + 8.0 * Tsol.delta / 9);
-    Eigen::Matrix2cd ZMat = z_Mat(x, v);
+    Eigen::Matrix2cd ZMat = z_Mat(x / Bsol.a_end, v);
     Eigen::Vector2d z;
     z << Z(Tsol.eta_step.back()), DZ(Tsol.eta_step.back());
     
