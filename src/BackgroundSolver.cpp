@@ -23,7 +23,8 @@ void equations(double dx_dt[], const double t, const double x[], void* data)
 BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p)
 {
     double t0 = 6.48757e-6 / sqrt(2 * pot->V(1)), dt = 1e-3;
-    std::vector<double> x = {phi_p, dphi_p, 0, 1.5 * t0};
+    double n0 = 0, eta0 = 1.5 * t0 / exp(n0);
+    std::vector<double> x = {phi_p, dphi_p, n0, eta0};
     
     Solutions sol;
     sol(x, t0);
@@ -36,14 +37,14 @@ BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p)
     }
     
     std::vector<double> Z, DZ, DDZ, ETA;
-    double a_end = exp(sol.x[sol.t.size() - 1][2]);
+    double a_end = exp(sol.x[sol.t.size() - 1][2] - n0);
     
     for(size_t i = 0; i < sol.t.size(); i++)
     {
-        Z.push_back(exp(sol.x[i][2]) * sol.x[i][1] / H(sol.x[i][0], sol.x[i][1], pot));
-        DZ.push_back(exp(2 * sol.x[i][2]) * (-2 * sol.x[i][1] - pot->dV(sol.x[i][0]) / H(sol.x[i][0], sol.x[i][1], pot) + pow(sol.x[i][1], 3) / (2 * H(sol.x[i][0], sol.x[i][1], pot) * H(sol.x[i][0], sol.x[i][1], pot))));
-        DDZ.push_back(ddz(sol.x[i][0], sol.x[i][1], sol.x[i][2], pot) / pow(a_end,2));
-        ETA.push_back(sol.x[i][3] * a_end);
+        Z.push_back(exp(sol.x[i][2] - n0) * sol.x[i][1] / H(sol.x[i][0], sol.x[i][1], pot));
+        DZ.push_back(exp(2 * (sol.x[i][2] - n0)) * (-2 * sol.x[i][1] - pot->dV(sol.x[i][0]) / H(sol.x[i][0], sol.x[i][1], pot) + pow(sol.x[i][1], 3) / (2 * H(sol.x[i][0], sol.x[i][1], pot) * H(sol.x[i][0], sol.x[i][1], pot))));
+        DDZ.push_back(ddz(sol.x[i][0], sol.x[i][1], sol.x[i][2] - n0, pot) / pow(a_end,2));
+        ETA.push_back(sol.x[i][3] * exp(n0) * a_end);
     }
 
     return BackgroundSolution(a_end, Z, DZ, DDZ, ETA);
