@@ -2,21 +2,22 @@
 #include "dlsodar.hpp"
 #include "pointers.hpp"
 
-dlsodar::dlsodar(int neq_, int ng_): 
+dlsodar::dlsodar(int neq_, int ng_, int max_steps_): 
         neq{neq_},
         itol{1},
         rtol{1e-8},
         atol{1e-8},
         itask{1},
         istate{1},
-        iopt{0},
-        rwork(static_cast<size_t>(22+neq*std::max(16,neq+9)+3*ng_)),
+        iopt{1},
+        rwork(static_cast<size_t>(22+neq*std::max(16,neq+9)+3*ng_), 0),
         lrw{static_cast<int>(rwork.size())},
-        iwork(static_cast<size_t>(20+neq)),
+        iwork(static_cast<size_t>(20+neq), 0),
         liw{static_cast<int>(iwork.size())},
         jt{2},
         ng{ng_},
-        jroot(static_cast<size_t>(ng))
+        jroot(static_cast<size_t>(ng)),
+        max_steps{max_steps_}
 {}
 
 void dlsodar::integrate(double &t, double tout, double q[], Field f_func, void *data)
@@ -33,6 +34,8 @@ void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacob
     auto f = [&](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
     auto j = [&](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
     auto g = [&](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
+
+    iwork[5] = max_steps;
 
     dlsodar_(
             function_ptr(f),

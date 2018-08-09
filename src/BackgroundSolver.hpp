@@ -6,7 +6,9 @@
 
 void equations(double dx_dt[], const double t, const double x[], void* data);
 double H(double phi, double dphi, Potential* pot);
-double ddz(double phi, double dphi, double n, Potential* pot);
+double omega_2(double phi, double dphi, Potential* pot);
+double d_omega_2(double phi, double dphi, Potential* pot);
+void end(double g[], const double, const double x[], void* data);
 
 struct Solutions
 {
@@ -24,14 +26,18 @@ struct Solutions
 
 struct BackgroundSolution
 {
-    BackgroundSolution(double _a_end, std::vector<double> _z, std::vector<double> _dz,std::vector<double>_ddz, std::vector<double> _eta) :
-    a_end{_a_end}, z{_z}, dz{_dz}, ddz{_ddz}, eta{_eta} {}
+    BackgroundSolution(std::vector<double> _t, std::vector<double> _phi, std::vector<double> _dphi,  std::vector<double> _N, std::vector<double> _H, std::vector<double> _z, std::vector<double> _omega_2, std::vector<double> _d_omega_2) :
+    t{_t}, phi{_phi}, dphi{_dphi}, N{_N}, H{_H}, z{_z}, omega_2{_omega_2}, d_omega_2{_d_omega_2} {}
 
-    double a_end;
+    std::vector<double> t;
+    std::vector<double> phi;
+    std::vector<double> dphi;
+    std::vector<double> N;
+    std::vector<double> H;
     std::vector<double> z;
-    std::vector<double> dz;
-    std::vector<double> ddz;
-    std::vector<double> eta;
+    std::vector<double> omega_2;
+    std::vector<double> d_omega_2;
+    
 };
 
 BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p);

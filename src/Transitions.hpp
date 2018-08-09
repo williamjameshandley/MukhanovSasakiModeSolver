@@ -8,26 +8,25 @@
 struct TransitionsSolution
 {
     TransitionsSolution() :
-        delta{}, a{}, b{}, eta_step{} {}
+    a{}, b{}, N_step{} {}
     
-    double delta;
     std::vector<double> a;
     std::vector<double> b;
-    std::vector<double> eta_step;
+    std::vector<double> N_step;
 };
 
 struct Transitions
 {
    
-    double eta_i, eta_f;
+    double N_i, N_f;
     BackgroundSolution Bsol;
 
-    Transitions(double _eta_i, double _eta_f, BackgroundSolution _Bsol):
-        eta_i(_eta_i), eta_f(_eta_f), Bsol{_Bsol} { }
+    Transitions(double _N_i, double _N_f, BackgroundSolution _Bsol):
+        N_i(_N_i), N_f(_N_f), Bsol{_Bsol} { }
 
-    double integral(double a, double b);
+    double integral(double a, double b, double k);
 
-    TransitionsSolution Find(double error);
+    TransitionsSolution Find(double k, double error);
     
 };
 
