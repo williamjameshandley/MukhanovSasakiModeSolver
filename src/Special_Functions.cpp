@@ -1,4 +1,5 @@
 #include "Special_Functions.hpp"
+#include <iostream>
 
 
 std::complex<double> Bessel_J(double v, double x)
@@ -24,11 +25,6 @@ std::complex<double> Bessel_Y(double v, double x)
 std::complex<double> Hankel1(double v, double x) { return Bessel_J(v, x) + I * Bessel_Y(v, x); }
 std::complex<double> Hankel2(double v, double x) { return Bessel_J(v, x) - I * Bessel_Y(v, x); }
 
-void Airy(double x, double& Ai, double& Aip, double& Bi, double& Bip)
-{ airy(x,&Ai,&Aip,&Bi,&Bip); }
+void Airy(double x, double& Ai, double& Aip, double& Bi, double& Bip){airy(x,&Ai,&Aip,&Bi,&Bip);}
 
-double Airy_Ai(double x) { return boost::math::airy_ai(x); }
-double Airy_Bi(double x) { return boost::math::airy_bi(x); }
-double Airy_Aip(double x) { return boost::math::airy_ai_prime(x); }
-double Airy_Bip(double x) { return boost::math::airy_bi_prime(x); }
 double Gamma(double x) { return gamma(x); }

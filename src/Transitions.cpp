@@ -13,9 +13,10 @@ TransitionsSolution Transitions::Find(double k, double error)
         True.insert(Bsol.N[o], Bsol.omega_2[o] + pow(k * exp(-Bsol.N[o]) / Bsol.H[o], 2));
     
     double N0 = N_i;
-    auto p = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N0) - Bsol.N.begin());
+    auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N0) - Bsol.N.begin());
+    auto p1 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N_f) - Bsol.N.begin());
     size_t pp = 0;
-    for(size_t o = p; o < Bsol.N.size(); o++)
+    for(size_t o = p0; o < p1; o++)
     {
         double old = Bsol.d_omega_2[o - 1];
         if(old < 0 and Bsol.d_omega_2[o] > 0)

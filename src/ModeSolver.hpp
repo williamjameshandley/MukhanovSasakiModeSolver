@@ -17,21 +17,17 @@ class ModeSolver
         BackgroundSolution Bsol;    
         TransitionsSolution Tsol;    
     
-        double eta_r, PPS_error;
+        double N_r, PPS_error;
         VacuumChoice vacuum;
-        size_t initial_index;
-        LinearInterpolator<double, double> DDZ, DZ, Z, PPS;
+        LinearInterpolator<double, double> OMEGA_2, Z, H, PPS;
     
-        ModeSolver(BackgroundSolution _Bsol, double PPS_error);
+        ModeSolver(BackgroundSolution _Bsol);
     
-        Eigen::Matrix2d Mat(double k);
+        Eigen::Matrix2d Mat();
         Eigen::Vector2cd Match(double k);
-        void Initial_Conditions(VacuumChoice vacuum, double eta_r);
+        void Initial_Conditions(VacuumChoice vacuum, double N_r);
 
-        Eigen::Matrix2d A(double x, double p);
-        Eigen::Matrix2cd H(double eta, double k);
-        Eigen::Matrix2cd H(double x, double k, double v);
-        Eigen::Matrix2cd z_Mat(std::complex<double> x, double v);
+        Eigen::Matrix2d Airy_mat(double x0, double x1, double p);
     
         double Find_PPS(double k);
         void Construct_PPS(double k0, double k1);
