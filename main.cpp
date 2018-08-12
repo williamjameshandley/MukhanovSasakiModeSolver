@@ -24,7 +24,7 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Finding PPS..."<<std::endl;
     double k0 = 1e-6, k1 = 1;
-    double N_r = 0.1;
+    double N_r = 3;
     
     ModeSolver ms(sols);
     ms.Initial_Conditions(BD, N_r);

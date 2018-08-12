@@ -47,9 +47,7 @@ BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p)
     dlsodar desolver(4, 1, 1000);
     desolver.integrate(t, 1e10, &x[0], equations, end, static_cast<void*> (ptrs));
     double N_end = x[2];
-    
-    std::cout<<N_end<<std::endl;
-    
+
     double dt = 1e-2;
     t = t0;
     x = {phi_p, dphi_p, 0, 0};

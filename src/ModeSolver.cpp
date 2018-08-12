@@ -22,13 +22,14 @@ Eigen::Matrix2d ModeSolver::Mat()
 {
     Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
     
-    for(size_t j = Tsol.N_step.size() - 2; j != - 1; j--)
+    for(size_t n = Tsol.N_step.size() - 2; n != - 1; n--)
     {
-        double p = pow(abs(Tsol.b[j]), 1.0/3.0);
-        double x0 = -((Tsol.a[j] + Tsol.b[j] * Tsol.N_step[j]) /p/p);
-        double x1 = -((Tsol.a[j] + Tsol.b[j] * Tsol.N_step[j+1]) /p/p);
+        double p = pow(abs(Tsol.b[n]), 1.0/3.0);
+        double x0 = -((Tsol.a[n] + Tsol.b[n] * Tsol.N_step[n]) /p/p);
+        double x1 = -((Tsol.a[n] + Tsol.b[n] * Tsol.N_step[n+1]) /p/p);
         
         Eigen::Matrix2d A = Airy_mat(x0, x1, p);
+        
         Mat *= A;
     }
     return Mat;
@@ -51,12 +52,12 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 
 double ModeSolver::Find_PPS(double k)
 {
-    double N_i = N_r, N_f = 20 + log(k);
+    double N_i = N_r, N_f = log(k) + 20;
     Transitions T(N_i, N_f, Bsol);
     Tsol = T.Find(k, 1e-1);
     
     Eigen::Vector2cd cd = Match(k);
-
+    
     double F = exp(Tsol.N_step.back() / 2) * Z(Tsol.N_step.back()) * sqrt(H(Tsol.N_step.back()));
     
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(cd[0] + cd[1]) / F, 2);
@@ -140,15 +141,15 @@ Eigen::Matrix2d ModeSolver::Airy_mat(double x0, double x1, double p)
     }
     else
     {
-        auto a1 = pow(x1, 1.5);
-        auto b1 = pow(x1, 0.25);
         auto a0 = pow(x0, 1.5);
         auto b0 = pow(x0, 0.25);
+        auto a1 = pow(x1, 1.5);
+        auto b1 = pow(x1, 0.25);
         
-        auto a00 = 2 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b0 * p / b1;
-        auto a01 = 2 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) / (b0 * b1);
-        auto a10 = 2 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) * b1 * b0 * p * p;
-        auto a11 = 2 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b1 * p / b0;
+        auto a00 = 0.5 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b0 / b1;
+        auto a01 = 0.5 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) / (p * b0 * b1);
+        auto a10 = 0.5 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) * (p * b0 * b1);
+        auto a11 = 0.5 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b1 / b0;
         
         A << a00,  a01,
             a10, a11;
