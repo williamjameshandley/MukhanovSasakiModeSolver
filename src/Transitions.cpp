@@ -15,8 +15,8 @@ TransitionsSolution Transitions::Find(double k, double error)
     double N0 = N_i;
     auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N0) - Bsol.N.begin());
     auto p1 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N_f) - Bsol.N.begin());
-    size_t pp = 0;
-    for(size_t o = p0; o < p1; o++)
+    size_t pp = p0;
+    for(size_t o = p0 + 1; o < p1; o++)
     {
         double old = Bsol.d_omega_2[o - 1];
         if(old < 0 and Bsol.d_omega_2[o] > 0)
@@ -32,13 +32,20 @@ TransitionsSolution Transitions::Find(double k, double error)
             pp = o;
         }
     }
-    N_pair.push_back(std::make_pair(Bsol.N[pp], N_f));
-    
+    if(pp == p0)
+    {
+        N_pair.push_back(std::make_pair(N_i, N_f));
+    }
+    else
+    {
+        N_pair.push_back(std::make_pair(Bsol.N[pp], N_f));
+    }
+
     Seg.insert(N_pair[0].first, True(N_pair[0].first));
     Seg.insert(N_pair[0].second, True(N_pair[0].second));
     N_step.push_back(N_pair[0].first);
     N_step.push_back(N_pair[0].second);
-        
+    
     double lim = error;
         
     while(N_pair.size() != 0)

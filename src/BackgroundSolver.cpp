@@ -76,6 +76,7 @@ BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p)
         _H.push_back(H(sol.x[i][0], sol.x[i][1], pot));
         
     }
+    
 
     return BackgroundSolution(sol.t, _phi, _dphi, _N, _H, _z, _omega_2, _d_omega_2);
 }

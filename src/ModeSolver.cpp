@@ -1,10 +1,11 @@
 #include "ModeSolver.hpp"
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol):
-Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, Z{}, H{}, DPHI{}, PPS{}
+Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, Z{}, H{}, DPHI{}, H_aH{}, PPS{}
 {
     for(size_t o = 0; o < Bsol.N.size(); o++)
     {
+        H_aH.insert(exp(Bsol.N[o]) * Bsol.H[o], Bsol.H[o]);
         DPHI.insert(Bsol.N[o], Bsol.dphi[o]);
         Z.insert(Bsol.N[o], Bsol.z[o]);
         H.insert(Bsol.N[o], Bsol.H[o]);
@@ -31,6 +32,7 @@ Eigen::Matrix2d ModeSolver::Mat()
         
         Mat *= A;
     }
+
     return Mat;
 }
 
@@ -55,9 +57,10 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 
 double ModeSolver::Find_PPS(double k)
 {
-    double N_f = log(k) + 30;
+    double N_f = 0.98 * Bsol.N.back();
+    //log(k) - log(H(Bsol.N.back() - 40)) + log(100) + N_r; this is wrong need to fix. keep as 0.98*N_end for now
     Transitions T(N_r, N_f, Bsol);
-    Tsol = T.Find(k, 1e-2);
+    Tsol = T.Find(k, 1e-4);
     
     Eigen::Vector2cd Q = Match(k);
     
@@ -144,10 +147,7 @@ Eigen::Matrix2d ModeSolver::Airy_mat(double p, double x0, double x1)
     }
     else
     {
-        auto a0 = pow(x0, 1.5);
-        auto b0 = pow(x0, 0.25);
-        auto a1 = pow(x1, 1.5);
-        auto b1 = pow(x1, 0.25);
+        auto a0 = pow(x0, 1.5), b0 = pow(x0, 0.25), a1 = pow(x1, 1.5), b1 = pow(x1, 0.25);
         
         auto a00 = 0.5 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b0 / b1;
         auto a01 = 0.5 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) / (p * b0 * b1);

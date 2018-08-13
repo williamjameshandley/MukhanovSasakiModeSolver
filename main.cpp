@@ -12,7 +12,7 @@ int main()
 
     std::cout<<"Solving for Background..."<<std::endl;
     //Set Potential
-    Poly_Step pot(6.48757e-6, 0.0, 0.05, 14);
+    Polynomial pot(6.48757e-6);
     auto pot_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
@@ -31,7 +31,7 @@ int main()
     
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
-    std::vector<double> kplot(1000);
+    std::vector<double> kplot(100);
     
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
