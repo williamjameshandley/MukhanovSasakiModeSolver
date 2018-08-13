@@ -16,7 +16,7 @@ int main()
     auto pot_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
-    double phi_p = 23, dphi_p = -sqrt(2./3);//17, dphi_p = - pot.dV(phi_p) / (3 * sqrt(pot.V(phi_p) / 3));
+    double phi_p = 17, dphi_p = - pot.dV(phi_p) / (3 * sqrt(pot.V(phi_p) / 3));
     
     //Solve Background Variables
     auto sols = solve_equations(pot_ptr, phi_p, dphi_p);
@@ -24,14 +24,14 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Finding PPS..."<<std::endl;
     double k0 = 1e-6, k1 = 1;
-    double N_r = 3;
+    double N_r = 1;
     
     ModeSolver ms(sols);
     ms.Initial_Conditions(BD, N_r);
     
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
-    std::vector<double> kplot(100);
+    std::vector<double> kplot(1000);
     
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));

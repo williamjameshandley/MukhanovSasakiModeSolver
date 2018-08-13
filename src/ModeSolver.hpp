@@ -19,13 +19,13 @@ class ModeSolver
     
         double N_r, PPS_error;
         VacuumChoice vacuum;
-        LinearInterpolator<double, double> OMEGA_2, Z, H, PPS;
+        LinearInterpolator<double, double> Z, H, DPHI, PPS;
     
         ModeSolver(BackgroundSolution _Bsol);
     
         Eigen::Matrix2d Mat();
         Eigen::Vector2cd Match(double k);
-        void Initial_Conditions(VacuumChoice vacuum, double N_r);
+        void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
 
         Eigen::Matrix2d Airy_mat(double x0, double x1, double p);
     
