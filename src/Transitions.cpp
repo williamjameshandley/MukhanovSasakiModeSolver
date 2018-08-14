@@ -9,12 +9,15 @@ TransitionsSolution Transitions::Find(double k, double error)
     std::vector<std::pair<double, double>> N_pair;
     std::vector<double> N_step;
     
+    //Interpolate omega_2
     for(size_t o = 0; o < Bsol.N.size(); o++)
         True.insert(Bsol.N[o], Bsol.omega_2[o] + pow(k * exp(-Bsol.N[o]) / Bsol.H[o], 2));
     
-    double N0 = N_i;
-    auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N0) - Bsol.N.begin());
+    //Initialize pairs at zeros of derivative of omega_2
+    auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N_i) - Bsol.N.begin());
     auto p1 = static_cast<size_t>(std::lower_bound(Bsol.N.begin(), Bsol.N.end(), N_f) - Bsol.N.begin());
+    
+    double N0 = N_i;
     size_t pp = p0;
     for(size_t o = p0 + 1; o < p1; o++)
     {
@@ -41,10 +44,14 @@ TransitionsSolution Transitions::Find(double k, double error)
         N_pair.push_back(std::make_pair(Bsol.N[pp], N_f));
     }
 
-    Seg.insert(N_pair[0].first, True(N_pair[0].first));
-    Seg.insert(N_pair[0].second, True(N_pair[0].second));
-    N_step.push_back(N_pair[0].first);
-    N_step.push_back(N_pair[0].second);
+    for(size_t n = 0; n < N_pair.size(); n++)
+    {
+        Seg.insert(N_pair[n].first, True(N_pair[n].first));
+        N_step.push_back(N_pair[n].first);
+    }
+    
+    Seg.insert(N_pair.back().second, True(N_pair.back().second));
+    N_step.push_back(N_pair.back().second);
     
     double lim = error;
         
@@ -65,30 +72,17 @@ TransitionsSolution Transitions::Find(double k, double error)
             
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
             
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim or abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
                 n += 2;
+                Seg.insert(N_m1, (temp_true1));
+                Seg.insert(N_m2, (temp_true2));
+                N_step.push_back(N_m1);
+                N_step.push_back(N_m2);
             }
-            else if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_f));
-                n += 1;
-            }
-            else if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
-                n += 1;
-            }
-            Seg.insert(N_m1, (temp_true1));
-            Seg.insert(N_m2, (temp_true2));
-            N_step.push_back(N_m1);
-            N_step.push_back(N_m2);
-            
         }
     }
     

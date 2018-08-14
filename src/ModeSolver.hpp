@@ -19,7 +19,7 @@ class ModeSolver
     
         double N_r, PPS_error;
         VacuumChoice vacuum;
-        LinearInterpolator<double, double> Z, H, DPHI, H_aH, PPS;
+        LinearInterpolator<double, double> Z, H, DPHI, PPS;
     
         ModeSolver(BackgroundSolution _Bsol);
     

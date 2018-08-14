@@ -1,11 +1,10 @@
 #include "ModeSolver.hpp"
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol):
-Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, Z{}, H{}, DPHI{}, H_aH{}, PPS{}
+Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, Z{}, H{}, DPHI{}, PPS{}
 {
     for(size_t o = 0; o < Bsol.N.size(); o++)
     {
-        H_aH.insert(exp(Bsol.N[o]) * Bsol.H[o], Bsol.H[o]);
         DPHI.insert(Bsol.N[o], Bsol.dphi[o]);
         Z.insert(Bsol.N[o], Bsol.z[o]);
         H.insert(Bsol.N[o], Bsol.H[o]);
@@ -58,7 +57,6 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 double ModeSolver::Find_PPS(double k)
 {
     double N_f = 0.98 * Bsol.N.back();
-    //log(k) - log(H(Bsol.N.back() - 40)) + log(100) + N_r; this is wrong need to fix. keep as 0.98*N_end for now
     Transitions T(N_r, N_f, Bsol);
     Tsol = T.Find(k, 1e-4);
     
@@ -78,7 +76,7 @@ void ModeSolver::Construct_PPS(double k0, double k1)
     PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
     
-    double lim = 1e-4;
+    double lim = 1e-3;
     
     while(k_pair.size() != 0)
     {
