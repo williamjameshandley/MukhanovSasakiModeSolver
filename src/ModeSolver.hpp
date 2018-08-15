@@ -19,7 +19,8 @@ class ModeSolver
     
         double N_r, PPS_error;
         VacuumChoice vacuum;
-        LinearInterpolator<double, double> Z, H, DPHI, PPS;
+        std::vector<double> k_plot; 
+        LinearInterpolator<double, double> OMEGA_2, Z, H, DPHI, PPS;
     
         ModeSolver(BackgroundSolution _Bsol);
     
@@ -30,6 +31,6 @@ class ModeSolver
         Eigen::Matrix2d Airy_mat(double x0, double x1, double p);
     
         double Find_PPS(double k);
-        void Construct_PPS(double k0, double k1);
+        void Construct_PPS(double k0, double k1, double error);
     
 };

@@ -1,10 +1,12 @@
 #include "ModeSolver.hpp"
+#include <fstream>
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol):
-Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, Z{}, H{}, DPHI{}, PPS{}
+Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, OMEGA_2{}, Z{}, H{}, DPHI{}, PPS{}
 {
     for(size_t o = 0; o < Bsol.N.size(); o++)
     {
+        OMEGA_2.insert(Bsol.N[o], Bsol.omega_2[o]);
         DPHI.insert(Bsol.N[o], Bsol.dphi[o]);
         Z.insert(Bsol.N[o], Bsol.z[o]);
         H.insert(Bsol.N[o], Bsol.H[o]);
@@ -42,10 +44,10 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     double dphi_H_2 = pow(0.5 * DPHI(N_r) / H(N_r), 2);
     Eigen::Vector2cd Q;
     
-    Q[0] = sqrt(aH_r / (2 * k));
+    Q[0] = sqrt(aH_r / (2 * k));//sqrt(1 / (2 * sqrt(OMEGA_2(N_r) + pow(k * exp(-N_r) / H(N_r),2))));
     
     if(vacuum == BD)
-        Q[1] = Q[0] * (0.5 - dphi_H_2 + (-I * k / aH_r));
+        Q[1] = Q[0] * (0.5 - dphi_H_2 + (-I * k / aH_r));//Q[0] * (- I * sqrt(OMEGA_2(N_r) + pow(k * exp(-N_r) / H(N_r),2)));
         //only change the last part for different IC (only the -ik part)
     else
         throw std::runtime_error("Initial conditions unknown");
@@ -56,9 +58,12 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 
 double ModeSolver::Find_PPS(double k)
 {
-    double N_f = 0.98 * Bsol.N.back();
+    k_plot.push_back(k);
+    k *= Bsol.aH_star / 0.05;
+    
+    double N_f = log(k / 0.05) + 55;
     Transitions T(N_r, N_f, Bsol);
-    Tsol = T.Find(k, 1e-4);
+    Tsol = T.Find(k, 1e-5);
     
     Eigen::Vector2cd Q = Match(k);
     
@@ -67,7 +72,7 @@ double ModeSolver::Find_PPS(double k)
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
 }
 
-void ModeSolver::Construct_PPS(double k0, double k1)
+void ModeSolver::Construct_PPS(double k0, double k1, double error = 1e-3)
 {
     std::vector<std::pair<double, double>> k_pair;
     
@@ -76,7 +81,7 @@ void ModeSolver::Construct_PPS(double k0, double k1)
     PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
     
-    double lim = 1e-3;
+    double lim = error;
     
     while(k_pair.size() != 0)
     {
@@ -95,20 +100,20 @@ void ModeSolver::Construct_PPS(double k0, double k1)
 
             k_pair.erase(k_pair.begin() + static_cast<int>(n));
             
-            if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
+            if(abs((temp_true1 - temp_approx1) / temp_true1) > lim and abs((temp_true2 - temp_approx2) / temp_true2) > lim)
             {
                 k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m1));
                 k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_m2));
                 k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_m2, k1));
                 n += 2;
             }
-            else if(abs(temp_true1 - temp_approx1) / temp_true1 > lim and abs(temp_true2 - temp_approx2) / temp_true2 < lim)
+            else if(abs((temp_true1 - temp_approx1) / temp_true1) > lim and abs((temp_true2 - temp_approx2) / temp_true2) < lim)
             {
                 k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m1));
                 k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k1));
                 n += 1;
             }
-            else if(abs(temp_true1 - temp_approx1) / temp_true1 < lim and abs(temp_true2 - temp_approx2) / temp_true2 > lim)
+            else if(abs((temp_true1 - temp_approx1) / temp_true1) < lim and abs((temp_true2 - temp_approx2) / temp_true2) > lim)
             {
                 k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k0, k_m2));
                 k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m2, k1));
@@ -118,6 +123,7 @@ void ModeSolver::Construct_PPS(double k0, double k1)
             PPS.insert(k_m2, (temp_true2));
         }
     }
+    std::sort(k_plot.begin(), k_plot.end());
 }
 
 Eigen::Matrix2d ModeSolver::Airy_mat(double p, double x0, double x1)

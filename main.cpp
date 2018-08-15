@@ -12,35 +12,35 @@ int main()
 
     std::cout<<"Solving for Background..."<<std::endl;
     //Set Potential
-    Polynomial pot(6.48757e-6);
+    Poly_Step pot(6.48757e-6, 5e-6, 1e-3, 15.5);
     auto pot_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
-    double phi_p = 23, dphi_p = - sqrt(2./3);//17, dphi_p = - pot.dV(phi_p) / (3 * sqrt(pot.V(phi_p) / 3));
+    double phi_p = 17, dphi_p = - pot.dV(phi_p) / (3 * sqrt(pot.V(phi_p) / 3));
     
     //Solve Background Variables
     auto sols = solve_equations(pot_ptr, phi_p, dphi_p);
-    
+
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Finding PPS..."<<std::endl;
     double k0 = 1e-6, k1 = 1;
-    double N_r = 1;
+    double N_r = 0.5;
     
     ModeSolver ms(sols);
     ms.Initial_Conditions(BD, N_r);
-    //ms.Construct_PPS(k0, k1);
+    ms.Construct_PPS(k0, k1, 1e-2);
     
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
-    std::vector<double> kplot(1000);
+    std::vector<double> kplot(10000);
     
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
     std::ofstream mout{"output/PPS.txt"};
-    for(auto k : kplot)
+    for(auto k : ms.k_plot)
     {
-        mout << k << " " << ms.Find_PPS(k) << std::endl;
+        mout << k << " " << ms.PPS(k) << std::endl;
     }
     mout.close();
 

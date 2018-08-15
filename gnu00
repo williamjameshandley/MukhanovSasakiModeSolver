@@ -1,6 +1,0 @@
-set nokey
-set size square
-set object 1 rectangle from screen 0,0 to screen 1,1 fillcolor rgb"white" behind
-
-plot "output/var.txt" u 1:2 w p
-replot "output/omega.txt" u 1:2 w l

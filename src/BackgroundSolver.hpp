@@ -26,8 +26,8 @@ struct Solutions
 
 struct BackgroundSolution
 {
-    BackgroundSolution(std::vector<double> _t, std::vector<double> _phi, std::vector<double> _dphi,  std::vector<double> _N, std::vector<double> _H, std::vector<double> _z, std::vector<double> _omega_2, std::vector<double> _d_omega_2) :
-    t{_t}, phi{_phi}, dphi{_dphi}, N{_N}, H{_H}, z{_z}, omega_2{_omega_2}, d_omega_2{_d_omega_2} {}
+    BackgroundSolution(std::vector<double> _t, std::vector<double> _phi, std::vector<double> _dphi,  std::vector<double> _N, std::vector<double> _H, std::vector<double> _z, std::vector<double> _omega_2, std::vector<double> _d_omega_2, double _aH_star) :
+    t{_t}, phi{_phi}, dphi{_dphi}, N{_N}, H{_H}, z{_z}, omega_2{_omega_2}, d_omega_2{_d_omega_2}, aH_star{_aH_star} {}
 
     std::vector<double> t;
     std::vector<double> phi;
@@ -37,6 +37,7 @@ struct BackgroundSolution
     std::vector<double> z;
     std::vector<double> omega_2;
     std::vector<double> d_omega_2;
+    double aH_star;
     
 };
 
