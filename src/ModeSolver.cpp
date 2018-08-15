@@ -82,7 +82,6 @@ void ModeSolver::Construct_PPS(double k0, double k1, double error = 1e-3)
     PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
     
     double lim = error;
-    
     while(k_pair.size() != 0)
     {
         for(size_t n = 0; n < k_pair.size(); n++)

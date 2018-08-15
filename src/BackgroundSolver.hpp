@@ -8,7 +8,11 @@ void equations(double dx_dt[], const double t, const double x[], void* data);
 double H(double phi, double dphi, Potential* pot);
 double omega_2(double phi, double dphi, Potential* pot);
 double d_omega_2(double phi, double dphi, Potential* pot);
+
+void check(double g[], const double, const double x[], void* data);
 void end(double g[], const double, const double x[], void* data);
+void begin(double g[], const double, const double x[], void* data);
+void N_star_check(double g[], const double, const double x[], void* data);
 
 struct Solutions
 {
@@ -41,4 +45,5 @@ struct BackgroundSolution
     
 };
 
-BackgroundSolution solve_equations(Potential* pot, double phi_p, double dphi_p);
+BackgroundSolution solve_equations(Potential* pot, double N_star);
+BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger);
