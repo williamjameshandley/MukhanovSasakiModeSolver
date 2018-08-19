@@ -24,11 +24,13 @@ class ModeSolver
     
         ModeSolver(BackgroundSolution _Bsol);
     
-        Eigen::Matrix2d Mat();
+        Eigen::Matrix2d Airy_Mat();
+        Eigen::Matrix2cd Bessel_Mat();
         Eigen::Vector2cd Match(double k);
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
 
-        Eigen::Matrix2d Airy_mat(double x0, double x1, double p);
+        Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
+        Eigen::Matrix2cd Bessel_gen(double p, double x1, double x0);
     
         double Find_PPS(double k);
         void Construct_PPS(double k0, double k1, double error);

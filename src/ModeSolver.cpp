@@ -1,5 +1,4 @@
 #include "ModeSolver.hpp"
-#include <fstream>
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol):
 Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, OMEGA_2{}, Z{}, H{}, DPHI{}, PPS{}
@@ -19,21 +18,41 @@ void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
     N_r = _N_r;
 }
 
-Eigen::Matrix2d ModeSolver::Mat()
+Eigen::Matrix2d ModeSolver::Airy_Mat()
 {
     Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
     
-    for(size_t n = Tsol.N_step.size() - 2; n != static_cast<size_t>(-1); n--)
+    for(size_t n = Tsol.lin_N_step.size() - 2; n != static_cast<size_t>(-1); n--)
     {
-        double p = pow(abs(Tsol.b[n]), 1.0/3.0);
-        double x0 = -((Tsol.a[n] + Tsol.b[n] * Tsol.N_step[n]) /p/p);
-        double x1 = -((Tsol.a[n] + Tsol.b[n] * Tsol.N_step[n+1]) /p/p);
+        double p = pow(abs(Tsol.lin_b[n]), 1.0/3.0);
+        double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
+        double x1 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n+1]) /p/p);
         
-        Eigen::Matrix2d A = Airy_mat(p, x0, x1);
+        Eigen::Matrix2d A = Airy_gen(p, x0, x1);
         
         Mat *= A;
     }
 
+    return Mat;
+}
+
+Eigen::Matrix2cd ModeSolver::Bessel_Mat()
+{
+    Eigen::Matrix2cd Mat = Eigen::Matrix2d::Identity();
+    
+    if(Tsol.log_a.size() != 0)
+    {
+        for(size_t n = Tsol.log_N_step.size() - 2; n != static_cast<size_t>(-1); n--)
+        {
+            double p = 2.0 / Tsol.log_b[n];
+            double x0 = exp(0.5 * (Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n])) * p;
+            double x1 = exp(0.5 * (Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1])) * p;
+            
+            Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
+            
+            Mat *= B;
+        }
+    }
     return Mat;
 }
 
@@ -44,16 +63,15 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     double dphi_H_2 = pow(0.5 * DPHI(N_r) / H(N_r), 2);
     Eigen::Vector2cd Q;
     
-    Q[0] = sqrt(aH_r / (2 * k));//sqrt(1 / (2 * sqrt(OMEGA_2(N_r) + pow(k * exp(-N_r) / H(N_r),2))));
+    Q[0] = sqrt(aH_r / (2 * k));
     
     if(vacuum == BD)
-        Q[1] = Q[0] * (0.5 - dphi_H_2 + (-I * k / aH_r));//Q[0] * (- I * sqrt(OMEGA_2(N_r) + pow(k * exp(-N_r) / H(N_r),2)));
-        //only change the last part for different IC (only the -ik part)
+        Q[1] = Q[0] * (0.5 - dphi_H_2 + (-I * k / aH_r));
     else
         throw std::runtime_error("Initial conditions unknown");
 
     //Match
-    return Mat() * Q;
+    return Airy_Mat() * Bessel_Mat() * Q;
 }
 
 double ModeSolver::Find_PPS(double k)
@@ -63,7 +81,7 @@ double ModeSolver::Find_PPS(double k)
     
     double N_f = log(k / 0.05) + 55;
     Transitions T(N_r, N_f, Bsol);
-    Tsol = T.Find(k, 1e-5);
+    Tsol = T.Find(k, 1e-4);
     
     Eigen::Vector2cd Q = Match(k);
     
@@ -125,7 +143,7 @@ void ModeSolver::Construct_PPS(double k0, double k1, double error = 1e-3)
     std::sort(k_plot.begin(), k_plot.end());
 }
 
-Eigen::Matrix2d ModeSolver::Airy_mat(double p, double x0, double x1)
+Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
 {
     Eigen::Matrix2d A0, A1, A;
     double Ai0, Bi0, Aip0, Bip0, Ai, Bi, Aip, Bip;
@@ -164,3 +182,26 @@ Eigen::Matrix2d ModeSolver::Airy_mat(double p, double x0, double x1)
     return A;
 }
 
+
+Eigen::Matrix2cd ModeSolver::Bessel_gen(double p, double x0, double x1)
+{
+    Eigen::Matrix2cd B0, B1;
+    
+    auto J0 = Bessel_J(0, x0);
+    auto Y0 = Bessel_Y(0, x0);
+    auto Jp0 = -x0 * Bessel_J(1, x0) / p;
+    auto Yp0 = -x0 * Bessel_Y(1, x0) / p;
+    
+    auto J = Bessel_J(0, x1);
+    auto Y = Bessel_Y(0, x1);
+    auto Jp = -x1 * Bessel_J(1, x1) / p;
+    auto Yp = -x1 * Bessel_Y(1, x1) / p;
+    
+    B0 << J0,  Y0,
+          Jp0, Yp0;
+    
+    B1 << J,  Y,
+          Jp, Yp;
+    
+    return B1 * B0.inverse();
+}

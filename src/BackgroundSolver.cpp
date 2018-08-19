@@ -27,7 +27,7 @@ void equations(double dx_dt[], const double, const double x[], void* data)
 }
 
 
-void check(double g[], const double, const double x[], void* data)
+void check(double g[], const double, const double x[], void*)
 {
     g[0] = x[0];
 }
@@ -111,11 +111,15 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
     Solutions sol;
     sol(x, t0);
     desolver = dlsodar(4, 1, 100000);
+    double old = 0;
     while(x[2] < N_end)
     {
         desolver.integrate(t0, t0 + dt, &x[0], equations, end, static_cast<void*> (ptrs));
         sol(x, t0);
-        dt *= 1.0001;
+        double New = d_omega_2(x[0], x[1], pot);
+        double inc = abs(New - old) / dt;
+        dt = (1e-3 + 1 / pow(inc, 0.3));
+        old = New;
     }
     
     std::vector<double> _phi, _dphi, _N, _H, _z, _omega_2, _d_omega_2;
@@ -132,7 +136,6 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
         
     }
     
-
     return BackgroundSolution(sol.t, _phi, _dphi, _N, _H, _z, _omega_2, _d_omega_2, aH_star);
 }
 
@@ -197,11 +200,15 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     Solutions sol;
     sol(x, t0);
     desolver = dlsodar(4, 1, 100000);
+    double old = 0;
     while(x[2] < N_end)
     {
         desolver.integrate(t0, t0 + dt, &x[0], equations, end, static_cast<void*> (ptrs));
         sol(x, t0);
-        dt *= 1.0001;
+        double New = d_omega_2(x[0], x[1], pot);
+        double inc = abs(New - old) / dt;
+        dt = (1e-4 + 1 / pow(inc, 0.4));
+        old = New;
     }
     
     std::vector<double> _phi, _dphi, _N, _H, _z, _omega_2, _d_omega_2;
@@ -217,7 +224,6 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         _H.push_back(H(sol.x[i][0], sol.x[i][1], pot));
         
     }
-    
     
     return BackgroundSolution(sol.t, _phi, _dphi, _N, _H, _z, _omega_2, _d_omega_2, aH_star);
 }
