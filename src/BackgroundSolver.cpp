@@ -102,7 +102,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
     }
     
     double dphi_p = - pot->dV(phi_p) / (3 * sqrt(pot->V(phi_p) / 3));
-    std::vector<double> x0 = {23, -0.8, 0};
+    std::vector<double> x0 = {phi_p, dphi_p, 0};
     
     //Find N_end
     double t = t0;

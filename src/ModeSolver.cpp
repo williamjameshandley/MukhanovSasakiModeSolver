@@ -51,13 +51,13 @@ Eigen::Vector2cd ModeSolver::Match(double k)
 {
     //Setting Vacuum
     double aH_r = exp(Bsol.log_aH(N_r));
-    double epsilon = pow(0.5 * Bsol.dphi_H(N_r), 2);
+    double epsilon = 0.5 * pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q;
     
     Q[0] = sqrt(aH_r / (2 * k));
     
     if(vacuum == BD)
-        Q[1] = Q[0] * (0.5 - epsilon + (-I * k / aH_r));
+        Q[1] = Q[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
     else
         throw std::runtime_error("Initial conditions unknown");
     
