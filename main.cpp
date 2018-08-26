@@ -16,11 +16,11 @@ int main()
     auto pot_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
-    double N_star = 55, N_dagger = 3;
+    double N_star = 55, N_dagger = 5;
     
     //Solve Background Variables
-    auto sols = solve_equations(pot_ptr, N_star);
-   
+    auto sols = solve_equations(pot_ptr, N_star, N_dagger);
+    
     //////////////////////////////////////////////////////////////////////////////////
     std::cout<<"Finding PPS..."<<std::endl;
     double k0 = 1e-6, k1 = 1;

@@ -6,6 +6,15 @@ using Field    = void(*)(double qdot[], const double t, const double q[], void *
 using Jacobian = void(*)(double dfdq[], const double t, const double q[], void *data);
 using Root     = void(*)(double root[], const double t, const double q[], void *data);
 
+static Field f_func_;
+static Jacobian j_func_;
+static Jacobian g_func_;
+static void* data_;
+
+void f_(const int *, const double *t_, const double *y, double *ydot);
+void j_(const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *);
+void g_(const int *, const double *t_, const double *y, const int *, double *gout);
+
 class dlsodar
 {
     private:

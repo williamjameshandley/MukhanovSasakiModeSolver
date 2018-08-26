@@ -29,22 +29,28 @@ void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Root g
 void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data)
 { jt = 1; _integrate(t, tout, q, f_func, j_func, g_func, data); }
 
+void f_(const int *, const double *t_, const double *y, double *ydot)                                           {f_func_(ydot, *t_, y, data_); }
+void j_(const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *)    {j_func_(dfdy, *t_, y, data_);}
+void g_(const int *, const double *t_, const double *y, const int *, double *gout)                              {g_func_(gout, *t_, y, data_);}
+
+
 void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data){
 
-    auto f = [f_func,data](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
-    auto j = [j_func,data](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
-    auto g = [g_func,data](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
+    data_ = data;
+    f_func_ = f_func;
+    j_func_ = j_func;
+    g_func_ = g_func;
 
     iwork[5] = max_steps;
 
     dlsodar_(
-            function_ptr(f),
+            f_,
             &neq, q, &t, &tout,
             &itol, &rtol[0], &atol[0],
             &itask, &istate, &iopt,
             &rwork[0], &lrw, &iwork[0], &liw,
-            function_ptr(j), &jt,
-            function_ptr(g), &ng,
+            j_, &jt,
+            g_, &ng,
             &jroot[0]
             );
     // @todo istate processing

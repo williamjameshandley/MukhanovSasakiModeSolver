@@ -1,6 +1,7 @@
 #pragma once
 
-extern "C" void dlsodar_(void (*f)(const int *neq, const double *t, const double *y, double *ydot),
+extern "C" void dlsodar_(
+        void (*f)(const int *neq, const double *t, const double *y, double *ydot),
 		const int *neq, double *y, double *t, const double *tout,
 		const int *itol, const double *rtol, const double *atol,
 		const int *itask, int *istate, const int *iopt,

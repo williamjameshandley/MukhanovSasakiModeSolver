@@ -56,9 +56,6 @@ void inflation_end(double g[], const double, const double x[], void* data)
         g[0] = (-H(x, pot) + 0.5 * x[1] * x[1] / H(x, pot));
     else if(p < 0)
         g[0] = p;
-    
-    //////Fix THIS//////
-    g[1] = params[0] - x[2];
 }
 
 void inflation_begin(double g[], const double, const double x[], void* data)
@@ -123,7 +120,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
     double old = d_omega_2(&x[0], pot);
     while(x[2] < N_end)
     {
-        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, ptrs);
+        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
         sol(x, t);
         dt *= 1.001;
         double New = d_omega_2(&x[0], pot);
@@ -138,6 +135,85 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
         old = New;
     }
 
+    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
+    
+    double aH_star = exp(_log_aH(N_end - N_star));
+    
+    return BackgroundSolution(_omega_2, _log_aH, _dphi_H, _N_extrema, aH_star, N_end);
+}
+
+BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger)
+{
+    void* ptrs[2];
+    ptrs[0] = static_cast<void*> (pot);
+    double params[2];
+    ptrs[1] = static_cast<void*> (params);
+    
+    double t0 = 1;
+    double dphi_p = - sqrt(2.0/3);
+    
+    double phi_p = 0, N_temp_d = 0, N_end = 0;
+    while(N_end < N_star + N_dagger)
+    {
+        phi_p += 0.5;
+        double t = t0;
+        std::vector<double> x = {phi_p, dphi_p, 0};
+        dlsodar desolver(3, 1, 1000000);
+        desolver.integrate(t, 1e10, &x[0], equations, check, static_cast<void*> (ptrs));
+        N_end = x[2];
+    }
+    while(abs(N_temp_d - N_dagger) > 0.01)
+    {
+        phi_p += 0.001;
+        double t = t0;
+        std::vector<double> x = {phi_p, dphi_p, 0};
+        dlsodar desolver(3, 1, 1000000);
+        desolver.integrate(t, 1e10, &x[0], equations, inflation_end, static_cast<void*> (ptrs));
+        N_end = x[2];
+        
+        t = t0;
+        x = {phi_p, dphi_p, 0};
+        desolver = dlsodar(3, 1, 100000);
+        desolver.integrate(t, 1e10, &x[0], equations, inflation_begin, static_cast<void*> (ptrs));
+        double NN = x[2];
+        
+        double params[2];
+        params[0] = N_end - N_star;
+        ptrs[1] = static_cast<void*> (params);
+        desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*> (ptrs));
+        N_temp_d = x[2] - NN;
+    }
+
+    std::vector<double> x0 = {phi_p, dphi_p, 0};
+    
+    std::vector<double> _N_extrema;
+    //Run Solver
+    double dt = 1e-2;
+    auto t = t0;
+    auto x = x0;
+    Solutions sol;
+    sol(x, t);
+    dlsodar desolver(3, 1, 100000);
+    double old = d_omega_2(&x[0], pot);
+    while(x[2] < N_end)
+    {
+        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+        sol(x, t);
+        dt *= 1.001;
+        double New = d_omega_2(&x[0], pot);
+        if(old < 0 and New > 0)
+        {
+            _N_extrema.push_back(x[2]);
+        }
+        else if(old > 0 and New < 0)
+        {
+            _N_extrema.push_back(x[2]);
+        }
+        old = New;
+    }
+    
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
@@ -190,13 +266,13 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     
     _Var.insert(N_pair[0].first, Var(&x0[0], pot));
     
-    desolver = dlsodar(3, 2, 100000);
+    desolver = dlsodar(3, 1, 10000);
     t = t0;
     x = x0;
     for(size_t n = 1; n < N_pair.size(); n++)
     {
         params[0] = N_pair[n].first;
-        desolver.integrate(t, 1e10, &x[0], equations, Find_N, ptrs);
+        desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
         
         _Var.insert(N_pair[n].first, Var(&x[0], pot));
     }
@@ -209,7 +285,7 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     int count = 0;
     while(N_pair.size() != 0)
     {
-        desolver = dlsodar(3, 2, 100000);
+        desolver = dlsodar(3, 1, 100000);
         for(size_t n = 0; n < N_pair.size(); n++)
         {
             N_i = N_pair[n].first;
@@ -219,12 +295,12 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
             x = x0;
             auto N_m1 = (2 * N_i + N_f) / 3.0;
             params[0] = N_m1;
-            desolver.integrate(t, 1e10, &x[0], equations, Find_N, ptrs);
+            desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
             std::vector<double> x_m1 = x;
             
             auto N_m2 = (N_i + 2 * N_f) / 3.0;
             params[0] = N_m2;
-            desolver.integrate(t, 1e10, &x[0], equations, Find_N, ptrs);
+            desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
             std::vector<double> x_m2 = x;
             
             count += 2;

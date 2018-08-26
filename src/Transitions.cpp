@@ -8,7 +8,7 @@ double Transitions::True(double N, double k)
 TransitionsSolution Transitions::Find(double k, double error)
 {
     ///FIND WAY TO GET RID OF THIS////////////////////
-    std::vector<double> N(100);
+    std::vector<double> N(10000);
     for(size_t o = 0; o < N.size(); o++)
     {
         N[o] = 1.0 * o * Bsol.N_end / N.size();
@@ -30,6 +30,7 @@ TransitionsSolution Transitions::Find(double k, double error)
             old = New;
         }
     }
+
     ///FIND WAY TO GET RID OF THIS////////////////////
     
     //Find Log
