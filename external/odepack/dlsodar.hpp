@@ -2,9 +2,9 @@
 #include <vector>
 #include <functional>
 
-using Field    = std::function<void(double qdot[], const double t, const double q[], void *data)>;
-using Jacobian = std::function<void(double dfdq[], const double t, const double q[], void *data)>;
-using Root     = std::function<void(double root[], const double t, const double q[], void *data)>;
+using Field    = void(*)(double qdot[], const double t, const double q[], void *data);
+using Jacobian = void(*)(double dfdq[], const double t, const double q[], void *data);
+using Root     = void(*)(double root[], const double t, const double q[], void *data);
 
 class dlsodar
 {

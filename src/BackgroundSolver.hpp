@@ -2,25 +2,29 @@
 #include <iostream>
 #include <vector>
 #include <odepack/dlsodar.hpp>
+#include <math.h>
+#include <stddef.h>
 #include "Potential.hpp"
+#include "linear_interpolation.hpp"
 
 void equations(double dx_dt[], const double t, const double x[], void* data);
-double H(double phi, double dphi, Potential* pot);
-double omega_2(double phi, double dphi, Potential* pot);
-double d_omega_2(double phi, double dphi, Potential* pot);
+double dphi_H(const double x[], Potential* pot);
+double H(const double x[], Potential* pot);
+double omega_2(const double x[], Potential* pot);
+double d_omega_2(const double x[], Potential* pot);
 
 void check(double g[], const double, const double x[], void* data);
-void end(double g[], const double, const double x[], void* data);
-void begin(double g[], const double, const double x[], void* data);
-void N_star_check(double g[], const double, const double x[], void* data);
+void inflation_end(double g[], const double, const double x[], void* data);
+void inflation_begin(double g[], const double, const double x[], void* data);
+void Find_N(double g[], const double, const double x[], void* data);
 
 struct Solutions
 {
     std::vector< std::vector<double> > x;
     std::vector< double > t;
-
+    
     Solutions() : x{}, t{} {}
-  
+    
     void operator()( const std::vector<double> &x_ , double t_ )
     {
         x.push_back( x_ );
@@ -30,20 +34,20 @@ struct Solutions
 
 struct BackgroundSolution
 {
-    BackgroundSolution(std::vector<double> _t, std::vector<double> _phi, std::vector<double> _dphi,  std::vector<double> _N, std::vector<double> _H, std::vector<double> _z, std::vector<double> _omega_2, std::vector<double> _d_omega_2, double _aH_star) :
-    t{_t}, phi{_phi}, dphi{_dphi}, N{_N}, H{_H}, z{_z}, omega_2{_omega_2}, d_omega_2{_d_omega_2}, aH_star{_aH_star} {}
-
-    std::vector<double> t;
-    std::vector<double> phi;
-    std::vector<double> dphi;
-    std::vector<double> N;
-    std::vector<double> H;
-    std::vector<double> z;
-    std::vector<double> omega_2;
-    std::vector<double> d_omega_2;
+    BackgroundSolution(LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _log_aH, LinearInterpolator<double, double> _dphi_H, std::vector<double> _N_extrema, double _aH_star, double _N_end) :
+    omega_2{_omega_2}, log_aH{_log_aH}, dphi_H{_dphi_H}, N_extrema{_N_extrema}, aH_star{_aH_star}, N_end{_N_end} {}
+    
+    LinearInterpolator<double, double> omega_2;
+    LinearInterpolator<double, double> log_aH;
+    LinearInterpolator<double, double> dphi_H;
+    std::vector<double> N_extrema;
     double aH_star;
+    double N_end;
     
 };
 
+
+std::vector<double> Solve_N(double t0, std::vector<double> x0, void* ptrs[]);
 BackgroundSolution solve_equations(Potential* pot, double N_star);
 BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger);
+LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double> x0, std::function<double(const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);

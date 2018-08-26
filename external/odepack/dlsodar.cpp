@@ -5,8 +5,8 @@
 dlsodar::dlsodar(int neq_, int ng_, int max_steps_): 
         neq{neq_},
         itol{1},
-        rtol{1e-8},
-        atol{1e-8},
+        rtol{1e-12},
+        atol{1e-12},
         itask{1},
         istate{1},
         iopt{1},
@@ -31,9 +31,9 @@ void dlsodar::integrate(double &t, double tout, double q[], Field f_func, Jacobi
 
 void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data){
 
-    auto f = [&](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
-    auto j = [&](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
-    auto g = [&](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
+    auto f = [f_func,data](const int *, const double *t_, const double *y, double *ydot)                                        -> void {f_func(ydot, *t_, y, data);};
+    auto j = [j_func,data](const int *, const double *t_, const double *y, const int *, const int *, double *dfdy, const int *) -> void {j_func(dfdy, *t_, y, data);};
+    auto g = [g_func,data](const int *, const double *t_, const double *y, const int *, double *gout)                           -> void {g_func(gout, *t_, y, data);};
 
     iwork[5] = max_steps;
 

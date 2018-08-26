@@ -21,16 +21,18 @@ struct TransitionsSolution
 
 struct Transitions
 {
-   
-    double N_i, N_f;
+    
+    double N_initial, N_final;
     BackgroundSolution Bsol;
-
-    Transitions(double _N_i, double _N_f, BackgroundSolution _Bsol):
-        N_i(_N_i), N_f(_N_f), Bsol{_Bsol} { }
-
+    
+    Transitions(double _N_initial, double _N_final, BackgroundSolution _Bsol):
+    N_initial(_N_initial), N_final(_N_final), Bsol{_Bsol} { }
+    
     TransitionsSolution Find(double k, double error);
-    std::vector<double> Linear(double N_initial, double N_final, LinearInterpolator<double, double> True, double lim);
-    std::vector<double> Log(double N_initial, double N_final, LinearInterpolator<double, double> True, double lim);
+    std::vector<double> Linear(double k, double N_initial, double N_final, double lim);
+    std::vector<double> Log(double k, double N_initial, double N_final, double lim);
+    
+    double True(double N,double k);
     
 };
 
