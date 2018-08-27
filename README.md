@@ -15,7 +15,7 @@
 
 
 ## Potentials 
-- <img src="https://latex.codecogs.com/gif.latex?s=\text { sensor reading }  " /> 
+
 ### Polynomial: 1/2 * m^2 * phi^2 + 1/24 * lambda * phi^4
 * Polynomial pot(m)
 * Polynomial pot(m, lambda) 
