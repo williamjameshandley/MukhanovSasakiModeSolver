@@ -1,8 +1,4 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <math.h>
-#include <tuple>
 #include "BackgroundSolver.hpp"
 #include "linear_interpolation.hpp"
 

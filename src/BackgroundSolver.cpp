@@ -324,13 +324,13 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
             if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
+                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_f));
                 n += 1;
                 _Var.insert(N_m1, (temp_true1));
             }
             if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
             {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_m1, N_m2));
+                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m2));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
                 n += 1;
                 _Var.insert(N_m2, (temp_true2));

@@ -6,52 +6,7 @@ Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD}, PPS{} {}
 void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
 {
     vacuum = _vacuum;
-    N_r = _N_r;
-}
-
-Eigen::Matrix2d ModeSolver::Airy_Mat()
-{
-    Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
-    
-    for(size_t n = 0; n < Tsol.lin_a.size(); n++)
-    {
-        double p = pow(abs(Tsol.lin_b[n]), 1.0/3.0);
-        double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
-        double x1 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n+1]) /p/p);
-        
-        if(Tsol.lin_b[n] < 0)
-        {
-            Eigen::Matrix2d A = Airy_gen(p, x0, x1);
-            Mat = A * Mat;
-        }
-        else if(Tsol.lin_b[n] > 0)
-        {
-            Eigen::Matrix2d A = Airy_gen(-p, x0, x1);
-            Mat = A * Mat;
-        }
-    }
-
-    return Mat;
-}
-
-Eigen::Matrix2cd ModeSolver::Bessel_Mat()
-{
-    Eigen::Matrix2cd Mat = Eigen::Matrix2d::Identity();
-    
-    if(Tsol.log_a.size() != 0)
-    {
-        for(size_t n = 0; n < Tsol.log_a.size(); n++)
-        {
-            double p = Tsol.log_b[n];
-            double x0 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n]);
-            double x1 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1]);
-            
-            Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
-            
-            Mat = B * Mat;
-        }
-    }
-    return Mat;
+    N_r = Bsol.N_end - _N_r;
 }
 
 Eigen::Vector2cd ModeSolver::Match(double k)
@@ -88,63 +43,49 @@ double ModeSolver::Find_PPS(double k)
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
 }
 
-void ModeSolver::Construct_PPS(double k_i, double k_f, double error = 1e-3)
+Eigen::Matrix2d ModeSolver::Airy_Mat()
 {
-    std::vector<std::pair<double, double>> k_pair;
+    Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
     
-    k_pair.push_back(std::make_pair(k_i, k_f));
-    
-    PPS.insert(k_pair[0].first, Find_PPS(k_pair[0].first));
-    PPS.insert(k_pair[0].second, Find_PPS(k_pair[0].second));
-    
-    double lim = error;
-    while(k_pair.size() != 0)
+    for(size_t n = 0; n < Tsol.lin_a.size(); n++)
     {
-        for(size_t n = 0; n < k_pair.size(); n++)
+        double p = pow(abs(Tsol.lin_b[n]), 1.0/3.0);
+        double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
+        double x1 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n+1]) /p/p);
+        
+        if(Tsol.lin_b[n] < 0)
         {
-            k_i = k_pair[n].first;
-            k_f = k_pair[n].second;
-            
-            auto k_m1 = exp((2 * log(k_i) + log(k_f)) / 3.0);
-            auto k_m2 = exp((log(k_i) + 2 * log(k_f)) / 3.0);
-            
-            auto temp_approx1 = (PPS(k_m1));
-            auto temp_approx2 = (PPS(k_m2));
-            auto temp_true1 = (Find_PPS(k_m1));
-            auto temp_true2 = (Find_PPS(k_m2));
-            
-            k_pair.erase(k_pair.begin() + static_cast<int>(n));
-            
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_m2));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_m2, k_f));
-                n += 2;
-                PPS.insert(k_m1, (temp_true1));
-                PPS.insert(k_m2, (temp_true2));
-                k_plot.push_back(k_m1);
-                k_plot.push_back(k_m2);
-            }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_m2));
-                n += 1;
-                PPS.insert(k_m1, (temp_true1));
-                k_plot.push_back(k_m1);
-            }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_m1, k_m2));
-                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m2, k_f));
-                n += 1;
-                PPS.insert(k_m2, (temp_true2));
-                k_plot.push_back(k_m2);
-            }
+            Eigen::Matrix2d A = Airy_gen(p, x0, x1);
+            Mat = A * Mat;
+        }
+        else if(Tsol.lin_b[n] > 0)
+        {
+            Eigen::Matrix2d A = Airy_gen(-p, x0, x1);
+            Mat = A * Mat;
         }
     }
-    std::sort(k_plot.begin(), k_plot.end());
+    
+    return Mat;
+}
+
+Eigen::Matrix2cd ModeSolver::Bessel_Mat()
+{
+    Eigen::Matrix2cd Mat = Eigen::Matrix2d::Identity();
+    
+    if(Tsol.log_a.size() != 0)
+    {
+        for(size_t n = 0; n < Tsol.log_a.size(); n++)
+        {
+            double p = Tsol.log_b[n];
+            double x0 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n]);
+            double x1 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1]);
+            
+            Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
+            
+            Mat = B * Mat;
+        }
+    }
+    return Mat;
 }
 
 Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
@@ -207,4 +148,98 @@ Eigen::Matrix2cd ModeSolver::Bessel_gen(double p, double x0, double x1)
           Jp, Yp;
     
     return B1 * B0.inverse();
+}
+
+void ModeSolver::Construct_PPS(double k_i, double k_f, double error = 1e-3)
+{
+    std::vector<std::pair<double, double>> k_pair;
+    
+    k_pair.push_back(std::make_pair(k_i, k_f));
+    
+    PPS.insert(k_pair[0].first, (Find_PPS(k_pair[0].first)));
+    PPS.insert(k_pair[0].second, (Find_PPS(k_pair[0].second)));
+    
+    double lim = error;
+    while(k_pair.size() != 0)
+    {
+        for(size_t n = 0; n < k_pair.size(); n++)
+        {
+            k_i = k_pair[n].first;
+            k_f = k_pair[n].second;
+            
+            auto k_m1 = exp((3 * log(k_i) + log(k_f)) / 4.0);
+            auto k_m2 = exp((log(k_i) + log(k_f)) / 2.0);
+            auto k_m3 = exp((log(k_i) + 3 * log(k_f)) / 4.0);
+            
+            auto temp_approx1 = (PPS(k_m1));
+            auto temp_approx2 = (PPS(k_m2));
+            auto temp_approx3 = (PPS(k_m3));
+            auto temp_true1 = (Find_PPS(k_m1));
+            auto temp_true2 = (Find_PPS(k_m2));
+            auto temp_true3 = (Find_PPS(k_m3));
+            
+            k_pair.erase(k_pair.begin() + static_cast<int>(n));
+            
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) > lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_f));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_i, k_m2));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 3, std::make_pair(k_m2, k_f));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 4, std::make_pair(k_i, k_m3));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 5, std::make_pair(k_m3, k_f));
+                n += 5;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) > lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m2));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m2, k_f));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_i, k_m3));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 3, std::make_pair(k_m3, k_f));
+                n += 3;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) > lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_f));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_i, k_m3));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 3, std::make_pair(k_m3, k_f));
+                n += 3;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) > lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m3));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m3, k_f));
+                n += 1;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) < lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_f));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 2, std::make_pair(k_i, k_m2));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 3, std::make_pair(k_m2, k_f));
+                n += 3;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) < lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m2));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m2, k_f));
+                n += 1;
+            }
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim and abs(temp_true3 - temp_approx3) / abs(temp_true3) < lim)
+            {
+                k_pair.insert(k_pair.begin() + static_cast<int>(n), std::make_pair(k_i, k_m1));
+                k_pair.insert(k_pair.begin() + static_cast<int>(n) + 1, std::make_pair(k_m1, k_f));
+                n += 1;
+            }
+            
+            PPS.insert(k_m1, (temp_true1));
+            PPS.insert(k_m2, (temp_true2));
+            PPS.insert(k_m3, (temp_true3));
+            k_plot.push_back(k_m1);
+            k_plot.push_back(k_m2);
+            k_plot.push_back(k_m3);
+        }
+    }
+    std::sort(k_plot.begin(), k_plot.end());
 }
