@@ -5,16 +5,15 @@ double Transitions::True(double N, double k)
     return Bsol.omega_2(N) + k * k / exp(2 * Bsol.log_aH(N));
 }
 
-TransitionsSolution Transitions::Find(double k, double error)
+double Transitions::Find_N_log_end(double k, double N_i)
 {
-    ///FIND WAY TO GET RID OF THIS////////////////////
     std::vector<double> N(10000);
     for(size_t o = 0; o < N.size(); o++)
     {
         N[o] = 1.0 * o * Bsol.N_end / N.size();
     }
     //Find Log to Lin start point
-    double N_log_end = N_initial;
+    double N_log_end = N_i;
     if(True(N[0], k) > 0)
     {
         double old = 0;
@@ -22,7 +21,7 @@ TransitionsSolution Transitions::Find(double k, double error)
         for(size_t o = 0; o < N.size(); o++)
         {
             double New = True(N[o], k) - 1;
-            if(New < 0 and old > 0 and count == 0 and N[o-1] > N_initial)
+            if(New < 0 and old > 0 and count == 0 and N[o-1] > N_i)
             {
                 N_log_end = N[o-1];
                 count += 1;
@@ -30,8 +29,13 @@ TransitionsSolution Transitions::Find(double k, double error)
             old = New;
         }
     }
+    
+    return N_log_end;
+}
 
-    ///FIND WAY TO GET RID OF THIS////////////////////
+TransitionsSolution Transitions::Find(double k, double error)
+{
+    double N_log_end = Find_N_log_end(k, N_initial);
     
     //Find Log
     std::vector<double> log_N_step;
@@ -41,8 +45,8 @@ TransitionsSolution Transitions::Find(double k, double error)
         log_N_step = Log(k, N_initial, N_log_end, error);
         for(size_t l = 0; l < log_N_step.size() - 1; l++)
         {
-            log_b.push_back((log(True(log_N_step[l+1], k)) - log(True(log_N_step[l], k))) / (log_N_step[l+1]-log_N_step[l]));
-            log_a.push_back(-log_b[l] * log_N_step[l] + log(True(log_N_step[l], k)));
+            log_b.push_back(0.5 * (log(True(log_N_step[l+1], k)) - log(True(log_N_step[l], k))) / (log_N_step[l+1]-log_N_step[l]));
+            log_a.push_back(-log_b[l] * log_N_step[l] + 0.5 * log(True(log_N_step[l], k)));
         }
     }
     
@@ -119,7 +123,7 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
             
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
             
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) > lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
@@ -130,7 +134,7 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
                 N_step.push_back(N_m1);
                 N_step.push_back(N_m2);
             }
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
@@ -138,7 +142,7 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
                 lin_Seg.insert(N_m1, (temp_true1));
                 N_step.push_back(N_m1);
             }
-            if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_m1, N_m2));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
@@ -205,7 +209,7 @@ std::vector<double> Transitions::Log(double k, double N_i, double N_f, double li
             
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
             
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) > lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
@@ -216,7 +220,7 @@ std::vector<double> Transitions::Log(double k, double N_i, double N_f, double li
                 N_step.push_back(N_m1);
                 N_step.push_back(N_m2);
             }
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
@@ -224,7 +228,7 @@ std::vector<double> Transitions::Log(double k, double N_i, double N_f, double li
                 log_Seg.insert(N_m1, (temp_true1));
                 N_step.push_back(N_m1);
             }
-            if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
+            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
             {
                 N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_m1, N_m2));
                 N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));

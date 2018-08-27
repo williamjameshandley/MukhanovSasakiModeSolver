@@ -28,9 +28,10 @@ struct Transitions
     Transitions(double _N_initial, double _N_final, BackgroundSolution _Bsol):
     N_initial(_N_initial), N_final(_N_final), Bsol{_Bsol} { }
     
+    double Find_N_log_end(double k, double N_i);
     TransitionsSolution Find(double k, double error);
-    std::vector<double> Linear(double k, double N_initial, double N_final, double lim);
-    std::vector<double> Log(double k, double N_initial, double N_final, double lim);
+    std::vector<double> Linear(double k, double N_i, double N_f, double lim);
+    std::vector<double> Log(double k, double N_i, double N_f, double lim);
     
     double True(double N,double k);
     

@@ -154,7 +154,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     double t0 = 1;
     double dphi_p = - sqrt(2.0/3);
     
-    double phi_p = 0, N_temp_d = 0, N_end = 0;
+    double phi_p = 0, N_temp_d = 0, N_end = 0, NN = 0, N_temp_s = 0;
     while(N_end < N_star + N_dagger)
     {
         phi_p += 0.5;
@@ -177,12 +177,12 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         x = {phi_p, dphi_p, 0};
         desolver = dlsodar(3, 1, 100000);
         desolver.integrate(t, 1e10, &x[0], equations, inflation_begin, static_cast<void*> (ptrs));
-        double NN = x[2];
+        NN = x[2];
         
-        double params[2];
         params[0] = N_end - N_star;
         ptrs[1] = static_cast<void*> (params);
         desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*> (ptrs));
+        N_temp_s = x[2];
         N_temp_d = x[2] - NN;
     }
 
@@ -266,7 +266,7 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     
     _Var.insert(N_pair[0].first, Var(&x0[0], pot));
     
-    desolver = dlsodar(3, 1, 10000);
+    desolver = dlsodar(3, 1, 100000);
     t = t0;
     x = x0;
     for(size_t n = 1; n < N_pair.size(); n++)
@@ -285,7 +285,7 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     int count = 0;
     while(N_pair.size() != 0)
     {
-        desolver = dlsodar(3, 1, 100000);
+        desolver = dlsodar(3, 1, 1000000);
         for(size_t n = 0; n < N_pair.size(); n++)
         {
             N_i = N_pair[n].first;

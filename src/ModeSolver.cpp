@@ -13,7 +13,7 @@ Eigen::Matrix2d ModeSolver::Airy_Mat()
 {
     Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
     
-    for(size_t n = Tsol.lin_N_step.size() - 2; n != static_cast<size_t>(-1); n--)
+    for(size_t n = 0; n < Tsol.lin_a.size(); n++)
     {
         double p = pow(abs(Tsol.lin_b[n]), 1.0/3.0);
         double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
@@ -21,7 +21,7 @@ Eigen::Matrix2d ModeSolver::Airy_Mat()
         
         Eigen::Matrix2d A = Airy_gen(p, x0, x1);
         
-        Mat *= A;
+        Mat = A * Mat;
     }
 
     return Mat;
@@ -33,15 +33,15 @@ Eigen::Matrix2cd ModeSolver::Bessel_Mat()
     
     if(Tsol.log_a.size() != 0)
     {
-        for(size_t n = Tsol.log_N_step.size() - 2; n != static_cast<size_t>(-1); n--)
+        for(size_t n = 0; n < Tsol.log_a.size(); n++)
         {
-            double p = 2.0 / Tsol.log_b[n];
-            double x0 = exp(0.5 * (Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n])) * p;
-            double x1 = exp(0.5 * (Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1])) * p;
+            double p = Tsol.log_b[n];
+            double x0 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n]);
+            double x1 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1]);
             
             Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
             
-            Mat *= B;
+            Mat = B * Mat;
         }
     }
     return Mat;
@@ -53,7 +53,7 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     double aH_r = exp(Bsol.log_aH(N_r));
     double epsilon = 0.5 * pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q;
-    
+
     Q[0] = sqrt(aH_r / (2 * k));
     
     if(vacuum == BD)
@@ -72,7 +72,7 @@ double ModeSolver::Find_PPS(double k)
     
     double N_f = log(k / 0.05) + 55;
     Transitions T(N_r, N_f, Bsol);
-    Tsol = T.Find(k, 1e-4);
+    Tsol = T.Find(k, 1e-5);
     
     Eigen::Vector2cd Q = Match(k);
     
@@ -184,15 +184,15 @@ Eigen::Matrix2cd ModeSolver::Bessel_gen(double p, double x0, double x1)
 {
     Eigen::Matrix2cd B0, B1;
     
-    auto J0 = Bessel_J(0, x0);
-    auto Y0 = Bessel_Y(0, x0);
-    auto Jp0 = -x0 * Bessel_J(1, x0) / p;
-    auto Yp0 = -x0 * Bessel_Y(1, x0) / p;
+    auto J0 = Bessel_J(0, x0 / p);
+    auto Y0 = Bessel_Y(0, x0 / p);
+    auto Jp0 = -x0 * Bessel_J(1, x0 / p);
+    auto Yp0 = -x0 * Bessel_Y(1, x0 / p);
     
-    auto J = Bessel_J(0, x1);
-    auto Y = Bessel_Y(0, x1);
-    auto Jp = -x1 * Bessel_J(1, x1) / p;
-    auto Yp = -x1 * Bessel_Y(1, x1) / p;
+    auto J = Bessel_J(0, x1 / p);
+    auto Y = Bessel_Y(0, x1 / p);
+    auto Jp = -x1 * Bessel_J(1, x1 / p);
+    auto Yp = -x1 * Bessel_Y(1, x1 / p);
     
     B0 << J0,  Y0,
           Jp0, Yp0;
