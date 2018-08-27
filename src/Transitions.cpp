@@ -29,7 +29,6 @@ double Transitions::Find_N_log_end(double k, double N_i)
             old = New;
         }
     }
-    
     return N_log_end;
 }
 

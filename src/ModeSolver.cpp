@@ -19,9 +19,16 @@ Eigen::Matrix2d ModeSolver::Airy_Mat()
         double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
         double x1 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n+1]) /p/p);
         
-        Eigen::Matrix2d A = Airy_gen(p, x0, x1);
-        
-        Mat = A * Mat;
+        if(Tsol.lin_b[n] < 0)
+        {
+            Eigen::Matrix2d A = Airy_gen(p, x0, x1);
+            Mat = A * Mat;
+        }
+        else if(Tsol.lin_b[n] > 0)
+        {
+            Eigen::Matrix2d A = Airy_gen(-p, x0, x1);
+            Mat = A * Mat;
+        }
     }
 
     return Mat;
@@ -72,7 +79,7 @@ double ModeSolver::Find_PPS(double k)
     
     double N_f = log(k / 0.05) + 55;
     Transitions T(N_r, N_f, Bsol);
-    Tsol = T.Find(k, 1e-5);
+    Tsol = T.Find(k, 1e-4);
     
     Eigen::Vector2cd Q = Match(k);
     
@@ -178,7 +185,6 @@ Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
     
     return A;
 }
-
 
 Eigen::Matrix2cd ModeSolver::Bessel_gen(double p, double x0, double x1)
 {
