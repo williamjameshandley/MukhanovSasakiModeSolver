@@ -10,7 +10,20 @@
 
 enum VacuumChoice { BD, HD, RST };
 
-class ModeSolver
+class BasicModeSolver
+{
+    public:
+        LinearInterpolator<double, double> PPS;
+        std::vector<double> k_plot; 
+
+        BasicModeSolver() : PPS{}, k_plot{} {};
+
+        void Construct_PPS(double k0, double k1, double error);
+        virtual double Find_PPS(double k) =0;
+};
+
+
+class ModeSolver : public BasicModeSolver
 {
     public:
         BackgroundSolution Bsol;    
@@ -18,8 +31,7 @@ class ModeSolver
     
         double N_r, PPS_error;
         VacuumChoice vacuum;
-        std::vector<double> k_plot; 
-        LinearInterpolator<double, double> OMEGA_2, Z, H, DPHI, PPS;
+        LinearInterpolator<double, double> OMEGA_2, Z, H, DPHI;
     
         ModeSolver(BackgroundSolution _Bsol);
     
@@ -31,7 +43,11 @@ class ModeSolver
         Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
         Eigen::Matrix2cd Bessel_gen(double p, double x1, double x0);
     
-        double Find_PPS(double k);
-        void Construct_PPS(double k0, double k1, double error);
-    
+        virtual double Find_PPS(double k) override;
+};
+
+class NumericModeSolver : public BasicModeSolver
+{
+    public:
+        virtual double Find_PPS(double k) override;
 };
