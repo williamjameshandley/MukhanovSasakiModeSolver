@@ -33,6 +33,10 @@ double ModeSolver::Find_PPS(double k)
     k *= Bsol.aH_star / 0.05;
     
     double N_f = log(k / 0.05) + 55;
+    if(N_f > Bsol.N_end)
+    {
+        N_f = Bsol.N_end;
+    }
     Transitions T(N_r, N_f, Bsol);
     Tsol = T.Find(k, 1e-4);
     
