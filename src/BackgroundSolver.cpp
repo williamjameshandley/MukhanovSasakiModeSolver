@@ -154,7 +154,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     double t0 = 1;
     double dphi_p = - sqrt(2.0/3);
     
-    double phi_p = 0, N_temp_d = 0, N_end = 0, NN = 0, N_temp_s = 0;
+    double phi_p = 0, N_temp_d = 0, N_end = 0, NN = 0;
     while(N_end < N_star + N_dagger)
     {
         phi_p += 0.5;
@@ -164,9 +164,10 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         desolver.integrate(t, 1e10, &x[0], equations, check, static_cast<void*> (ptrs));
         N_end = x[2];
     }
+    double phi_old = phi_p - 0.5;
+    phi_p += 0.001;
     while(abs(N_temp_d - N_dagger) > 0.01)
     {
-        phi_p += 0.001;
         double t = t0;
         std::vector<double> x = {phi_p, dphi_p, 0};
         dlsodar desolver(3, 1, 1000000);
@@ -182,8 +183,18 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         params[0] = N_end - N_star;
         ptrs[1] = static_cast<void*> (params);
         desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*> (ptrs));
-        N_temp_s = x[2];
         N_temp_d = x[2] - NN;
+        
+        if(N_temp_d < N_dagger)
+        {
+            phi_old = phi_p;
+            phi_p += 0.001;
+        }
+        else if(N_temp_d > N_dagger)
+        {
+            phi_p -= (phi_p - phi_old) / phi_p;
+        }
+        
     }
 
     std::vector<double> x0 = {phi_p, dphi_p, 0};

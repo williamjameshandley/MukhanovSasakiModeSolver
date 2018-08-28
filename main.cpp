@@ -29,7 +29,7 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     for(auto k : ms.k_plot)                                         //ms.k_plot are k points of linear intepolation
     {
-        mout << k << " " << (ms.PPS(k))<< std::endl;                //Call PPS linear interpolation for plotting
+        mout << k << " " << ms.PPS(k)<< std::endl;                  //Call PPS linear interpolation for plotting
     }
     mout.close();
     
