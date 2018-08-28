@@ -20,8 +20,8 @@ Set up:
 * Polynomial pot(m)
 * Polynomial pot(m, lambda) 
 
-Stepped Potential: 1/2 * m^2 * phi^2 * (1 + c * tanh((phi - phi_step) / d))
+### Stepped Potential: 1/2 * m^2 * phi^2 * (1 + c * tanh((phi - phi_step) / d))
 * Poly_Step pot(m, c, d, phi_step)
 
-Starobinsky: 3/4 * m^2 * (1 - exp(-sqrt(2/3) * phi))^2
+### Starobinsky: 3/4 * m^2 * (1 - exp(-sqrt(2/3) * phi))^2
 * Starobinsky pot(m)
