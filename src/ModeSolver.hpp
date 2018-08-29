@@ -50,8 +50,9 @@ class NumericModeSolver : public BasicModeSolver
 {
     public:
         Potential* pot;
-        double N_star, N_r;
-        NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : pot{_pot}, N_star{_N_star}, N_r{_N_r} {}
+        double N_star, N_dagger, N_r, phi_p, dphi_p, log_aH_star, phi_IC, dphi_IC, n_IC, N_end;
+        NumericModeSolver(Potential* _pot, double _N_star, double _N_r);
+        NumericModeSolver(Potential* _pot, double _N_star, double N_dagger, double _N_r);
     
         virtual double Find_PPS(double k) override;
 };
