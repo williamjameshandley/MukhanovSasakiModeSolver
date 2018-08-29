@@ -1,4 +1,5 @@
 #include "Transitions.hpp"
+#include <algorithm>
 
 double Transitions::True(double N, double k)
 {
