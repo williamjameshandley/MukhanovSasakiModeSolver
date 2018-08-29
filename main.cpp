@@ -15,7 +15,7 @@ int main()
     auto sols = solve_equations(potential_ptr, N_star, N_dagger);   //Solve Background Variables
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    double k0 = 1e-6, k1 = 1;                                       //k range
+    double k0 = 1e-6, k1 = 1e21;                                    //k range
     double N_r = sols.N_end - 2;                                    //Set Vacuum (no. e-folds before end of inflation)
     
     std::cout<<"Finding PPS Approximately..."<<std::endl;
@@ -36,7 +36,7 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     for(auto k : kplot)                                         //ms.k_plot are k points of linear intepolation
     {
-        mout << k << " " << N_ms.Find_PPS(k)<<"   "<<ms.Find_PPS(k)<<std::endl;    //Call PPS linear interpolation for plotting
+        mout << k << " " <<ms.Find_PPS(k)<<std::endl;    //Call PPS linear interpolation for plotting
     }
     mout.close();
     
