@@ -49,5 +49,9 @@ class ModeSolver : public BasicModeSolver
 class NumericModeSolver : public BasicModeSolver
 {
     public:
+        Potential* pot;
+        double N_star, N_r;
+        NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : pot{_pot}, N_star{_N_star}, N_r{_N_r} {}
+    
         virtual double Find_PPS(double k) override;
 };
