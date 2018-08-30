@@ -14,10 +14,13 @@ void __equations(double dx_dt[], const double, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    double log_k = log(params[2]);
     
     dx_dt[0] = x[1];
     dx_dt[1] = - (3 * _H(x[0], x[1], pot) * x[1] + pot->dV(x[0]));
     dx_dt[2] = _H(x[0], x[1], pot);
+    dx_dt[3] = exp(-x[2]);
 }
 
 void _equations(double dx_dt[], const double, const double x[], void* data)
@@ -88,6 +91,24 @@ void _Find_N(double g[], const double, const double x[], void* data)
     auto params = static_cast<double*> (ptr[1]);
     
     g[0] = params[0] - x[2];
+}
+
+void _start(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = (params[0] + log(200)) + (x[2] + log(_H(x[0], x[1], pot)));
+}
+
+void _finish(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = (params[0] - log(200)) + (x[2] + log(_H(x[0], x[1], pot)));
 }
 
 NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : pot{_pot}, N_star{_N_star}, N_r{_N_r}
@@ -315,6 +336,103 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
     auto B = (-R0 * dR1_IC + R1_IC * dR0) / det;
     
     PPS = (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(A * R1 + B * R2), 2);
+    
+    return PPS;
+}
+
+double NumericModeSolver::Find_PPS(double k)
+{
+    void* ptrs[2];
+    ptrs[0] = static_cast<void*> (pot);
+    double params[3];
+    ptrs[1] = static_cast<void*> (params);
+    
+    double t0 = 1;
+    double N_temp = 0;
+    phi_p = 0;
+    while(abs(N_temp - (N_star + 20)) > 0.1)
+    {
+        phi_p += 0.01;
+        int steps = 1000;
+        auto dx = (phi_p - 1e-5) / steps;
+        
+        N_temp = 0.5 * (pot->V(1e-5) / pot->dV(1e-5)) * dx;
+        for(int n = 1; n < steps; n++)
+        {
+            N_temp += (pot->V(dx * n) / pot->dV(dx * n)) * dx;
+        }
+        N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
+    }
+    
+    dphi_p = - pot->dV(phi_p) / (3 * sqrt(pot->V(phi_p) / 3));
+    std::vector<double> x0 = {phi_p, dphi_p, 0};
+    
+    //Find N_end
+    double t = t0;
+    std::vector<double> x = x0;
+    dlsodar desolver(3, 1, 1000000);
+    desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
+    N_end = x[2];
+    params[0] = N_end;
+    
+    //Find aH_star
+    params[0] = N_end - N_star;
+    t = t0;
+    x = x0;
+    desolver = dlsodar(3, 1, 1000000);
+    desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
+    log_aH_star = x[2] + log(_H(x[0], x[1], pot));
+    
+    k *= exp(log_aH_star) / (0.05);
+    
+    //Find BackgroundVar at N_start
+    params[0] = -log(k);
+    t = t0;
+    x = x0;
+    desolver = dlsodar(4, 1, 1000000);
+    desolver.integrate(t, 1e10, &x[0], __equations, _start, static_cast<void*> (ptrs));
+    auto t_start = t;
+    auto phi_start = x[0];
+    auto dphi_start = x[1];
+    auto n_start = x[2];
+    auto eta_start = x[3];
+    
+    //Find BackgroundVar at N_finish
+    params[0] = -log(k);
+    x = x0;
+    desolver = dlsodar(4, 1, 1000000);
+    desolver.integrate(t, 1e10, &x[0], __equations, _finish, static_cast<void*> (ptrs));
+    auto t_finish = t;
+    auto phi_finish = x[0];
+    auto dphi_finish = x[1];
+    auto n_finish = x[2];
+    auto eta_finish = x[3];
+    
+    //Find R1, R2 at eta_r for matching
+    double R1_IC = 1, R2_IC = 0, dR1_IC = 0, dR2_IC = 1;
+    //Find R1, R2 at end of inflation
+    double R1, R2, dR1, dR2;
+    
+    //Solve MS
+    params[2] = k;
+    x = {phi_start, dphi_start, n_start, 1, 0, 0, 1};
+    desolver = dlsodar(7, 1, 1000000);
+    desolver.integrate(t_start, t_finish, &x[0], _equations, _inflation_end, static_cast<void*> (ptrs));
+    R1 = x[3];
+    R2 = x[4];
+    dR1 = x[5];
+    dR2 = x[6];
+    
+    //Matching and find PPS
+    double PPS;
+    double Z = exp(n_start) * dphi_start / _H(phi_start, dphi_start, pot);
+    double dZ_Z = dz_z(phi_start, dphi_start, pot);
+    
+    //Set Vacuum Initial Conditions
+    auto R0 = (cos(k*eta_start) + I * sin(k*eta_start)) / (Z * sqrt(2 * k));
+    auto dR0 = (-1.0 * I * k * exp(-n_start) - dZ_Z) * R0;
+    
+    PPS = (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(R0 * R1 + dR0 * R2), 2);
     
     return PPS;
 }
