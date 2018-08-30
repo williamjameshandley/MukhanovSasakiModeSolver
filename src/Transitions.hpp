@@ -19,12 +19,13 @@ struct Transitions
 {
     
     double N_initial, N_final;
-    BackgroundSolution Bsol;
+    LinearInterpolator<double, double> omega_2, log_aH;
+    std::vector<double> N_extrema;
     
-    Transitions(double _N_initial, double _N_final, BackgroundSolution _Bsol):
-    N_initial(_N_initial), N_final(_N_final), Bsol{_Bsol} { }
+    Transitions(double _N_initial, double _N_final, LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _log_aH, std::vector<double> _N_extrema):
+    N_initial(_N_initial), N_final(_N_final), omega_2{_omega_2}, log_aH{_log_aH}, N_extrema{_N_extrema} { }
     
-    double Find_N_log_end(double k, double N_i);
+    double Find_N_log_end(double k, double N_i, double N_f);
     TransitionsSolution Find(double k, double error);
     std::vector<double> Linear(double k, double N_i, double N_f, double lim);
     std::vector<double> Log(double k, double N_i, double N_f, double lim);

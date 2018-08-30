@@ -21,7 +21,19 @@ double H(const double x[], Potential* pot)
 double omega_2(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return (pot->ddV(phi) + 1.5 * pot->dV(phi) * dphi / H(x, pot)) / pow(H(x, pot), 2) - (pow(dphi/H(x, pot), 2) - 6) * (5 * pow(dphi/H(x, pot), 2) - 6) / 16.0;
+    return -9.0/4 + pow(3 * dphi / (2 * H(x, pot)), 2) - 5 * pow(0.5 * dphi / H(x, pot), 4) + 1.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3) + pot->ddV(phi) / pow(H(x, pot), 2);
+}
+
+double omega_2_tensor(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return -9.0/4 - 3 * pow(0.5 * dphi / H(x, pot), 2) + 3 * pow(0.5 * dphi / H(x, pot), 4) - 0.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3);
+}
+
+double d_omega_2_tensor(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return (3 * pow(dphi , 6)) / (8. * pow(H(x, pot), 6)) - (3 * pow(dphi, 4)) / pow(H(x, pot), 4) + (9 * pow(dphi, 2))/(2. * pow(H(x, pot) ,2)) - (3 * pow(dphi, 3) * pot->dV(phi)) / (2. * pow(H(x, pot), 5)) + (3 * dphi * pot->dV(phi)) / pow(H(x, pot), 3) + pow(pot->dV(phi), 2) / (2. * pow(H(x, pot), 4)) - (pow(dphi, 2) * pot->ddV(phi)) / (2. * pow(H(x, pot), 4));
 }
 
 double d_omega_2(const double x[], Potential* pot)
@@ -135,13 +147,37 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
         old = New;
     }
 
+    std::vector<double> _N_extrema_tensor;
+    //Run Solver
+    dt = 1e-2;
+    t = t0;
+    x = x0;
+    desolver = dlsodar(3, 1, 1000000);
+    old = d_omega_2_tensor(&x[0], pot);
+    while(x[2] < N_end)
+    {
+        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+        dt *= 1.001;
+        double New = d_omega_2_tensor(&x[0], pot);
+        if(old < 0 and New > 0)
+        {
+            _N_extrema_tensor.push_back(x[2]);
+        }
+        else if(old > 0 and New < 0)
+        {
+            _N_extrema_tensor.push_back(x[2]);
+        }
+        old = New;
+    }
+    
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, 1e-4);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
-    return BackgroundSolution(_omega_2, _log_aH, _dphi_H, _N_extrema, aH_star, N_end);
+    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema, _N_extrema_tensor, aH_star, N_end);
 }
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger)
@@ -204,14 +240,11 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     double dt = 1e-2;
     auto t = t0;
     auto x = x0;
-    Solutions sol;
-    sol(x, t);
-    dlsodar desolver(3, 1, 100000);
+    dlsodar desolver(3, 1, 1000000);
     double old = d_omega_2(&x[0], pot);
     while(x[2] < N_end)
     {
         desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        sol(x, t);
         dt *= 1.001;
         double New = d_omega_2(&x[0], pot);
         if(old < 0 and New > 0)
@@ -225,13 +258,37 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         old = New;
     }
     
+    std::vector<double> _N_extrema_tensor;
+    //Run Solver
+    dt = 1e-2;
+    t = t0;
+    x = x0;
+    desolver = dlsodar(3, 1, 1000000);
+    old = d_omega_2_tensor(&x[0], pot);
+    while(x[2] < N_end)
+    {
+        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+        dt *= 1.001;
+        double New = d_omega_2_tensor(&x[0], pot);
+        if(old < 0 and New > 0)
+        {
+            _N_extrema_tensor.push_back(x[2]);
+        }
+        else if(old > 0 and New < 0)
+        {
+            _N_extrema_tensor.push_back(x[2]);
+        }
+        old = New;
+    }
+    
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, 1e-4);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
-    return BackgroundSolution(_omega_2, _log_aH, _dphi_H, _N_extrema, aH_star, N_end);
+    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema,_N_extrema_tensor, aH_star, N_end);
 }
 
 

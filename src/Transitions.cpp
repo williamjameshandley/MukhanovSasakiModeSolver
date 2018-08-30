@@ -3,15 +3,15 @@
 
 double Transitions::True(double N, double k)
 {
-    return Bsol.omega_2(N) + k * k / exp(2 * Bsol.log_aH(N));
+    return omega_2(N) + k * k / exp(2 * log_aH(N));
 }
 
-double Transitions::Find_N_log_end(double k, double N_i)
+double Transitions::Find_N_log_end(double k, double N_i, double N_f)
 {
     std::vector<double> N(10000);
     for(size_t o = 0; o < N.size(); o++)
     {
-        N[o] = 1.0 * o * Bsol.N_end / N.size();
+        N[o] = 1.0 * o * (N_f - N_i) / N.size() + N_i;
     }
     //Find Log to Lin start point
     double N_log_end = N_i;
@@ -19,7 +19,8 @@ double Transitions::Find_N_log_end(double k, double N_i)
     {
         double old = 0;
         int count = 0;
-        for(size_t o = 0; o < N.size(); o++)
+        size_t o = 0;
+        while(count == 0 and o < N.size())
         {
             double New = True(N[o], k) - 1;
             if(New < 0 and old > 0 and count == 0 and N[o-1] > N_i)
@@ -28,6 +29,7 @@ double Transitions::Find_N_log_end(double k, double N_i)
                 count += 1;
             }
             old = New;
+            o += 1;
         }
     }
     return N_log_end;
@@ -35,7 +37,7 @@ double Transitions::Find_N_log_end(double k, double N_i)
 
 TransitionsSolution Transitions::Find(double k, double error)
 {
-    double N_log_end = Find_N_log_end(k, N_initial);
+    double N_log_end = Find_N_log_end(k, N_initial, N_final);
     
     //Find Log
     std::vector<double> log_N_step;
@@ -79,17 +81,17 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
     LinearInterpolator<double, double> lin_Seg;
     
     //Initialize Extrema
-    if(Bsol.N_extrema.size() != 0)
+    if(N_extrema.size() != 0)
     {
-        auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N_extrema.begin(), Bsol.N_extrema.end(), N_i) - Bsol.N_extrema.begin());
-        auto p1 = static_cast<size_t>(std::lower_bound(Bsol.N_extrema.begin(), Bsol.N_extrema.end(), N_f) - Bsol.N_extrema.begin());
-        if(p1 <= Bsol.N_extrema.size() and p1 > p0)
+        auto p0 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_i) - N_extrema.begin());
+        auto p1 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_f) - N_extrema.begin());
+        if(p1 <= N_extrema.size() and p1 > p0)
         {
-            N_pair.push_back(std::make_pair(N_i, Bsol.N_extrema[p0]));
+            N_pair.push_back(std::make_pair(N_i, N_extrema[p0]));
             for(size_t n = p0+1; n < p1; n++)
-                N_pair.push_back(std::make_pair(Bsol.N_extrema[n-1], Bsol.N_extrema[n]));
+                N_pair.push_back(std::make_pair(N_extrema[n-1], N_extrema[n]));
             
-            N_pair.push_back(std::make_pair(Bsol.N_extrema[p1-1], N_f));
+            N_pair.push_back(std::make_pair(N_extrema[p1-1], N_f));
         }
     }
     
@@ -165,17 +167,17 @@ std::vector<double> Transitions::Log(double k, double N_i, double N_f, double li
     LinearInterpolator<double, double> log_Seg;
     
     //Initialize Extrema
-    if(Bsol.N_extrema.size() != 0)
+    if(N_extrema.size() != 0)
     {
-        auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N_extrema.begin(), Bsol.N_extrema.end(), N_i) - Bsol.N_extrema.begin());
-        auto p1 = static_cast<size_t>(std::lower_bound(Bsol.N_extrema.begin(), Bsol.N_extrema.end(), N_f) - Bsol.N_extrema.begin());
-        if(p1 <= Bsol.N_extrema.size() and p1 > p0)
+        auto p0 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_i) - N_extrema.begin());
+        auto p1 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_f) - N_extrema.begin());
+        if(p1 <= N_extrema.size() and p1 > p0)
         {
-            N_pair.push_back(std::make_pair(N_i, Bsol.N_extrema[p0]));
+            N_pair.push_back(std::make_pair(N_i, N_extrema[p0]));
             for(size_t n = p0+1; n < p1; n++)
-                N_pair.push_back(std::make_pair(Bsol.N_extrema[n-1], Bsol.N_extrema[n]));
+                N_pair.push_back(std::make_pair(N_extrema[n-1], N_extrema[n]));
             
-            N_pair.push_back(std::make_pair(Bsol.N_extrema[p1-1], N_f));
+            N_pair.push_back(std::make_pair(N_extrema[p1-1], N_f));
         }
     }
     

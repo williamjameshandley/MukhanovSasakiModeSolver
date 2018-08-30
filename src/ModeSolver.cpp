@@ -27,9 +27,8 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     return Airy_Mat() * Bessel_Mat() * Q;
 }
 
-double ModeSolver::Find_PPS(double k)
+double ModeSolver::Find_PPS_Scalar(double k)
 {
-    k_plot.push_back(k);
     k *= Bsol.aH_star / 0.05;
     
     double N_f = log(k / 0.05) + 55;
@@ -37,7 +36,7 @@ double ModeSolver::Find_PPS(double k)
     {
         N_f = Bsol.N_end;
     }
-    Transitions T(N_r, N_f, Bsol);
+    Transitions T(N_r, N_f, Bsol.omega_2, Bsol.log_aH, Bsol.N_extrema);
     Tsol = T.Find(k, 1e-4);
     
     Eigen::Vector2cd Q = Match(k);
@@ -45,6 +44,25 @@ double ModeSolver::Find_PPS(double k)
     double F = exp(N_f) * Bsol.dphi_H(N_f) * exp(0.5 * Bsol.log_aH(N_f));
     
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
+}
+
+double ModeSolver::Find_PPS_Tensor(double k)
+{
+    k *= Bsol.aH_star / 0.05;
+    
+    double N_f = log(k / 0.05) + 55;
+    if(N_f > Bsol.N_end)
+    {
+        N_f = Bsol.N_end;
+    }
+    Transitions T(N_r, N_f, Bsol.omega_2_tensor, Bsol.log_aH, Bsol.N_extrema_tensor);
+    Tsol = T.Find(k, 1e-4);
+    
+    Eigen::Vector2cd Q = Match(k);
+    
+    double F = exp(N_f) * exp(0.5 * Bsol.log_aH(N_f));
+    
+    return 4 * (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
 }
 
 Eigen::Matrix2d ModeSolver::Airy_Mat()
