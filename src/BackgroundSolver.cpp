@@ -21,13 +21,13 @@ double H(const double x[], Potential* pot)
 double omega_2(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return -9.0/4 + pow(3 * dphi / (2 * H(x, pot)), 2) - 5 * pow(0.5 * dphi / H(x, pot), 4) + 1.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3) + pot->ddV(phi) / pow(H(x, pot), 2);
+    return (pot->ddV(phi) + 1.5 * pot->dV(phi) * dphi / H(x, pot)) / pow(H(x, pot), 2) - (pow(dphi/H(x, pot), 2) - 6) * (5 * pow(dphi/H(x, pot), 2) - 6) / 16.0;
 }
 
 double omega_2_tensor(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return -9.0/4 - 3 * pow(0.5 * dphi / H(x, pot), 2) + 3 * pow(0.5 * dphi / H(x, pot), 4) - 0.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3);
+    return (3 * pow(dphi/H(x, pot), 2) + 6) * (pow(dphi/H(x, pot), 2) - 6) / 16.0 - 0.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3);
 }
 
 double d_omega_2_tensor(const double x[], Potential* pot)

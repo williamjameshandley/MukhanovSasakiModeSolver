@@ -38,7 +38,7 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     for(auto k : kplot)                                         //ms.k_plot are k points of linear intepolation
     {
-        mout << k << " " << N_ms.Find_PPS_Scalar(k)<<"  "<<ms.Find_PPS_Scalar(k)<<std::endl;         //Call PPS linear interpolation for plotting
+        mout << k << " " << N_ms.Find_PPS_Tensor(k)<<"  "<<ms.Find_PPS_Tensor(k)<<std::endl;         //Call PPS linear interpolation for plotting
     }
     mout.close();
     
