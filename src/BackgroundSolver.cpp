@@ -358,50 +358,54 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
         {
             N_i = N_pair[n].first;
             N_f = N_pair[n].second;
-            
-            t = t0;
-            x = x0;
-            auto N_m1 = (2 * N_i + N_f) / 3.0;
-            params[0] = N_m1;
-            desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
-            std::vector<double> x_m1 = x;
-            
-            auto N_m2 = (N_i + 2 * N_f) / 3.0;
-            params[0] = N_m2;
-            desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
-            std::vector<double> x_m2 = x;
-            
-            count += 2;
-            
-            auto temp_approx1 = _Var(N_m1);
-            auto temp_approx2 = _Var(N_m2);
-            auto temp_true1 = Var(&x_m1[0], pot);
-            auto temp_true2 = Var(&x_m2[0], pot);
-            
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
+
             
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) > lim)
+            if(N_f - N_i > 1e-7)
             {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
-                n += 2;
-                _Var.insert(N_m1, (temp_true1));
-                _Var.insert(N_m2, (temp_true2));
-            }
-            if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_f));
-                n += 1;
-                _Var.insert(N_m1, (temp_true1));
-            }
-            if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
-                n += 1;
-                _Var.insert(N_m2, (temp_true2));
+                t = t0;
+                x = x0;
+                auto N_m1 = (2 * N_i + N_f) / 3.0;
+                params[0] = N_m1;
+                desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
+                std::vector<double> x_m1 = x;
+                
+                auto N_m2 = (N_i + 2 * N_f) / 3.0;
+                params[0] = N_m2;
+                desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
+                std::vector<double> x_m2 = x;
+                
+                count += 2;
+                
+                auto temp_approx1 = _Var(N_m1);
+                auto temp_approx2 = _Var(N_m2);
+                auto temp_true1 = Var(&x_m1[0], pot);
+                auto temp_true2 = Var(&x_m2[0], pot);
+                
+                
+                if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) > lim)
+                {
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
+                    n += 2;
+                    _Var.insert(N_m1, (temp_true1));
+                    _Var.insert(N_m2, (temp_true2));
+                }
+                if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
+                {
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_f));
+                    n += 1;
+                    _Var.insert(N_m1, (temp_true1));
+                }
+                if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
+                {
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m2));
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
+                    n += 1;
+                    _Var.insert(N_m2, (temp_true2));
+                }
             }
         }
     }

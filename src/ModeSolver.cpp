@@ -65,49 +65,45 @@ double ModeSolver::Find_PPS_Tensor(double k)
     return 4 * (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
 }
 
-Eigen::Matrix2d ModeSolver::Airy_Mat()
+Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
 {
-    Eigen::Matrix2d Mat = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d A;
+
+    double p = pow(abs(b), 1.0/3.0);
+    double x0 = -((a + b * N0) /p/p);
+    double x1 = -((a + b * N1) /p/p);
     
-    for(size_t n = 0; n < Tsol.lin_a.size(); n++)
+    if(Tsol.lin_b[n] < 0)
     {
-        double p = pow(abs(Tsol.lin_b[n]), 1.0/3.0);
-        double x0 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n]) /p/p);
-        double x1 = -((Tsol.lin_a[n] + Tsol.lin_b[n] * Tsol.lin_N_step[n+1]) /p/p);
-        
-        if(Tsol.lin_b[n] < 0)
-        {
-            Eigen::Matrix2d A = Airy_gen(p, x0, x1);
-            Mat = A * Mat;
-        }
-        else if(Tsol.lin_b[n] > 0)
-        {
-            Eigen::Matrix2d A = Airy_gen(-p, x0, x1);
-            Mat = A * Mat;
-        }
+        A = Airy_gen(p, x0, x1);
     }
-    
-    return Mat;
+    else if(Tsol.lin_b[n] > 0)
+    {
+        A = Airy_gen(-p, x0, x1);
+    }
+    return A;
 }
 
-Eigen::Matrix2cd ModeSolver::Bessel_Mat()
+Eigen::Matrix2cd ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
 {
-    Eigen::Matrix2cd Mat = Eigen::Matrix2d::Identity();
+    double p = b;
+    double x0 = exp(a + b * N0);
+    double x1 = exp(a + b * N1);
     
-    if(Tsol.log_a.size() != 0)
-    {
-        for(size_t n = 0; n < Tsol.log_a.size(); n++)
-        {
-            double p = Tsol.log_b[n];
-            double x0 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n]);
-            double x1 = exp(Tsol.log_a[n] + Tsol.log_b[n] * Tsol.log_N_step[n+1]);
-            
-            Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
-            
-            Mat = B * Mat;
-        }
-    }
-    return Mat;
+    Eigen::Matrix2cd B = Bessel_gen(p, x0, x1);
+
+    return B;
+}
+
+Eigen::Matrix2cd ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, double N1)
+{
+    double p = b;
+    double x0 = exp(a + b * N0);
+    double x1 = exp(a + b * N1);
+    
+    Eigen::Matrix2cd B = Modified_Bessel_gen(p, x0, x1);
+    
+    return B;
 }
 
 Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)

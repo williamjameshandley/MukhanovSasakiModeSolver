@@ -10,7 +10,7 @@ int main()
     std::cout<<"Solving for Background..."<<std::endl;
     
     //Set Potential
-    Poly_Step pot(6.48757e-6, 1e-4, 5e-3, 15.5);
+    Poly_Step pot(6.48757e-6, 1e-3, 5e-3, 15.5);
     //Set Potential ptr
     auto potential_ptr = static_cast<Potential*> (&pot);
     //Background Initial Conditions
@@ -53,6 +53,7 @@ int main()
         double True = N_ms.Find_PPS(k);
         double Approx = ms.Find_PPS_Scalar(k);
         //Call PPS linear interpolation for plotting
+        std::cout<<k<<std::endl;
         mout << k <<"  "<< Approx <<"  "<< (Approx - True) / True <<std::endl;
     }
     mout.close();
