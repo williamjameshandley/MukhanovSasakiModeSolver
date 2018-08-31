@@ -87,6 +87,26 @@ void Find_N(double g[], const double, const double x[], void* data)
     g[0] = params[0] - x[2];
 }
 
+void Extrema_Scalar(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = d_omega_2(&x[0], pot);
+    g[1] = params[0] - x[2];
+}
+
+void Extrema_Tensor(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = d_omega_2_tensor(&x[0], pot);
+    g[1] = params[0] - x[2];
+}
+
 BackgroundSolution solve_equations(Potential* pot, double N_star)
 {
     void* ptrs[2];
@@ -121,55 +141,32 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
     std::vector<double> x_end = x;
     double N_end = x_end[2];
     
+    //Find Scalar Extrema
     std::vector<double> _N_extrema;
-    //Run Solver
-    double dt = 1e-2;
     t = t0;
     x = x0;
-    Solutions sol;
-    sol(x, t);
-    desolver = dlsodar(3, 1, 100000);
-    double old = d_omega_2(&x[0], pot);
+    params[0] = N_end;
+    desolver = dlsodar(3, 2, 10000);
     while(x[2] < N_end)
     {
-        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        sol(x, t);
-        dt *= 1.001;
-        double New = d_omega_2(&x[0], pot);
-        if(old < 0 and New > 0)
-        {
+        desolver.integrate(t, 1e10, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
+        if(x[2] < N_end)
             _N_extrema.push_back(x[2]);
-        }
-        else if(old > 0 and New < 0)
-        {
-            _N_extrema.push_back(x[2]);
-        }
-        old = New;
     }
 
+    //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
-    //Run Solver
-    dt = 1e-2;
     t = t0;
     x = x0;
-    desolver = dlsodar(3, 1, 1000000);
-    old = d_omega_2_tensor(&x[0], pot);
+    params[0] = N_end;
+    desolver = dlsodar(3, 2, 100000);
     while(x[2] < N_end)
     {
-        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        dt *= 1.001;
-        double New = d_omega_2_tensor(&x[0], pot);
-        if(old < 0 and New > 0)
-        {
+        desolver.integrate(t, 1e10, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
+        if(x[2] < N_end)
             _N_extrema_tensor.push_back(x[2]);
-        }
-        else if(old > 0 and New < 0)
-        {
-            _N_extrema_tensor.push_back(x[2]);
-        }
-        old = New;
     }
-    
+
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, 1e-4);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
@@ -235,50 +232,30 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
 
     std::vector<double> x0 = {phi_p, dphi_p, 0};
     
+    //Find Scalar Extrema
     std::vector<double> _N_extrema;
-    //Run Solver
-    double dt = 1e-2;
     auto t = t0;
     auto x = x0;
-    dlsodar desolver(3, 1, 1000000);
-    double old = d_omega_2(&x[0], pot);
+    params[0] = N_end;
+    dlsodar desolver(3, 2, 10000);
     while(x[2] < N_end)
     {
-        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        dt *= 1.001;
-        double New = d_omega_2(&x[0], pot);
-        if(old < 0 and New > 0)
-        {
+        desolver.integrate(t, 1e10, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
+        if(x[2] < N_end)
             _N_extrema.push_back(x[2]);
-        }
-        else if(old > 0 and New < 0)
-        {
-            _N_extrema.push_back(x[2]);
-        }
-        old = New;
     }
     
+    //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
-    //Run Solver
-    dt = 1e-2;
     t = t0;
     x = x0;
-    desolver = dlsodar(3, 1, 1000000);
-    old = d_omega_2_tensor(&x[0], pot);
+    params[0] = N_end;
+    desolver = dlsodar(3, 2, 100000);
     while(x[2] < N_end)
     {
-        desolver.integrate(t, t + dt, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        dt *= 1.001;
-        double New = d_omega_2_tensor(&x[0], pot);
-        if(old < 0 and New > 0)
-        {
+        desolver.integrate(t, 1e10, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
+        if(x[2] < N_end)
             _N_extrema_tensor.push_back(x[2]);
-        }
-        else if(old > 0 and New < 0)
-        {
-            _N_extrema_tensor.push_back(x[2]);
-        }
-        old = New;
     }
     
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);

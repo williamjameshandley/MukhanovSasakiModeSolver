@@ -32,7 +32,6 @@ int main()
     //Construct PPS linear interpolation
     //ms.Construct_PPS_Scalar(k0, k1, 3e-3);
     
-    
     std::cout<<"Finding PPS Numerically..."<<std::endl;
     //Initialize Numeric Solver
     NumericModeSolver N_ms(potential_ptr, N_star);

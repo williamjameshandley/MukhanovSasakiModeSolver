@@ -17,6 +17,8 @@ void check(double g[], const double, const double x[], void* data);
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);
 void Find_N(double g[], const double, const double x[], void* data);
+void Extrema_Scalar(double g[], const double, const double x[], void* data);
+void Extrema_Tensor(double g[], const double, const double x[], void* data);
 
 struct Solutions
 {
