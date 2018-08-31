@@ -5,19 +5,15 @@
 struct TransitionsSolution
 {
     TransitionsSolution() :
-    lin_a{}, lin_b{}, lin_N_step{}, log_a{}, log_b{}, log_N_step{} {}
+    a{}, b{}, seg_control{} {}
     
-    std::vector<double> lin_a;
-    std::vector<double> lin_b;
-    std::vector<double> lin_N_step;
-    std::vector<double> log_a;
-    std::vector<double> log_b;
-    std::vector<double> log_N_step;
+    std::vector<double> a;
+    std::vector<double> b;
+    std::vector<std::pair<double, int>> seg_control;
 };
 
 struct Transitions
 {
-    
     double N_initial, N_final;
     LinearInterpolator<double, double> omega_2, log_aH;
     std::vector<double> N_extrema;
@@ -25,12 +21,8 @@ struct Transitions
     Transitions(double _N_initial, double _N_final, LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _log_aH, std::vector<double> _N_extrema):
     N_initial(_N_initial), N_final(_N_final), omega_2{_omega_2}, log_aH{_log_aH}, N_extrema{_N_extrema} { }
     
-    double Find_N_log_end(double k, double N_i, double N_f);
     TransitionsSolution Find(double k, double error);
-    std::vector<double> Linear(double k, double N_i, double N_f, double lim);
-    std::vector<double> Log(double k, double N_i, double N_f, double lim);
-    
+    std::vector<std::pair<double, int>> N_Distribution(double k, double N_i, double N_f, double lim);
     double True(double N,double k);
-    
 };
 

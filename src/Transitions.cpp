@@ -6,79 +6,45 @@ double Transitions::True(double N, double k)
     return omega_2(N) + k * k / exp(2 * log_aH(N));
 }
 
-double Transitions::Find_N_log_end(double k, double N_i, double N_f)
-{
-    std::vector<double> N(10000);
-    for(size_t o = 0; o < N.size(); o++)
-    {
-        N[o] = 1.0 * o * (N_f - N_i) / N.size() + N_i;
-    }
-    //Find Log to Lin start point
-    double N_log_end = N_i;
-    if(True(N[0], k) > 0)
-    {
-        double old = 0;
-        int count = 0;
-        size_t o = 0;
-        while(count == 0 and o < N.size())
-        {
-            double New = True(N[o], k) - 1;
-            if(New < 0 and old > 0 and count == 0 and N[o-1] > N_i)
-            {
-                N_log_end = N[o-1];
-                count += 1;
-            }
-            old = New;
-            o += 1;
-        }
-    }
-    return N_log_end;
-}
-
 TransitionsSolution Transitions::Find(double k, double error)
 {
-    double N_log_end = Find_N_log_end(k, N_initial, N_final);
+    //Find Distribution and Segment control
+    auto seg_control = N_Distribution(k, N_initial, N_final, error);
     
-    //Find Log
-    std::vector<double> log_N_step;
-    std::vector<double> log_a, log_b;
-    if(N_log_end != N_initial)
+    //Find Segments
+    std::vector<double> a, b;
+    for(size_t n = 0; n < seg_control.size() - 1; n++)
     {
-        log_N_step = Log(k, N_initial, N_log_end, error);
-        for(size_t l = 0; l < log_N_step.size() - 1; l++)
+        if(seg_control[n].second == 0)
         {
-            log_b.push_back(0.5 * (log(True(log_N_step[l+1], k)) - log(True(log_N_step[l], k))) / (log_N_step[l+1]-log_N_step[l]));
-            log_a.push_back(-log_b[l] * log_N_step[l] + 0.5 * log(True(log_N_step[l], k)));
+            b.push_back((True(seg_control[n+1].first, k) - True(seg_control[n].first, k)) / (seg_control[n+1].first - seg_control[n].first));
+            a.push_back(True(seg_control[n].first, k) - b[n] * seg_control[n].first);
         }
-    }
-    
-    //Find Lin
-    std::vector<double> lin_N_step = Linear(k, N_log_end, N_final, error);
-    std::vector<double> lin_a, lin_b;
-    for(size_t l = 0; l < lin_N_step.size() - 1; l++)
-    {
-        lin_b.push_back((True(lin_N_step[l+1], k) - True(lin_N_step[l], k)) / (lin_N_step[l+1]-lin_N_step[l]));
-        lin_a.push_back(-lin_b[l] * lin_N_step[l] + True(lin_N_step[l], k));
+        else if(seg_control[n].second == 1)
+        {
+            b.push_back(0.5 * (log(True(seg_control[n+1].first, k)) - log(True(seg_control[n].first, k))) / (seg_control[n+1].first - seg_control[n].first));
+            a.push_back(0.5 * log(True(seg_control[n].first, k)) - b[n] * seg_control[n].first);
+        }
+        else if(seg_control[n].second == -1)
+        {
+            b.push_back(0.5 * (log(-True(seg_control[n+1].first, k)) - log(-True(seg_control[n].first, k))) / (seg_control[n+1].first - seg_control[n].first));
+            a.push_back(0.5 * log(-True(seg_control[n].first, k)) - b[n] * seg_control[n].first);
+        }
     }
     
     TransitionsSolution Tsol;
-    Tsol.lin_a = lin_a;
-    Tsol.lin_b = lin_b;
-    Tsol.lin_N_step = lin_N_step;
-    Tsol.log_a = log_a;
-    Tsol.log_b = log_b;
-    Tsol.log_N_step = log_N_step;
-    
+    Tsol.a = a;
+    Tsol.b = b;
+    Tsol.seg_control = seg_control;
     
     return Tsol;
-    
 }
 
-std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double lim)
+std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double N_i, double N_f, double lim)
 {
-    std::vector<double> N_step;
     std::vector<std::pair<double, double>> N_pair;
-    LinearInterpolator<double, double> lin_Seg;
+    std::vector<std::pair<double, int>> seg_control;
+    seg_control.push_back(std::make_pair(N_f, 0));
     
     //Initialize Extrema
     if(N_extrema.size() != 0)
@@ -94,19 +60,10 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
             N_pair.push_back(std::make_pair(N_extrema[p1-1], N_f));
         }
     }
-    
     if(N_pair.size() == 0)
     {
         N_pair.push_back(std::make_pair(N_i, N_f));
     }
-    
-    for(size_t n = 0; n < N_pair.size(); n++)
-    {
-        lin_Seg.insert(N_pair[n].first, True(N_pair[n].first, k));
-        N_step.push_back(N_pair[n].first);
-    }
-    lin_Seg.insert(N_pair.back().second, True(N_pair.back().second, k));
-    N_step.push_back(N_pair.back().second);
     
     while(N_pair.size() != 0)
     {
@@ -114,135 +71,118 @@ std::vector<double> Transitions::Linear(double k, double N_i, double N_f, double
         {
             N_i = N_pair[n].first;
             N_f = N_pair[n].second;
-            
-            auto N_m1 = (2 * N_i + N_f) / 3.0;
-            auto N_m2 = (N_i + 2 * N_f) / 3.0;
-            
-            auto temp_approx1 = lin_Seg(N_m1);
-            auto temp_approx2 = lin_Seg(N_m2);
-            auto temp_true1 = True(N_m1, k);
-            auto temp_true2 = True(N_m2, k);
-            
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
+            auto End0 = True(N_i, k);
+            auto End1 = True(N_f, k);
             
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
+            auto N_m = (N_i + N_f) / 2.0;
+            auto temp_true = True(N_m, k);
+            
+            //Try exp or linear
+            if(End0 > 1 and End1 > 1)
             {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
-                n += 2;
-                lin_Seg.insert(N_m1, (temp_true1));
-                lin_Seg.insert(N_m2, (temp_true2));
-                N_step.push_back(N_m1);
-                N_step.push_back(N_m2);
+                auto lin_b = (End1 - End0) / (N_f - N_i);
+                auto lin_a = End0 - lin_b * N_i;
+                auto lin_approx = lin_a + lin_b * N_m;
+                
+                auto log_b = (log(End1) - log(End0)) / (N_f - N_i);
+                auto log_a = log(End0) - log_b * N_i;
+                auto log_approx = log_a + log_b * N_m;
+                
+                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
+                auto err_log = abs(exp(log_approx) - temp_true) / abs(temp_true);
+                
+                if(err_lin > err_log)
+                {
+                    if(err_log > lim)
+                    {
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m));
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m, N_f));
+                        n += 1;
+                    }
+                    else
+                    {
+                        seg_control.push_back(std::make_pair(N_i, 1));
+                    }
+                }
+                else if(err_lin < err_log)
+                {
+                    if(err_lin > lim)
+                    {
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m));
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m, N_f));
+                        n += 1;
+                    }
+                    else
+                    {
+                        seg_control.push_back(std::make_pair(N_i, 0));
+                    }
+                }
             }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
+            //Try -exp or linear
+            else if(End0 < -1 and End1 < -1)
             {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                n += 1;
-                lin_Seg.insert(N_m1, (temp_true1));
-                N_step.push_back(N_m1);
-            }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_m1, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
-                n += 1;
-                lin_Seg.insert(N_m2, (temp_true2));
-                N_step.push_back(N_m2);
-            }
-        }
-    }
-    std::sort(N_step.begin(), N_step.end());
-    
-    return N_step;
-    
-}
+                auto lin_b = (End1 - End0) / (N_f - N_i);
+                auto lin_a = End0 - lin_b * N_i;
+                auto lin_approx = lin_a + lin_b * N_m;
 
-std::vector<double> Transitions::Log(double k, double N_i, double N_f, double lim)
-{
-    std::vector<double> N_step;
-    std::vector<std::pair<double, double>> N_pair;
-    LinearInterpolator<double, double> log_Seg;
-    
-    //Initialize Extrema
-    if(N_extrema.size() != 0)
-    {
-        auto p0 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_i) - N_extrema.begin());
-        auto p1 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_f) - N_extrema.begin());
-        if(p1 <= N_extrema.size() and p1 > p0)
-        {
-            N_pair.push_back(std::make_pair(N_i, N_extrema[p0]));
-            for(size_t n = p0+1; n < p1; n++)
-                N_pair.push_back(std::make_pair(N_extrema[n-1], N_extrema[n]));
-            
-            N_pair.push_back(std::make_pair(N_extrema[p1-1], N_f));
-        }
-    }
-    
-    if(N_pair.size() == 0)
-    {
-        N_pair.push_back(std::make_pair(N_i, N_f));
-    }
-    
-    for(size_t n = 0; n < N_pair.size(); n++)
-    {
-        log_Seg.insert(N_pair[n].first, log(True(N_pair[n].first, k)));
-        N_step.push_back(N_pair[n].first);
-    }
-    log_Seg.insert(N_pair.back().second, log(True(N_pair.back().second, k)));
-    N_step.push_back(N_pair.back().second);
-    
-    while(N_pair.size() != 0)
-    {
-        for(size_t n = 0; n < N_pair.size(); n++)
-        {
-            N_i = N_pair[n].first;
-            N_f = N_pair[n].second;
-            
-            auto N_m1 = (2 * N_i + N_f) / 3.0;
-            auto N_m2 = (N_i + 2 * N_f) / 3.0;
-            
-            auto temp_approx1 = log_Seg(N_m1);
-            auto temp_approx2 = log_Seg(N_m2);
-            auto temp_true1 = log(True(N_m1, k));
-            auto temp_true2 = log(True(N_m2, k));
-            
-            N_pair.erase(N_pair.begin() + static_cast<int>(n));
-            
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
-                n += 2;
-                log_Seg.insert(N_m1, (temp_true1));
-                log_Seg.insert(N_m2, (temp_true2));
-                N_step.push_back(N_m1);
-                N_step.push_back(N_m2);
-            }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) > lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) < lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                n += 1;
-                log_Seg.insert(N_m1, (temp_true1));
-                N_step.push_back(N_m1);
-            }
-            if(abs(temp_true1 - temp_approx1) / abs(temp_true1) < lim and abs(temp_true2 - temp_approx2) / abs(temp_true2) > lim)
-            {
-                N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_m1, N_m2));
-                N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
-                n += 1;
-                log_Seg.insert(N_m2, (temp_true2));
-                N_step.push_back(N_m2);
-            }
-        }
-    }
-    std::sort(N_step.begin(), N_step.end());
-    
-    return N_step;
-    
-}
+                auto log_b = (log(-End1) - log(-End0)) / (N_f - N_i);
+                auto log_a = log(-End0) - log_b * N_i;
+                auto log_approx = log_a + log_b * N_m;
 
+                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
+                auto err_log = abs(-exp(log_approx) - temp_true) / abs(temp_true);
+
+                if(err_lin > err_log)
+                {
+                    if(err_log > lim)
+                    {
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m));
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m, N_f));
+                        n += 1;
+                    }
+                    else
+                    {
+                        seg_control.push_back(std::make_pair(N_i, -1));
+                    }
+                }
+                else if(err_lin < err_log)
+                {
+                    if(err_lin > lim)
+                    {
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m));
+                        N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m, N_f));
+                        n += 1;
+                    }
+                    else
+                    {
+                        seg_control.push_back(std::make_pair(N_i, 0));
+                    }
+                }
+            }
+            //linear
+            else
+            {
+                auto lin_b = (End1 - End0) / (N_f - N_i);
+                auto lin_a = End0 - lin_b * N_i;
+                auto lin_approx = lin_a + lin_b * N_m;
+
+                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
+                
+                if(err_lin > lim)
+                {
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m));
+                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m, N_f));
+                    n += 1;
+                }
+                else
+                {
+                    seg_control.push_back(std::make_pair(N_i, 0));
+                }
+            }
+        }
+    }
+    
+    std::sort(seg_control.begin(), seg_control.end());
+    return seg_control;
+}

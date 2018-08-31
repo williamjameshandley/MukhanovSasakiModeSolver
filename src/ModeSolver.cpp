@@ -9,28 +9,12 @@ void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
     N_r = Bsol.N_end - _N_r;
 }
 
-Eigen::Vector2cd ModeSolver::Match(double k)
-{
-    //Setting Vacuum
-    double aH_r = exp(Bsol.log_aH(N_r));
-    double epsilon = 0.5 * pow(Bsol.dphi_H(N_r), 2);
-    Eigen::Vector2cd Q;
-
-    Q[0] = sqrt(aH_r / (2 * k));
-    
-    if(vacuum == BD)
-        Q[1] = Q[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
-    else
-        throw std::runtime_error("Initial conditions unknown");
-    
-    //Match
-    return Airy_Mat() * Bessel_Mat() * Q;
-}
-
 double ModeSolver::Find_PPS_Scalar(double k)
 {
+    //Scale k
     k *= Bsol.aH_star / 0.05;
     
+    //Find Transitions
     double N_f = log(k / 0.05) + 55;
     if(N_f > Bsol.N_end)
     {
@@ -39,8 +23,8 @@ double ModeSolver::Find_PPS_Scalar(double k)
     Transitions T(N_r, N_f, Bsol.omega_2, Bsol.log_aH, Bsol.N_extrema);
     Tsol = T.Find(k, 1e-4);
     
+    //Match and evaluate PPS
     Eigen::Vector2cd Q = Match(k);
-    
     double F = exp(N_f) * Bsol.dphi_H(N_f) * exp(0.5 * Bsol.log_aH(N_f));
     
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
@@ -48,8 +32,10 @@ double ModeSolver::Find_PPS_Scalar(double k)
 
 double ModeSolver::Find_PPS_Tensor(double k)
 {
+    //Scale k
     k *= Bsol.aH_star / 0.05;
     
+    //Find Transitions
     double N_f = log(k / 0.05) + 55;
     if(N_f > Bsol.N_end)
     {
@@ -58,11 +44,47 @@ double ModeSolver::Find_PPS_Tensor(double k)
     Transitions T(N_r, N_f, Bsol.omega_2_tensor, Bsol.log_aH, Bsol.N_extrema_tensor);
     Tsol = T.Find(k, 1e-4);
     
+    //Match and evaluate PPS
     Eigen::Vector2cd Q = Match(k);
-    
     double F = exp(N_f) * exp(0.5 * Bsol.log_aH(N_f));
     
     return 4 * (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q[0] / F), 2);
+}
+
+Eigen::Vector2cd ModeSolver::Match(double k)
+{
+    //Setting Vacuum
+    double aH_r = exp(Bsol.log_aH(N_r));
+    double epsilon = 0.5 * pow(Bsol.dphi_H(N_r), 2);
+    Eigen::Vector2cd Q;
+    
+    Q[0] = sqrt(aH_r / (2 * k));
+    
+    if(vacuum == BD)
+        Q[1] = Q[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
+    else
+        throw std::runtime_error("Initial conditions unknown");
+    
+    //Evolution matrix
+    Eigen::Matrix2cd Evolve = Eigen::Matrix2d::Identity();
+    
+    for(size_t n = 0; n < Tsol.seg_control.size()-1; n++)
+    {
+        if(Tsol.seg_control[n].second == 0)
+        {
+            Evolve = Airy_Mat(Tsol.a[n], Tsol.b[n], Tsol.seg_control[n].first, Tsol.seg_control[n+1].first) * Evolve;
+        }
+        else if(Tsol.seg_control[n].second == 1)
+        {
+            Evolve = Bessel_Mat(Tsol.a[n], Tsol.b[n], Tsol.seg_control[n].first, Tsol.seg_control[n+1].first) * Evolve;
+        }
+        else if(Tsol.seg_control[n].second == -1)
+        {
+            Evolve = Modified_Bessel_Mat(Tsol.a[n], Tsol.b[n], Tsol.seg_control[n].first, Tsol.seg_control[n+1].first) * Evolve;
+        }
+    }
+    
+    return Evolve * Q;
 }
 
 Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
@@ -73,11 +95,11 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
     double x0 = -((a + b * N0) /p/p);
     double x1 = -((a + b * N1) /p/p);
     
-    if(Tsol.lin_b[n] < 0)
+    if(b < 0)
     {
         A = Airy_gen(p, x0, x1);
     }
-    else if(Tsol.lin_b[n] > 0)
+    else if(b > 0)
     {
         A = Airy_gen(-p, x0, x1);
     }
@@ -101,9 +123,9 @@ Eigen::Matrix2cd ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, 
     double x0 = exp(a + b * N0);
     double x1 = exp(a + b * N1);
     
-    Eigen::Matrix2cd B = Modified_Bessel_gen(p, x0, x1);
+    Eigen::Matrix2cd MB = Modified_Bessel_gen(p, x0, x1);
     
-    return B;
+    return MB;
 }
 
 Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
@@ -167,4 +189,43 @@ Eigen::Matrix2cd ModeSolver::Bessel_gen(double p, double x0, double x1)
     
     return B1 * B0.inverse();
 }
+
+Eigen::Matrix2cd ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
+{
+    Eigen::Matrix2cd MB0, MB1, MB;
+    
+    if(x0 / p < 50)
+    {
+        auto I0 = Bessel_I(0, x0 / p);
+        auto K0 = Bessel_K(0, x0 / p);
+        auto Ip0 = x0 * Bessel_I(1, x0 / p);
+        auto Kp0 = -x0 * Bessel_K(1, x0 / p);
+        
+        auto I = Bessel_I(0, x1 / p);
+        auto K = Bessel_K(0, x1 / p);
+        auto Ip = x1 * Bessel_I(1, x1 / p);
+        auto Kp = -x1 * Bessel_K(1, x1 / p);
+        
+        MB0 << I0,  K0,
+            Ip0, Kp0;
+        
+        MB1 << I,  K,
+            Ip, Kp;
+        
+        MB =MB1 * MB0.inverse();
+    }
+    else
+    {
+        auto a00 = 0.5 * (exp((x1-x0) / p) + exp(-(x1-x0) / p)) * pow(x0/x1, 0.5);
+        auto a01 = 0.5 * (exp((x1-x0) / p) - exp(-(x1-x0) / p)) * pow(x0 * x1, -0.5);
+        auto a10 = 0.5 * (exp((x1-x0) / p) - exp(-(x1-x0) / p)) * pow(x0 * x1, 0.5);
+        auto a11 = 0.5 * (exp((x1-x0) / p) + exp(-(x1-x0) / p)) * pow(x0/x1, -0.5);
+        
+        MB<< a00, a01,
+            a10, a11;
+    }
+    
+    return MB;
+}
+
 

@@ -360,7 +360,6 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
             N_f = N_pair[n].second;
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
 
-            
             if(N_f - N_i > 1e-7)
             {
                 t = t0;

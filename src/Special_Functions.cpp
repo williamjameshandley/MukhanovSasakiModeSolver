@@ -1,5 +1,5 @@
 #include "Special_Functions.hpp"
-
+#include <iostream>
 
 std::complex<double> Bessel_J(int v, double x)
 {
@@ -22,7 +22,7 @@ std::complex<double> Bessel_I(int v, double x)
 std::complex<double> Bessel_K(int v, double x)
 {
     if(x >= 0) return kn(v,x);
-    else       return pow(-1, v) * kn(v,-x) + I * 2.0 * pow(-1, v) * Bessel_I(v, -x); // check this
+    else       return pow(-1, v) * kn(v,-x) - I * M_PI * Bessel_I(v, -x);
 }
 
 std::complex<double> Hankel1(int v, double x)

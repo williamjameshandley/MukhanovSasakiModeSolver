@@ -29,24 +29,26 @@ class ModeSolver : public BasicModeSolver
 {
     public:
         BackgroundSolution Bsol;    
-        TransitionsSolution Tsol;    
+        TransitionsSolution Tsol;
     
         double N_r, PPS_error;
         VacuumChoice vacuum;
-        LinearInterpolator<double, double> OMEGA_2, Z, H, DPHI;
     
         ModeSolver(BackgroundSolution _Bsol);
     
-        Eigen::Matrix2d Airy_Mat();
-        Eigen::Matrix2cd Bessel_Mat();
-        Eigen::Vector2cd Match(double k);
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
-
-        Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
-        Eigen::Matrix2cd Bessel_gen(double p, double x1, double x0);
+        Eigen::Vector2cd Match(double k);
     
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
+    
+        Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
+        Eigen::Matrix2cd Bessel_Mat(double a, double b, double N0, double N1);
+        Eigen::Matrix2cd Modified_Bessel_Mat(double a, double b, double N0, double N1);
+    
+        Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
+        Eigen::Matrix2cd Bessel_gen(double p, double x1, double x0);
+        Eigen::Matrix2cd Modified_Bessel_gen(double p, double x1, double x0);
 };
 
 class NumericModeSolver : public BasicModeSolver
