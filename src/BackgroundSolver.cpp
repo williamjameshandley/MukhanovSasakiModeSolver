@@ -51,12 +51,6 @@ void equations(double dx_dt[], const double, const double x[], void* data)
     dx_dt[2] = H(x, pot);
 }
 
-
-void check(double g[], const double, const double x[], void*)
-{
-    g[0] = x[0];
-}
-
 void inflation_end(double g[], const double, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
@@ -194,7 +188,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         double t = t0;
         std::vector<double> x = {phi_p, dphi_p, 0};
         dlsodar desolver(3, 1, 1000000);
-        desolver.integrate(t, 1e10, &x[0], equations, check, static_cast<void*> (ptrs));
+        desolver.integrate(t, 1e10, &x[0], equations, inflation_end, static_cast<void*> (ptrs));
         N_end = x[2];
     }
     double phi_old = phi_p - 0.5;

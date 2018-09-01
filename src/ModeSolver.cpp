@@ -67,7 +67,6 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     
     //Evolution matrix
     Eigen::Matrix2cd Evolve = Eigen::Matrix2d::Identity();
-    
     for(size_t n = 0; n < Tsol.seg_control.size()-1; n++)
     {
         if(Tsol.seg_control[n].second == 0)
@@ -194,7 +193,7 @@ Eigen::Matrix2cd ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
 {
     Eigen::Matrix2cd MB0, MB1, MB;
     
-    if(x0 / p < 50)
+    if(abs(x0 / p) < 20 and abs(x1 / p) < 20)
     {
         auto I0 = Bessel_I(0, x0 / p);
         auto K0 = Bessel_K(0, x0 / p);
@@ -211,15 +210,15 @@ Eigen::Matrix2cd ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
         
         MB1 << I,  K,
             Ip, Kp;
-        
-        MB =MB1 * MB0.inverse();
+
+        MB = MB1 * MB0.inverse();
     }
     else
     {
-        auto a00 = 0.5 * (exp((x1-x0) / p) + exp(-(x1-x0) / p)) * pow(x0/x1, 0.5);
-        auto a01 = 0.5 * (exp((x1-x0) / p) - exp(-(x1-x0) / p)) * pow(x0 * x1, -0.5);
-        auto a10 = 0.5 * (exp((x1-x0) / p) - exp(-(x1-x0) / p)) * pow(x0 * x1, 0.5);
-        auto a11 = 0.5 * (exp((x1-x0) / p) + exp(-(x1-x0) / p)) * pow(x0/x1, -0.5);
+        auto a00 = 0.5 * (exp(abs(x1-x0) / p) + exp(-abs(x1-x0) / p)) * pow(x0/x1, 0.5);
+        auto a01 = 0.5 * (exp(abs(x1-x0) / p) - exp(-abs(x1-x0) / p)) * pow(x0 * x1, -0.5);
+        auto a10 = 0.5 * (exp(abs(x1-x0) / p) - exp(-abs(x1-x0) / p)) * pow(x0 * x1, 0.5);
+        auto a11 = 0.5 * (exp(abs(x1-x0) / p) + exp(-abs(x1-x0) / p)) * pow(x0/x1, -0.5);
         
         MB<< a00, a01,
             a10, a11;

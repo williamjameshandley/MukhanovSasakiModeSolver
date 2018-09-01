@@ -13,26 +13,11 @@ double H(const double x[], Potential* pot);
 double omega_2(const double x[], Potential* pot);
 double d_omega_2(const double x[], Potential* pot);
 
-void check(double g[], const double, const double x[], void* data);
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);
 void Find_N(double g[], const double, const double x[], void* data);
 void Extrema_Scalar(double g[], const double, const double x[], void* data);
 void Extrema_Tensor(double g[], const double, const double x[], void* data);
-
-struct Solutions
-{
-    std::vector< std::vector<double> > x;
-    std::vector< double > t;
-    
-    Solutions() : x{}, t{} {}
-    
-    void operator()( const std::vector<double> &x_ , double t_ )
-    {
-        x.push_back( x_ );
-        t.push_back( t_ );
-    }
-};
 
 struct BackgroundSolution
 {

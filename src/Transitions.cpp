@@ -79,7 +79,7 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
             auto temp_true = True(N_m, k);
             
             //Try exp or linear
-            if(End0 > 1 and End1 > 1)
+            if(End0 > 0.1 and End1 > 0.1)
             {
                 auto lin_b = (End1 - End0) / (N_f - N_i);
                 auto lin_a = End0 - lin_b * N_i;
@@ -119,8 +119,9 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
                     }
                 }
             }
+            
             //Try -exp or linear
-            else if(End0 < -1 and End1 < -1)
+            else if(End0 < -0.1 and End1 < -0.1)
             {
                 auto lin_b = (End1 - End0) / (N_f - N_i);
                 auto lin_a = End0 - lin_b * N_i;
@@ -160,6 +161,7 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
                     }
                 }
             }
+            
             //linear
             else
             {
