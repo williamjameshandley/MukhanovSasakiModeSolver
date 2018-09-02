@@ -1,7 +1,7 @@
 #include "ModeSolver.hpp"
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol): BasicModeSolver(),
-Bsol{_Bsol}, Tsol{}, N_r{0}, vacuum{BD} {}
+Bsol{_Bsol}, Tsol{}, N_r{0}, PPS_error{5e-3}, vacuum{BD} {}
 
 void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
 {
@@ -21,7 +21,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
         N_f = Bsol.N_end;
     }
     Transitions T(N_r, N_f, Bsol.omega_2, Bsol.log_aH, Bsol.N_extrema);
-    Tsol = T.Find(k, 1e-4);
+    Tsol = T.Find(k, exp((log(PPS_error) - 1.0633) / 0.7852));
     
     //Match and evaluate PPS
     Eigen::Vector2cd Q = Match(k);
@@ -42,8 +42,8 @@ double ModeSolver::Find_PPS_Tensor(double k)
         N_f = Bsol.N_end;
     }
     Transitions T(N_r, N_f, Bsol.omega_2_tensor, Bsol.log_aH, Bsol.N_extrema_tensor);
-    Tsol = T.Find(k, 1e-4);
-    
+    Tsol = T.Find(k, exp((log(PPS_error) + 0.4179) / 0.5615));
+
     //Match and evaluate PPS
     Eigen::Vector2cd Q = Match(k);
     double F = exp(N_f) * exp(0.5 * Bsol.log_aH(N_f));
@@ -198,7 +198,7 @@ Eigen::Matrix2d ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
     Eigen::Matrix2cd MB0, MB1;
     Eigen::Matrix2d MB;
     
-    if((x0 / p) < 30 and (x1 / p) < 30 and (x0 / p) > -15 and (x1 / p) > -15)
+    if((x0 / p) < 20 and (x1 / p) < 20 and (x0 / p) > -15 and (x1 / p) > -15)
     {
         auto I0 = Bessel_I(0, x0 / p);
         auto K0 = Bessel_K(0, x0 / p);
