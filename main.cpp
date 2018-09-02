@@ -10,7 +10,7 @@ int main()
     std::cout<<"Solving for Background..."<<std::endl;
     
     //Set Potential and ptr
-    Poly_Step pot(6.48757e-6, 0, 5e-2, 15.5);
+    Poly_Step pot(6.48757e-6, 1e-3, 5e-3, 12.5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
@@ -18,7 +18,7 @@ int main()
     
     //Solve Background Variables
     auto sols = solve_equations(potential_ptr, N_star, N_dagger);
-    
+   
     //////////////////////////////////////////////////////////////////////////////
     //k range
     double k0 = 1e-6, k1 = 1;
@@ -38,7 +38,7 @@ int main()
     NumericModeSolver N_ms(potential_ptr, N_star, N_dagger, N_r);
     //Construct PPS linear interpolation
     //N_ms.Construct_PPS_Scalar(k0, k1, 3e-3);
-    
+
     //////////////////////////////////////////////////////////////////////////////
     std::cout<<"Plotting..."<<std::endl;
     std::ofstream mout{"output/PPS.txt"};
@@ -51,7 +51,9 @@ int main()
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
+        double True = N_ms.Find_PPS_Tensor(k);
         double Approx = ms.Find_PPS_Tensor(k);
+        
         //Call PPS linear interpolation for plotting
         mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
         std::cout<<k<<std::endl;

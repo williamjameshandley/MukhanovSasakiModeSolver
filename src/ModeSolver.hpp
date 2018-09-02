@@ -43,12 +43,12 @@ class ModeSolver : public BasicModeSolver
         virtual double Find_PPS_Tensor(double k) override;
     
         Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
-        Eigen::Matrix2cd Bessel_Mat(double a, double b, double N0, double N1);
-        Eigen::Matrix2cd Modified_Bessel_Mat(double a, double b, double N0, double N1);
+        Eigen::Matrix2d Bessel_Mat(double a, double b, double N0, double N1);
+        Eigen::Matrix2d Modified_Bessel_Mat(double a, double b, double N0, double N1);
     
         Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
-        Eigen::Matrix2cd Bessel_gen(double p, double x1, double x0);
-        Eigen::Matrix2cd Modified_Bessel_gen(double p, double x1, double x0);
+        Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
+        Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
 };
 
 class NumericModeSolver : public BasicModeSolver

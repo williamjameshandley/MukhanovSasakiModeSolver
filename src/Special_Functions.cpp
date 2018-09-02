@@ -25,16 +25,6 @@ std::complex<double> Bessel_K(int v, double x)
     else       return pow(-1, v) * kn(v,-x) - I * M_PI * Bessel_I(v, -x);
 }
 
-std::complex<double> Hankel1(int v, double x)
-{
-    return Bessel_J(v, x) + I * Bessel_Y(v, x);
-}
-
-std::complex<double> Hankel2(int v, double x)
-{
-    return Bessel_J(v, x) - I * Bessel_Y(v, x);
-}
-
 void Airy(double x, double& Ai, double& Aip, double& Bi, double& Bip)
 {
     airy(x,&Ai,&Aip,&Bi,&Bip);
