@@ -69,7 +69,6 @@ Eigen::Vector2cd ModeSolver::Match(double k)
     Eigen::Matrix2cd Evolve = Eigen::Matrix2d::Identity();
     for(size_t n = 0; n < Tsol.seg_control.size()-1; n++)
     {
-        Evolve = Evolve.real();
         if(Tsol.seg_control[n].second == 0)
         {
             Evolve = Airy_Mat(Tsol.a[n], Tsol.b[n], Tsol.seg_control[n].first, Tsol.seg_control[n+1].first) * Evolve;
