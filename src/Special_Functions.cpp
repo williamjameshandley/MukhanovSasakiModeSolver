@@ -1,5 +1,4 @@
 #include "Special_Functions.hpp"
-#include <iostream>
 
 std::complex<double> Bessel_J(int v, double x)
 {

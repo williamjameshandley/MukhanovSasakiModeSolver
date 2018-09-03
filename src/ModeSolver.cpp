@@ -66,7 +66,7 @@ Eigen::Vector2cd ModeSolver::Match(double k)
         throw std::runtime_error("Initial conditions unknown");
     
     //Evolution matrix
-    Eigen::Matrix2cd Evolve = Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d Evolve = Eigen::Matrix2d::Identity();
     for(size_t n = 0; n < Tsol.seg_control.size()-1; n++)
     {
         if(Tsol.seg_control[n].second == 0)

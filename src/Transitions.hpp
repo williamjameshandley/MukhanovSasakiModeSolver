@@ -1,5 +1,6 @@
 #pragma once
-#include "BackgroundSolver.hpp"
+#include <algorithm>
+#include <vector>
 #include "linear_interpolation.hpp"
 
 struct TransitionsSolution

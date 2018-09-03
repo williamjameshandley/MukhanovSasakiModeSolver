@@ -55,14 +55,6 @@ void _equations_tensor(double dx_dt[], const double, const double x[], void* dat
     dx_dt[6] = -(3 * _H(x[0], x[1], pot)) * x[6] - exp(2 * (log_k - x[2])) * x[4];
 }
 
-void _check(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto params = static_cast<double*> (ptr[1]);
-    
-    g[0] = x[0];
-}
-
 void _inflation_end(double g[], const double, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
@@ -182,7 +174,7 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
         double t = t0;
         std::vector<double> x = {phi_p, dphi_p, 0};
         dlsodar desolver(3, 1, 1000000);
-        desolver.integrate(t, 1e10, &x[0], __equations, _check, static_cast<void*> (ptrs));
+        desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
         N_end = x[2];
     }
     double phi_old = phi_p - 0.5;
