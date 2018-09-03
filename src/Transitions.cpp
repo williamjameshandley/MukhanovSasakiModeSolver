@@ -88,8 +88,8 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
                 auto log_a = log(End0) - log_b * N_i;
                 auto log_approx = log_a + log_b * N_m;
                 
-                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
-                auto err_log = abs(exp(log_approx) - temp_true) / abs(temp_true);
+                auto err_lin = std::abs((lin_approx - temp_true)/temp_true);
+                auto err_log = std::abs((exp(log_approx) - temp_true)/temp_true);
                 
                 if(err_lin > err_log)
                 {
@@ -130,8 +130,8 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
                 auto log_a = log(-End0) - log_b * N_i;
                 auto log_approx = log_a + log_b * N_m;
 
-                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
-                auto err_log = abs(-exp(log_approx) - temp_true) / abs(temp_true);
+                auto err_lin = std::abs((lin_approx - temp_true)/temp_true);
+                auto err_log = std::abs((-exp(log_approx) - temp_true) /temp_true);
 
                 if(err_lin > err_log)
                 {
@@ -168,7 +168,7 @@ std::vector<std::pair<double, int>> Transitions::N_Distribution(double k, double
                 auto lin_a = End0 - lin_b * N_i;
                 auto lin_approx = lin_a + lin_b * N_m;
 
-                auto err_lin = abs(lin_approx - temp_true) / abs(temp_true);
+                auto err_lin = std::abs((lin_approx - temp_true)/temp_true);
                 
                 if(err_lin > lim)
                 {

@@ -10,8 +10,11 @@
 void equations(double dx_dt[], const double t, const double x[], void* data);
 double dphi_H(const double x[], Potential* pot);
 double H(const double x[], Potential* pot);
+double log_aH(const double x[], Potential* pot);
 double omega_2(const double x[], Potential* pot);
 double d_omega_2(const double x[], Potential* pot);
+double omega_2_tensor(const double x[], Potential* pot);
+double d_omega_2_tensor(const double x[], Potential* pot);
 
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);

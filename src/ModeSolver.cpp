@@ -205,16 +205,16 @@ Eigen::Matrix2d ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
         auto Ip0 = x0 * Bessel_I(1, x0 / p);
         auto Kp0 = -x0 * Bessel_K(1, x0 / p);
         
-        auto I = Bessel_I(0, x1 / p);
-        auto K = Bessel_K(0, x1 / p);
-        auto Ip = x1 * Bessel_I(1, x1 / p);
-        auto Kp = -x1 * Bessel_K(1, x1 / p);
+        auto I1 = Bessel_I(0, x1 / p);
+        auto K1 = Bessel_K(0, x1 / p);
+        auto Ip1 = x1 * Bessel_I(1, x1 / p);
+        auto Kp1 = -x1 * Bessel_K(1, x1 / p);
         
         MB0 << I0,  K0,
             Ip0, Kp0;
         
-        MB1 << I,  K,
-            Ip, Kp;
+        MB1 << I1,  K1,
+            Ip1, Kp1;
 
         MB = (MB1 * MB0.inverse()).real();
     }

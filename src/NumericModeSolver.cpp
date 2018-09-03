@@ -62,7 +62,7 @@ void _inflation_end(double g[], const double, const double x[], void* data)
     auto params = static_cast<double*> (ptr[1]);
     
     auto p = -(2.5 * x[1] * x[1] + x[1] * pot->dV(x[0]) / _H(x[0], x[1], pot) - pow(0.5 * x[1] * x[1] / _H(x[0], x[1], pot), 2));
-    if(p > 0)
+    if(p >= 0)
         g[0] = (-_H(x[0], x[1], pot) + 0.5 * x[1] * x[1] / _H(x[0], x[1], pot));
     else if(p < 0)
         g[0] = p;
@@ -103,10 +103,11 @@ void _finish(double g[], const double, const double x[], void* data)
     g[0] = (params[0] - log(200)) + (x[2] + log(_H(x[0], x[1], pot)));
 }
 
-NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : pot{_pot}, N_star{_N_star}, N_r{_N_r}
+NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : 
+    pot{_pot}, N_star{_N_star}, N_dagger{}, N_r{_N_r}, phi_p{}, dphi_p{}, log_aH_star{}, phi_IC{}, dphi_IC{}, n_IC{}, N_end{}
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
+    ptrs[0] = static_cast<void*> (pot.get());
     double params[3];
     ptrs[1] = static_cast<void*> (params);
     
@@ -144,7 +145,7 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     x = x0;
     desolver = dlsodar(3, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot));
+    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
     
     //Find BackgroundVar at N_set
     params[0] = N_end - N_r;
@@ -158,10 +159,11 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     
 }
 
-NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_dagger, double _N_r) : pot{_pot}, N_star{_N_star}, N_dagger{_N_dagger}, N_r{_N_r}
+NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_dagger, double _N_r) :
+    pot{_pot}, N_star{_N_star}, N_dagger{_N_dagger}, N_r{_N_r}, phi_p{}, dphi_p{}, log_aH_star{}, phi_IC{}, dphi_IC{}, n_IC{}, N_end{}
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
+    ptrs[0] = static_cast<void*> (pot.get());
     double params[3];
     ptrs[1] = static_cast<void*> (params);
     
@@ -217,7 +219,7 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     auto x = x0;
     dlsodar desolver(3, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot));
+    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
     
     //Find BackgroundVar at N_set
     params[0] = N_end - N_r;
@@ -234,7 +236,7 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
 double NumericModeSolver::Find_PPS_Scalar(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
+    ptrs[0] = static_cast<void*> (pot.get());
     double params[3];
     ptrs[1] = static_cast<void*> (params);
     
@@ -267,8 +269,8 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
     //Matching and find PPS
     double PPS;
     
-    double Z = exp(n_IC) * dphi_IC / _H(phi_IC, dphi_IC, pot);
-    double dZ_Z = dz_z(phi_IC, dphi_IC, pot);
+    double Z = exp(n_IC) * dphi_IC / _H(phi_IC, dphi_IC, pot.get());
+    double dZ_Z = dz_z(phi_IC, dphi_IC, pot.get());
     
     //Set Vacuum Initial Conditions
     auto R0 = 1.0 / (Z * sqrt(2 * k));
@@ -286,7 +288,7 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
 double NumericModeSolver::Find_PPS_Tensor(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
+    ptrs[0] = static_cast<void*> (pot.get());
     double params[3];
     ptrs[1] = static_cast<void*> (params);
     
@@ -321,7 +323,7 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
     
     //Set Vacuum Initial Conditions
     auto R0 = 2.0 / (exp(n_IC) * sqrt(2 * k));
-    auto dR0 = (-1.0 * I * k * exp(- n_IC) - _H(phi_IC, dphi_IC, pot)) * R0;
+    auto dR0 = (-1.0 * I * k * exp(- n_IC) - _H(phi_IC, dphi_IC, pot.get())) * R0;
     
     auto det = R1_IC * dR2_IC - R2_IC * dR1_IC;
     auto A = (R0 * dR2_IC - R2_IC * dR0) / det;
@@ -335,7 +337,7 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
 double NumericModeSolver::Find_PPS(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
+    ptrs[0] = static_cast<void*> (pot.get());
     double params[3];
     ptrs[1] = static_cast<void*> (params);
     
@@ -373,7 +375,7 @@ double NumericModeSolver::Find_PPS(double k)
     x = x0;
     desolver = dlsodar(3, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot));
+    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
     
     k *= exp(log_aH_star) / (0.05);
     
@@ -417,8 +419,8 @@ double NumericModeSolver::Find_PPS(double k)
     
     //Matching and find PPS
     double PPS;
-    double Z = exp(n_start) * dphi_start / _H(phi_start, dphi_start, pot);
-    double dZ_Z = dz_z(phi_start, dphi_start, pot);
+    double Z = exp(n_start) * dphi_start / _H(phi_start, dphi_start, pot.get());
+    double dZ_Z = dz_z(phi_start, dphi_start, pot.get());
     
     //Set Vacuum Initial Conditions
     auto R0 = (cos(k*eta_start) + I * sin(k*eta_start)) / (Z * sqrt(2 * k));
