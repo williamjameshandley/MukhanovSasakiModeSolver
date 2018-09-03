@@ -57,7 +57,7 @@ int main()
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
-        double True = N_ms.Find_PPS_Scalar(k);
+        double True = N_ms.Find_PPS(k);
         double Approx = ms.Find_PPS_Scalar(k);
         
         //Plot

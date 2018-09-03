@@ -51,7 +51,7 @@ TEST_CASE("range","[PPS][Scalar]")
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
-        double b = N_ms.Find_PPS_Scalar(k);
+        double b = N_ms.Find_PPS(k);
         double a = ms.Find_PPS_Scalar(k);
         REQUIRE( a == Approx(b) );
     }
