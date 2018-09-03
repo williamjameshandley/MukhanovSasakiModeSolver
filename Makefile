@@ -7,6 +7,7 @@ else ifeq ($(UNAME), Darwin)
 endif
 
 source_dir = $(PWD)/src
+test_dir = $(source_dir)/test
 external_dir = $(PWD)/external
 cephes_dir = $(external_dir)/cephes
 odepack_dir = $(external_dir)/odepack
@@ -21,10 +22,14 @@ cephes_src := $(wildcard $(cephes_dir)/*.c)
 odepack_cpp_src := $(wildcard $(odepack_dir)/*.cpp)
 odepack_f_src := $(wildcard $(odepack_dir)/*.f)
 
+test_srcs = $(wildcard $(test_dir)/*.cpp)
+test_objs = $(test_srcs:%.cpp=$(build_dir)/%.o)
+test_deps = $(test_srcs:%.cpp=$(build_dir)/%.d)
+
 objs = $(src:%.cpp=$(build_dir)/%.o) $(cephes_src:%.c=$(build_dir)/%.o) $(odepack_f_src:%.f=$(build_dir)/%.o) $(odepack_cpp_src:%.cpp=$(build_dir)/%.o) 
 deps = $(src:%.cpp=$(build_dir)/%.d) $(cephes_src:%.c=$(build_dir)/%.d)
 
-inc += -isystem$(external_dir)
+inc += -isystem$(external_dir) -I$(PWD)/src
 
 libname = msms
 
@@ -33,8 +38,10 @@ LDSHARED = $(LD) -shared
 #LDFLAGS += -pthread
 LDLIBS +=  -l$(libname)
 
-all: main
+all: test main
 extra: tags doc
+main: $(binary_dir)/main 
+test: $(binary_dir)/test 
 
 $(lib_dir)/lib$(libname).so: $(objs)
 	@mkdir -p $(@D)
@@ -49,9 +56,11 @@ python $(libdir)/$(libname).so:
 	python2 setup.py install --user
 
 # Compiling the main program
-main: $(binary_dir)/main
+$(binary_dir)/main: $(build_dir)/main.o $(objs)
+	@mkdir -p $(@D)
+	$(LD) $^ -o $@ $(LDFLAGS)
 
-$(binary_dir)/%: $(build_dir)/%.o $(objs)
+$(binary_dir)/test: $(build_dir)/test_main.o $(objs) $(test_objs)
 	@mkdir -p $(@D)
 	$(LD) $^ -o $@ $(LDFLAGS)
 

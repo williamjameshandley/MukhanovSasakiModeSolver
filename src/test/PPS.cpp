@@ -2,6 +2,8 @@
 #include "BackgroundSolver.hpp"
 #include "Potential.hpp"
 #include "ModeSolver.hpp"
+#include <iostream>
+
 
 TEST_CASE("range","[PPS][Scalar]") 
 {
@@ -49,7 +51,8 @@ TEST_CASE("range","[PPS][Scalar]")
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
-        double True = N_ms.Find_PPS(k);
-        double Approx = ms.Find_PPS_Scalar(k);
+        double b = N_ms.Find_PPS_Scalar(k);
+        double a = ms.Find_PPS_Scalar(k);
+        REQUIRE( a == Approx(b) );
     }
 }

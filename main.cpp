@@ -57,12 +57,11 @@ int main()
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
-        std::cout<<k<<std::endl;
-        double True = 0;//N_ms.Find_PPS(k);
+        double True = N_ms.Find_PPS_Scalar(k);
         double Approx = ms.Find_PPS_Scalar(k);
         
         //Plot
-        mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
+        //mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
     }
     mout.close();
     
