@@ -44,7 +44,7 @@ TEST_CASE("range","[PPS][Scalar]")
 
     //////////////////////////////////////////////////////////////////////////////
     
-    std::vector<double> kplot(1000);
+    std::vector<double> kplot(10);
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
@@ -53,6 +53,6 @@ TEST_CASE("range","[PPS][Scalar]")
     {
         double b = N_ms.Find_PPS(k);
         double a = ms.Find_PPS_Scalar(k);
-        REQUIRE( a == Approx(b) );
+        REQUIRE( a == Approx(b).scale(1e-3) );
     }
 }

@@ -2,13 +2,17 @@
 CC = gcc
 CXX = g++
 FC = gfortran
-LD = $(CXX)
+LD = $(CXX)  -pg -g  -std=legacy
 
 CXXFLAGS += -std=c++11
 FFLAGS += -std=legacy
 
 # Debugging
-#CXXFLAGS += -pg -O0 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused -Wconversion -Weffc++ -Wfatal-errors -ftemplate-backtrace-limit=0 #-Werror 
+#CXXFLAGS += -g -O0 -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused -Wconversion -Weffc++ -Wfatal-errors -ftemplate-backtrace-limit=0 #-Werror 
+#CFLAGS += -g -O0
+#FFLAGS +=  -g -O0 -fbacktrace -ffpe-trap=zero,overflow  
+
+
 
 # Optimised
 CXXFLAGS += -O3 -DEIGEN_NO_DEBUG -DEIGEN_DONT_PARALLELIZE
@@ -18,9 +22,11 @@ FFLAGS += -O3
 # Profiling
 CXXFLAGS += -pg
 CFLAGS += -pg
+FFLAGS += -pg
 
 # Shared object
 CXXFLAGS += -fPIC
 CFLAGS += -fPIC
+FFLAGS += -fPIC
 
-LDFLAGS += -lgfortran -std=legacy
+LDFLAGS += -lgfortran
