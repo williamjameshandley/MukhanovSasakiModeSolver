@@ -68,14 +68,14 @@ void _finish(double g[], const double, const double x[], void* data);
 class NumericModeSolver : public BasicModeSolver
 {
     public:
-        std::unique_ptr<Potential> pot;
+        Potential* pot;
         double N_star, N_dagger, N_r, phi_p, dphi_p, log_aH_star, phi_IC, dphi_IC, n_IC, N_end;
         NumericModeSolver(Potential* _pot, double _N_star): 
             pot{_pot}, N_star{_N_star}, N_dagger{}, N_r{}, phi_p{}, dphi_p{}, log_aH_star{}, phi_IC{}, dphi_IC{}, n_IC{}, N_end{}
         {}
         NumericModeSolver(Potential* _pot, double _N_star, double _N_r);
         NumericModeSolver(Potential* _pot, double _N_star, double N_dagger, double _N_r);
-        virtual ~NumericModeSolver() override { pot.release(); }
+        virtual ~NumericModeSolver() {};
     
         double Find_PPS(double k);
         virtual double Find_PPS_Scalar(double k) override;
