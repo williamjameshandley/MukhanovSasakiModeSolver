@@ -53,6 +53,6 @@ TEST_CASE("range","[PPS][Scalar]")
     {
         double b = N_ms.Find_PPS(k);
         double a = ms.Find_PPS_Scalar(k);
-        REQUIRE( a == Approx(b).scale(1e-3) );
+        REQUIRE( a == Approx(b).epsilon(1e-2) );
     }
 }
