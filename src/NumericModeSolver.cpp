@@ -2,7 +2,7 @@
 
 double _H(double phi, double dphi, Potential* pot)
 {
-    return sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0);
+    return std::sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0);
 }
 
 double dz_z(double phi, double dphi, Potential* pot)
@@ -15,12 +15,12 @@ void __equations(double dx_dt[], const double, const double x[], void* data)
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
     auto params = static_cast<double*> (ptr[1]);
-    double log_k = log(params[2]);
+    double log_k = std::log(params[2]);
     
     dx_dt[0] = x[1];
     dx_dt[1] = - (3 * _H(x[0], x[1], pot) * x[1] + pot->dV(x[0]));
     dx_dt[2] = _H(x[0], x[1], pot);
-    dx_dt[3] = exp(-x[2]);
+    dx_dt[3] = std::exp(-x[2]);
 }
 
 void _equations(double dx_dt[], const double, const double x[], void* data)
@@ -28,15 +28,15 @@ void _equations(double dx_dt[], const double, const double x[], void* data)
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
     auto params = static_cast<double*> (ptr[1]);
-    double log_k = log(params[2]);
+    double log_k = std::log(params[2]);
     
     dx_dt[0] = x[1];
     dx_dt[1] = - (3 * _H(x[0], x[1], pot) * x[1] + pot->dV(x[0]));
     dx_dt[2] = _H(x[0], x[1], pot);
     dx_dt[3] = x[5];
     dx_dt[4] = x[6];
-    dx_dt[5] = -(_H(x[0], x[1], pot) + 2.0 * dz_z(x[0], x[1], pot)) * x[5] - exp(2 * (log_k - x[2])) * x[3];
-    dx_dt[6] = -(_H(x[0], x[1], pot) + 2.0 * dz_z(x[0], x[1], pot)) * x[6] - exp(2 * (log_k - x[2])) * x[4];
+    dx_dt[5] = -(_H(x[0], x[1], pot) + 2.0 * dz_z(x[0], x[1], pot)) * x[5] - std::exp(2 * (log_k - x[2])) * x[3];
+    dx_dt[6] = -(_H(x[0], x[1], pot) + 2.0 * dz_z(x[0], x[1], pot)) * x[6] - std::exp(2 * (log_k - x[2])) * x[4];
 }
 
 void _equations_tensor(double dx_dt[], const double, const double x[], void* data)
@@ -44,15 +44,15 @@ void _equations_tensor(double dx_dt[], const double, const double x[], void* dat
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
     auto params = static_cast<double*> (ptr[1]);
-    double log_k = log(params[2]);
+    double log_k = std::log(params[2]);
     
     dx_dt[0] = x[1];
     dx_dt[1] = - (3 * _H(x[0], x[1], pot) * x[1] + pot->dV(x[0]));
     dx_dt[2] = _H(x[0], x[1], pot);
     dx_dt[3] = x[5];
     dx_dt[4] = x[6];
-    dx_dt[5] = -(3 * _H(x[0], x[1], pot)) * x[5] - exp(2 * (log_k - x[2])) * x[3];
-    dx_dt[6] = -(3 * _H(x[0], x[1], pot)) * x[6] - exp(2 * (log_k - x[2])) * x[4];
+    dx_dt[5] = -(3 * _H(x[0], x[1], pot)) * x[5] - std::exp(2 * (log_k - x[2])) * x[3];
+    dx_dt[6] = -(3 * _H(x[0], x[1], pot)) * x[6] - std::exp(2 * (log_k - x[2])) * x[4];
 }
 
 void _inflation_end(double g[], const double, const double x[], void* data)
@@ -91,7 +91,7 @@ void _start(double g[], const double, const double x[], void* data)
     auto pot = static_cast<Potential*> (ptr[0]);
     auto params = static_cast<double*> (ptr[1]);
     
-    g[0] = (params[0] + log(200)) + (x[2] + log(_H(x[0], x[1], pot)));
+    g[0] = (params[0] + std::log(200.)) + (x[2] + std::log(_H(x[0], x[1], pot)));
 }
 
 void _finish(double g[], const double, const double x[], void* data)
@@ -100,15 +100,16 @@ void _finish(double g[], const double, const double x[], void* data)
     auto pot = static_cast<Potential*> (ptr[0]);
     auto params = static_cast<double*> (ptr[1]);
     
-    g[0] = (params[0] - log(200)) + (x[2] + log(_H(x[0], x[1], pot)));
+    g[0] = (params[0] - std::log(200.)) + (x[2] + std::log(_H(x[0], x[1], pot)));
 }
 
 NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_r) : 
     pot{_pot}, N_star{_N_star}, N_dagger{}, N_r{_N_r}, phi_p{}, dphi_p{}, log_aH_star{}, phi_IC{}, dphi_IC{}, n_IC{}, N_end{}
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot.get());
+    ptrs[0] = static_cast<void*> (pot);
     double params[3];
+    params[0] = params[1] = params[2] = 0;
     ptrs[1] = static_cast<void*> (params);
     
     double t0 = 1;
@@ -128,13 +129,12 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
         N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
     }
     
-    dphi_p = - pot->dV(phi_p) / (3 * sqrt(pot->V(phi_p) / 3));
-    std::vector<double> x0 = {phi_p, dphi_p, 0};
+    dphi_p = - pot->dV(phi_p) / (3 * std::sqrt(pot->V(phi_p) / 3));
     
     //Find N_end
     double t = t0;
-    std::vector<double> x = x0;
-    dlsodar desolver(3, 1, 1000000);
+    std::vector<double> x = {phi_p, dphi_p, 0., 0.};
+    dlsodar desolver(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
     N_end = x[2];
     params[0] = N_end;
@@ -142,16 +142,16 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     //Find aH_star
     params[0] = N_end - N_star;
     t = t0;
-    x = x0;
-    desolver = dlsodar(3, 1, 1000000);
+    x = {phi_p, dphi_p, 0., 0.};
+    desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
+    log_aH_star = x[2] + std::log(_H(x[0], x[1], pot));
     
     //Find BackgroundVar at N_set
     params[0] = N_end - N_r;
     t = t0;
-    x = x0;
-    desolver = dlsodar(3, 1, 1000000);
+    x = {phi_p, dphi_p, 0., 0.};
+    desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
     phi_IC = x[0];
     dphi_IC = x[1];
@@ -163,19 +163,20 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     pot{_pot}, N_star{_N_star}, N_dagger{_N_dagger}, N_r{_N_r}, phi_p{}, dphi_p{}, log_aH_star{}, phi_IC{}, dphi_IC{}, n_IC{}, N_end{}
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot.get());
+    ptrs[0] = static_cast<void*> (pot);
     double params[3];
+    params[0] = params[1] = params[2] = 0;
     ptrs[1] = static_cast<void*> (params);
     
     double t0 = 1;
-    phi_p = 0, dphi_p = - sqrt(2.0/3), N_end = 0;
+    phi_p = 0, dphi_p = - std::sqrt(2.0/3), N_end = 0;
     double N_temp_d = 0, NN = 0;
     while(N_end < N_star + N_dagger)
     {
         phi_p += 0.5;
         double t = t0;
-        std::vector<double> x = {phi_p, dphi_p, 0};
-        dlsodar desolver(3, 1, 1000000);
+        std::vector<double> x = {phi_p, dphi_p, 0. ,0.};
+        dlsodar desolver(4, 1, 1000000);
         desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
         N_end = x[2];
     }
@@ -184,14 +185,14 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
     while(abs(N_temp_d - N_dagger) > 0.01)
     {
         double t = t0;
-        std::vector<double> x = {phi_p, dphi_p, 0};
-        dlsodar desolver(3, 1, 1000000);
+        std::vector<double> x = {phi_p, dphi_p, 0., 0.};
+        dlsodar desolver(4, 1, 1000000);
         desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
         N_end = x[2];
         
         t = t0;
-        x = {phi_p, dphi_p, 0};
-        desolver = dlsodar(3, 1, 100000);
+        x = {phi_p, dphi_p, 0., 0.};
+        desolver = dlsodar(4, 1, 100000);
         desolver.integrate(t, 1e10, &x[0], __equations, _inflation_begin, static_cast<void*> (ptrs));
         NN = x[2];
         
@@ -211,21 +212,20 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
         }
     }
     
-    std::vector<double> x0 = {phi_p, dphi_p, 0};
     
     //Find aH_star
     params[0] = N_end - N_star;
     auto t = t0;
-    auto x = x0;
-    dlsodar desolver(3, 1, 1000000);
+    std::vector<double> x = {phi_p, dphi_p, 0., 0.};
+    dlsodar desolver(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
+    log_aH_star = x[2] + std::log(_H(x[0], x[1], pot));
     
     //Find BackgroundVar at N_set
     params[0] = N_end - N_r;
     t = t0;
-    x = x0;
-    desolver = dlsodar(3, 1, 1000000);
+    x = {phi_p, dphi_p, 0., 0.}; 
+    desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
     phi_IC = x[0];
     dphi_IC = x[1];
@@ -236,8 +236,9 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
 double NumericModeSolver::Find_PPS_Scalar(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot.get());
+    ptrs[0] = static_cast<void*> (pot);
     double params[3];
+    params[0] = params[1] = params[2] = 0;
     ptrs[1] = static_cast<void*> (params);
     
     double t0 = 1;
@@ -247,7 +248,7 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
     double R1, R2, dR1, dR2;
     
     //Solve MS
-    k *= exp(log_aH_star) / (0.05);
+    k *= std::exp(log_aH_star) / (0.05);
     params[2] = k;
     double t = t0;
     std::vector<double> x = {phi_p, dphi_p, 0, 1, 0, 0, 1};
@@ -269,12 +270,12 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
     //Matching and find PPS
     double PPS;
     
-    double Z = exp(n_IC) * dphi_IC / _H(phi_IC, dphi_IC, pot.get());
-    double dZ_Z = dz_z(phi_IC, dphi_IC, pot.get());
+    double Z = std::exp(n_IC) * dphi_IC / _H(phi_IC, dphi_IC, pot);
+    double dZ_Z = dz_z(phi_IC, dphi_IC, pot);
     
     //Set Vacuum Initial Conditions
-    auto R0 = 1.0 / (Z * sqrt(2 * k));
-    auto dR0 = (-1.0 * I * k * exp(- n_IC) - dZ_Z) * R0;
+    auto R0 = 1.0 / (Z * std::sqrt(2 * k));
+    auto dR0 = (-1.0 * I * k * std::exp(- n_IC) - dZ_Z) * R0;
     
     auto det = R1_IC * dR2_IC - R2_IC * dR1_IC;
     auto A = (R0 * dR2_IC - R2_IC * dR0) / det;
@@ -288,8 +289,9 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
 double NumericModeSolver::Find_PPS_Tensor(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot.get());
+    ptrs[0] = static_cast<void*> (pot);
     double params[3];
+    params[0] = params[1] = params[2] = 0;
     ptrs[1] = static_cast<void*> (params);
     
     double t0 = 1;
@@ -299,7 +301,7 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
     double R1, R2, dR1, dR2;
     
     //Solve MS
-    k *= exp(log_aH_star) / (0.05);
+    k *= std::exp(log_aH_star) / (0.05);
     params[2] = k;
     double t = t0;
     std::vector<double> x = {phi_p, dphi_p, 0, 1, 0, 0, 1};
@@ -322,8 +324,8 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
     double PPS;
     
     //Set Vacuum Initial Conditions
-    auto R0 = 2.0 / (exp(n_IC) * sqrt(2 * k));
-    auto dR0 = (-1.0 * I * k * exp(- n_IC) - _H(phi_IC, dphi_IC, pot.get())) * R0;
+    auto R0 = 2.0 / (std::exp(n_IC) * std::sqrt(2 * k));
+    auto dR0 = (-1.0 * I * k * std::exp(- n_IC) - _H(phi_IC, dphi_IC, pot)) * R0;
     
     auto det = R1_IC * dR2_IC - R2_IC * dR1_IC;
     auto A = (R0 * dR2_IC - R2_IC * dR0) / det;
@@ -337,8 +339,9 @@ double NumericModeSolver::Find_PPS_Tensor(double k)
 double NumericModeSolver::Find_PPS(double k)
 {
     void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot.get());
+    ptrs[0] = static_cast<void*> (pot);
     double params[3];
+    params[0] = params[1] = params[2] = 0;
     ptrs[1] = static_cast<void*> (params);
     
     double t0 = 1;
@@ -358,13 +361,12 @@ double NumericModeSolver::Find_PPS(double k)
         N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
     }
     
-    dphi_p = - pot->dV(phi_p) / (3 * sqrt(pot->V(phi_p) / 3));
-    std::vector<double> x0 = {phi_p, dphi_p, 0};
+    dphi_p = - pot->dV(phi_p) / (3 * std::sqrt(pot->V(phi_p) / 3));
     
     //Find N_end
     double t = t0;
-    std::vector<double> x = x0;
-    dlsodar desolver(3, 1, 1000000);
+    std::vector<double> x = {phi_p, dphi_p, 0., 0.};
+    dlsodar desolver(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _inflation_end, static_cast<void*> (ptrs));
     N_end = x[2];
     params[0] = N_end;
@@ -372,17 +374,17 @@ double NumericModeSolver::Find_PPS(double k)
     //Find aH_star
     params[0] = N_end - N_star;
     t = t0;
-    x = x0;
-    desolver = dlsodar(3, 1, 1000000);
+    x = {phi_p, dphi_p, 0., 0.};
+    desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _Find_N, static_cast<void*> (ptrs));
-    log_aH_star = x[2] + log(_H(x[0], x[1], pot.get()));
+    log_aH_star = x[2] + std::log(_H(x[0], x[1], pot));
     
-    k *= exp(log_aH_star) / (0.05);
+    k *= std::exp(log_aH_star) / (0.05);
     
     //Find BackgroundVar at N_start
-    params[0] = -log(k);
+    params[0] = -std::log(k);
     t = t0;
-    x = x0;
+    x = {phi_p, dphi_p, 0., 0.};
     desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _start, static_cast<void*> (ptrs));
     auto t_start = t;
@@ -392,8 +394,8 @@ double NumericModeSolver::Find_PPS(double k)
     auto eta_start = x[3];
     
     //Find BackgroundVar at N_finish
-    params[0] = -log(k);
-    x = x0;
+    params[0] = -std::log(k);
+    x = {phi_p, dphi_p, 0., 0.};
     desolver = dlsodar(4, 1, 1000000);
     desolver.integrate(t, 1e10, &x[0], __equations, _finish, static_cast<void*> (ptrs));
     auto t_finish = t;
@@ -419,12 +421,12 @@ double NumericModeSolver::Find_PPS(double k)
     
     //Matching and find PPS
     double PPS;
-    double Z = exp(n_start) * dphi_start / _H(phi_start, dphi_start, pot.get());
-    double dZ_Z = dz_z(phi_start, dphi_start, pot.get());
+    double Z = std::exp(n_start) * dphi_start / _H(phi_start, dphi_start, pot);
+    double dZ_Z = dz_z(phi_start, dphi_start, pot);
     
     //Set Vacuum Initial Conditions
-    auto R0 = (cos(k*eta_start) + I * sin(k*eta_start)) / (Z * sqrt(2 * k));
-    auto dR0 = (-1.0 * I * k * exp(-n_start) - dZ_Z) * R0;
+    auto R0 = (cos(k*eta_start) + I * sin(k*eta_start)) / (Z * std::sqrt(2 * k));
+    auto dR0 = (-1.0 * I * k * std::exp(-n_start) - dZ_Z) * R0;
     
     PPS = (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(R0 * R1 + dR0 * R2), 2);
     
