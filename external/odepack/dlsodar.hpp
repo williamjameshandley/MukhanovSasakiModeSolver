@@ -32,7 +32,8 @@ class dlsodar
         int jt;
         int ng;
         std::vector<int> jroot;
-        int max_steps;
+        int ml;
+        int mu;
 
         void _integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data);
     public:

@@ -1,6 +1,7 @@
 #include "opkdmain.h"
 #include "dlsodar.hpp"
 #include "pointers.hpp"
+#include <algorithm>
 
 dlsodar::dlsodar(int neq_, int ng_, int max_steps_): 
         neq{neq_},
@@ -10,15 +11,28 @@ dlsodar::dlsodar(int neq_, int ng_, int max_steps_):
         itask{1},
         istate{1},
         iopt{1},
-        rwork(static_cast<size_t>(22+neq*std::max(16,neq+9)+3*ng_), 0),
-        lrw{static_cast<int>(rwork.size())},
-        iwork(static_cast<size_t>(20+neq), 0),
-        liw{static_cast<int>(iwork.size())},
+        rwork{},
+        lrw{},
+        iwork{},
+        liw{},
         jt{2},
         ng{ng_},
         jroot(static_cast<size_t>(ng)),
-        max_steps{max_steps_}
-{}
+        ml{0},
+        mu{0}
+{
+
+    lrw = std::max({ 20 + 16*neq + 3*ng,
+                     22 + 9*neq + neq_*neq + 3*ng,
+                     22 + 10*neq + (2*ml+mu)*neq + 3*ng});
+    rwork.resize(static_cast<size_t>(lrw),0);
+
+    liw = 20 + neq;
+    iwork.resize(static_cast<size_t>(liw),0);
+    iwork[0] = ml;
+    iwork[1] = mu;
+    iwork[5] = max_steps_;
+}
 
 void dlsodar::integrate(double &t, double tout, double q[], Field f_func, void *data)
 { jt = 2; int ng_ = ng; ng = 0; _integrate(t, tout, q, f_func, nullptr, nullptr, data); ng = ng_; }
@@ -41,16 +55,14 @@ void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacob
     j_func_ = j_func;
     g_func_ = g_func;
 
-    iwork[5] = max_steps;
-
     dlsodar_(
-            f_,
+            &f_,
             &neq, q, &t, &tout,
             &itol, &rtol[0], &atol[0],
             &itask, &istate, &iopt,
             &rwork[0], &lrw, &iwork[0], &liw,
-            j_, &jt,
-            g_, &ng,
+            &j_, &jt,
+            &g_, &ng,
             &jroot[0]
             );
     // @todo istate processing
