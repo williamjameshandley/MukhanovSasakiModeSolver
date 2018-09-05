@@ -3,9 +3,20 @@
 #include "src/BackgroundSolver.hpp"
 #include "src/Potential.hpp"
 #include "src/ModeSolver.hpp"
+#include <map>
 
 int main()
 {
+    std::map<double,int> A;
+
+    A.insert(std::pair<double,int>(5.5,1));
+    A[6.5] = 2;
+    A[6.4] = 3;
+
+    for (auto iter = A.begin(); iter != A.end(); ++iter)
+        std::cout << iter->second << std::endl;
+
+    return 0;
     
     std::cout<<"Solving for Background..."<<std::endl;
     
