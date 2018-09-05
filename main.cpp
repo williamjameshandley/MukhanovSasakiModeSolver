@@ -5,16 +5,25 @@
 #include "src/ModeSolver.hpp"
 #include <map>
 
+struct Vars
+{
+    double a, b;
+    int i;
+    Vars(double _a, double _b, int _i): a{_a}, b{_b}, i{_i} {};
+};
+
 int main()
 {
-    std::map<double,int> A;
+    std::map<double,Vars> A;
 
-    A.insert(std::pair<double,int>(5.5,1));
-    A[6.5] = 2;
-    A[6.4] = 3;
+    A.insert(std::pair<double,Vars> (5.5, Vars(1, 2, 3)));
+    A.insert(std::pair<double,Vars> (6.5, Vars(3, 2, 1)));
+    A.insert(std::pair<double,Vars> (7.5, Vars(2, 1, 3)));
+
+    A[5.5] = Vars(7, 6, 5);
 
     for (auto iter = A.begin(); iter != A.end(); ++iter)
-        std::cout << iter->second << std::endl;
+        std::cout << iter->second.a <<"  "<< iter->second.b<<"  " << iter->second.i<< std::endl;
 
     return 0;
     
