@@ -20,7 +20,7 @@ int main()
     A.insert(std::pair<double,Vars> (6.5, Vars(3, 2, 1)));
     A.insert(std::pair<double,Vars> (7.5, Vars(2, 1, 3)));
 
-    A[5.5] = Vars(7, 6, 5);
+    A.at(5.5) = Vars(7, 6, 5);
 
     for (auto iter = A.begin(); iter != A.end(); ++iter)
         std::cout << iter->second.a <<"  "<< iter->second.b<<"  " << iter->second.i<< std::endl;
