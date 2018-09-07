@@ -9,13 +9,14 @@
 #include "linear_interpolation.hpp"
 
 enum VacuumChoice { BD, HD, RST };
+enum TransitionChoice {neg_exp, lin, pos_exp};
 
 struct Vars
 {
     double a, b;
-    int i;
+    TransitionChoice i;
     Eigen::Matrix2d Mat;
-    Vars(double _a, double _b, int _i, Eigen::Matrix2d _Mat): a{_a}, b{_b}, i{_i}, Mat{_Mat} {};
+    Vars(double _a, double _b, TransitionChoice _i, Eigen::Matrix2d _Mat): a{_a}, b{_b}, i{_i}, Mat{_Mat} {};
 };
 
 class BasicModeSolver

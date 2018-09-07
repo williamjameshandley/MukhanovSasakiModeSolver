@@ -20,7 +20,7 @@ int main()
    
     //////////////////////////////////////////////////////////////////////////////
     //k range
-    double k0 = 1e-6, k1 = 0.2;
+    double k0 = 1e-6, k1 = 1;
     //Vacuum Setting Time (no. e-folds before end of inflation)
     double N_r = sols.N_end - 2;
     

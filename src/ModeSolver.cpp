@@ -54,7 +54,7 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double N_final)
 {
     std::map<double, Vars> Seg;
-    Vars Null_var(0, 0, 0, Eigen::Matrix2d::Identity());
+    Vars Null_var(0, 0, lin, Eigen::Matrix2d::Identity());
     
     //Initialize Extrema and end points
     Seg.insert(std::pair<double,Vars> (N_initial, Null_var));
@@ -120,9 +120,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
+                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
                     else
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 3, Mat_log_0);
+                        Seg.at(N_i) = Vars(a_log_0, b_log_0, pos_exp, Mat_log_0);
                     
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
@@ -169,9 +169,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
+                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
                     else
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 1, Mat_log_0);
+                        Seg.at(N_i) = Vars(a_log_0, b_log_0, neg_exp, Mat_log_0);
                     
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
@@ -203,7 +203,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error)
                 {
-                    Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
+                    Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
                 }
@@ -218,9 +218,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
     Eigen::Matrix2d Evolve = Eigen::Matrix2d::Identity();
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
         Evolve = iter->second.Mat * Evolve;
-    
-    Eigen::Vector2cd Q_f = Evolve * Q_i;
 
+    Eigen::Vector2cd Q_f = Evolve * Q_i;
     return Q_f;
 }
 
@@ -237,16 +236,7 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
     double x0 = -((a + b * N0) /p/p);
     double x1 = -((a + b * N1) /p/p);
     
-    if(b < 0)
-    {
-        A = Airy_gen(p, x0, x1);
-    }
-    else if(b > 0)
-    {
-        A = Airy_gen(-p, x0, x1);
-    }
-    
-    return A;
+    return Airy_gen(-p * b / abs(b), x0, x1);
 }
 
 Eigen::Matrix2d ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
@@ -255,9 +245,7 @@ Eigen::Matrix2d ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
     double x0 = exp(a + b * N0);
     double x1 = exp(a + b * N1);
     
-    Eigen::Matrix2d B = Bessel_gen(p, x0, x1);
-    
-    return B;
+    return Bessel_gen(p, x0, x1);
 }
 
 Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, double N1)
@@ -266,9 +254,7 @@ Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, d
     double x0 = exp(a + b * N0);
     double x1 = exp(a + b * N1);
     
-    Eigen::Matrix2d MB = Modified_Bessel_gen(p, x0, x1);
-    
-    return MB;
+    return Modified_Bessel_gen(p, x0, x1);
 }
 
 Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
