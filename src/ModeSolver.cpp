@@ -120,9 +120,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 1, Mat_lin_0);
+                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
                     else
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 2, Mat_log_0);
+                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 3, Mat_log_0);
                     
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
@@ -169,9 +169,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 1, Mat_lin_0);
+                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
                     else
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 3, Mat_log_0);
+                        Seg.at(N_i) = Vars(a_log_0, b_log_0, 1, Mat_log_0);
                     
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
@@ -203,7 +203,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error)
                 {
-                    Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 1, Mat_lin_0);
+                    Seg.at(N_i) = Vars(a_lin_0, b_lin_0, 2, Mat_lin_0);
                     Seg.insert(std::pair<double,Vars> (N_f, Null_var));
                     count += 1;
                 }
@@ -220,7 +220,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         Evolve = iter->second.Mat * Evolve;
     
     Eigen::Vector2cd Q_f = Evolve * Q_i;
-    
+
     return Q_f;
 }
 
