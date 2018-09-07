@@ -4,12 +4,19 @@
 #include <complex>
 #include <memory>
 #include <Eigen/Dense>
-#include "Transitions.hpp"
 #include "BackgroundSolver.hpp"
 #include "Special_Functions.hpp"
 #include "linear_interpolation.hpp"
 
 enum VacuumChoice { BD, HD, RST };
+
+struct Vars
+{
+    double a, b;
+    int i;
+    Eigen::Matrix2d Mat;
+    Vars(double _a, double _b, int _i, Eigen::Matrix2d _Mat): a{_a}, b{_b}, i{_i}, Mat{_Mat} {};
+};
 
 class BasicModeSolver
 {
@@ -31,24 +38,25 @@ class BasicModeSolver
 class ModeSolver : public BasicModeSolver
 {
     public:
-        BackgroundSolution Bsol;    
-        TransitionsSolution Tsol;
-    
+        BackgroundSolution Bsol;
+        
         double N_r, PPS_error;
         VacuumChoice vacuum;
-    
+        
         ModeSolver(BackgroundSolution _Bsol);
-    
+        
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
-        Eigen::Vector2cd Match(double k);
-    
+        Eigen::Vector2cd Initial_Q(double k);
+        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, double k, double N_i, double N_f);
+        
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
-    
+        
+        double w_2(double N, double k);
         Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Bessel_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Modified_Bessel_Mat(double a, double b, double N0, double N1);
-    
+        
         Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
         Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
         Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
