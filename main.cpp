@@ -53,16 +53,7 @@ int main()
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
-    //ms.k_plot_Scalar are k points of linear intepolation
-    for(auto k : kplot)
-    {
-        double True = 0;//N_ms.Find_PPS(k);
-        double Approx = ms.Find_PPS_Scalar(k);
-        std::cout<<k<<std::endl;
-        //Plot
-        mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
-    }
-    mout.close();
+    double a = ms.Find_PPS_Scalar(1e-2);
     
     return 0;
 }
