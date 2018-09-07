@@ -253,8 +253,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         
         Evolve = iter->second.Mat * Evolve;
     }
-    Eigen::Vector2cd Q_f = Evolve * Q_initial;
     fout.close();
+    Eigen::Vector2cd Q_f = Evolve * Q_initial;
+    
     return Q_f;
 }
 
