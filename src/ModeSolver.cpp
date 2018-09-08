@@ -52,14 +52,35 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
     return Q_i;
 }
 
+Eigen::MatrixXd ModeSolver::lin_step(double w_2_i, double w_2_f, double N_i, double N_f)
+{
+    double b_lin = (w_2_f - w_2_i) / (N_f - N_i);
+    double a_lin = w_2_i - b_lin * N_i;
+    return Airy_Mat(a_lin, b_lin, N_i, N_f);
+}
+
+Eigen::MatrixXd ModeSolver::pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f)
+{
+    double b_log = 0.5 * (log(w_2_f) - log(w_2_i)) / (N_f - N_i);
+    double a_log = 0.5 * log(w_2_i) - b_log * N_i;
+    return Bessel_Mat(a_log, b_log, N_i, N_f);
+}
+
+Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f)
+{
+    double b_log = 0.5 * (log(-w_2_f) - log(-w_2_i)) / (N_f - N_i);
+    double a_log = 0.5 * log(-w_2_i) - b_log * N_i;
+    return Modified_Bessel_Mat(a_log, b_log, N_i, N_f);
+}
+
 Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double N_final)
 {
-    std::map<double, Vars> Seg;
-    Vars Null_var(Q_i * 0);
+    std::map<double, Eigen::VectorXcd> Seg;
     
     //Initialize Extrema and end points
-    Seg.insert(std::pair<double,Vars> (N_initial, Vars(Q_i)));
-    Seg.insert(std::pair<double,Vars> (N_final, Null_var));
+    Seg[N_initial] =  Q_i;
+    Seg[N_final] =  {};
+
     if(Bsol.N_extrema.size() != 0)
     {
         auto p0 = static_cast<size_t>(std::lower_bound(Bsol.N_extrema.begin(), Bsol.N_extrema.end(), N_initial) - Bsol.N_extrema.begin());
@@ -67,7 +88,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         if(p1 <= Bsol.N_extrema.size() and p1 > p0)
         {
             for(size_t n = p0; n < p1; n++)
-                Seg.insert(std::pair<double,Vars> (Bsol.N_extrema[n], Null_var));
+                Seg[Bsol.N_extrema[n]] = {};
         }
     }
     
@@ -75,148 +96,58 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
     {
         double N_i = iter->first;
         double N_f = std::next(iter)->first;
-        int count = 0;
         
-        while(count == 0)
+        while(true)
         {
             double N_m = 0.5 * (N_i + N_f);
             double w_2_i = w_2(N_i, k);
             double w_2_f = w_2(N_f, k);
             double w_2_m = w_2(N_m, k);
+
+            Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m, w_2_f, N_m, N_f) * lin_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+            double err_lin = frac_error(pow(abs(Q_lin_2[0]), 2) , pow(abs(Q_lin_1[0]), 2));
             
-            //Lin or Exp
             if(w_2_i > 0 and w_2_f > 0)
             {
-                //Try lin, log for one segment
-                double b_lin_0 = (w_2_f - w_2_i) / (N_f - N_i);
-                double a_lin_0 = w_2_i - b_lin_0 * N_i;
-                Eigen::Matrix2d Mat_lin_0 = Airy_Mat(a_lin_0, b_lin_0, N_i, N_f);
-                double b_log_0 = 0.5 * (log(w_2_f) - log(w_2_i)) / (N_f - N_i);
-                double a_log_0 = 0.5 * log(w_2_i) - b_log_0 * N_i;
-                Eigen::Matrix2d Mat_log_0 = Bessel_Mat(a_log_0, b_log_0, N_i, N_f);
-                
-                //Try lin, log for two segment
-                double b_lin_1 = (w_2_m - w_2_i) / (N_m - N_i);
-                double a_lin_1 = w_2_i - b_lin_1 * N_i;
-                double b_lin_2 = (w_2_f - w_2_m) / (N_f - N_m);
-                double a_lin_2 = w_2_m - b_lin_2 * N_m;
-                Eigen::Matrix2d Mat_lin_1 = Airy_Mat(a_lin_1, b_lin_1, N_i, N_m);
-                Eigen::Matrix2d Mat_lin_2 = Airy_Mat(a_lin_2, b_lin_2, N_m, N_f);
-                
-                double b_log_1 = 0.5 * (log(w_2_m) - log(w_2_i)) / (N_m - N_i);
-                double a_log_1 = 0.5 * log(w_2_i) - b_log_1 * N_i;
-                double b_log_2 = 0.5 * (log(w_2_f) - log(w_2_m)) / (N_f - N_m);
-                double a_log_2 = 0.5 * log(w_2_m) - b_log_2 * N_m;
-                Eigen::Matrix2d Mat_log_1 = Bessel_Mat(a_log_1, b_log_1, N_i, N_m);
-                Eigen::Matrix2d Mat_log_2 = Bessel_Mat(a_log_2, b_log_2, N_m, N_f);
-                
-                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
-                double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
-                
-                auto Q_log_1 = Mat_log_0 * iter->second.Q;
-                auto Q_log_2 = Mat_log_2 * Mat_log_1 * iter->second.Q;
-                double err_log = abs((pow(abs(Q_log_2[0]), 2) - pow(abs(Q_log_1[0]), 2)) / pow(abs(Q_log_2[0]), 2));
+                Eigen::VectorXcd Q_log_1 = pos_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+                Eigen::VectorXcd Q_log_2 = pos_exp_step(w_2_m, w_2_f, N_m, N_f) * pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+                double err_log = frac_error(pow(abs(Q_log_2[0]), 2) , pow(abs(Q_log_1[0]), 2));
                 
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
-                    if(err_lin < err_log)
-                        Seg.at(N_f) = Vars(Q_lin_1);
-                    else
-                        Seg.at(N_f) = Vars(Q_log_1);
-
-                    count += 1;
-                }
-                else
-                {
-                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
-                    N_f = N_m;
+                    if (err_lin < err_log) Seg[N_f] = Q_lin_1;
+                    else                   Seg[N_f] = Q_log_1; 
+                    break;
                 }
             }
-            //Lin or -Exp
             else if(w_2_i < 0 and w_2_f < 0)
             {
-                //Try lin, log for one segment
-                double b_lin_0 = (w_2_f - w_2_i) / (N_f - N_i);
-                double a_lin_0 = w_2_i - b_lin_0 * N_i;
-                Eigen::Matrix2d Mat_lin_0 = Airy_Mat(a_lin_0, b_lin_0, N_i, N_f);
-                double b_log_0 = 0.5 * (log(-w_2_f) - log(-w_2_i)) / (N_f - N_i);
-                double a_log_0 = 0.5 * log(-w_2_i) - b_log_0 * N_i;
-                Eigen::Matrix2d Mat_log_0 = Modified_Bessel_Mat(a_log_0, b_log_0, N_i, N_f);
-                
-                //Try lin, log for two segment
-                double b_lin_1 = (w_2_m - w_2_i) / (N_m - N_i);
-                double a_lin_1 = w_2_i - b_lin_1 * N_i;
-                double b_lin_2 = (w_2_f - w_2_m) / (N_f - N_m);
-                double a_lin_2 = w_2_m - b_lin_2 * N_m;
-                Eigen::Matrix2d Mat_lin_1 = Airy_Mat(a_lin_1, b_lin_1, N_i, N_m);
-                Eigen::Matrix2d Mat_lin_2 = Airy_Mat(a_lin_2, b_lin_2, N_m, N_f);
-                
-                double b_log_1 = 0.5 * (log(-w_2_m) - log(-w_2_i)) / (N_m - N_i);
-                double a_log_1 = 0.5 * log(-w_2_i) - b_log_1 * N_i;
-                double b_log_2 = 0.5 * (log(-w_2_f) - log(-w_2_m)) / (N_f - N_m);
-                double a_log_2 = 0.5 * log(-w_2_m) - b_log_2 * N_m;
-                Eigen::Matrix2d Mat_log_1 = Modified_Bessel_Mat(a_log_1, b_log_1, N_i, N_m);
-                Eigen::Matrix2d Mat_log_2 = Modified_Bessel_Mat(a_log_2, b_log_2, N_m, N_f);
-                
-                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
-                double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
-                
-                auto Q_log_1 = Mat_log_0 * iter->second.Q;
-                auto Q_log_2 = Mat_log_2 * Mat_log_1 * iter->second.Q;
-                double err_log = abs((pow(abs(Q_log_2[0]), 2) - pow(abs(Q_log_1[0]), 2)) / pow(abs(Q_log_2[0]), 2));
+                Eigen::VectorXcd Q_log_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+                Eigen::VectorXcd Q_log_2 = neg_exp_step(w_2_m, w_2_f, N_m, N_f) * pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+                double err_log = frac_error(pow(abs(Q_log_2[0]), 2) , pow(abs(Q_log_1[0]), 2)); 
                 
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
-                    if(err_lin < err_log)
-                        Seg.at(N_f) = Vars(Q_lin_1);
-                    else
-                        Seg.at(N_f) = Vars(Q_log_1);
-                    
-                    count += 1;
-                }
-                else
-                {
-                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
-                    N_f = N_m;
+                    if (err_lin < err_log) Seg[N_f] = Q_lin_1;
+                    else                   Seg[N_f] = Q_log_1; 
+                    break;
                 }
             }
-            //Lin
             else
             {
-                //Try lin one segment
-                double b_lin_0 = (w_2_f - w_2_i) / (N_f - N_i);
-                double a_lin_0 = w_2_i - b_lin_0 * N_i;
-                Eigen::Matrix2d Mat_lin_0 = Airy_Mat(a_lin_0, b_lin_0, N_i, N_f);
-                
-                //Try lin for two segment
-                double b_lin_1 = (w_2_m - w_2_i) / (N_m - N_i);
-                double a_lin_1 = w_2_i - b_lin_1 * N_i;
-                double b_lin_2 = (w_2_f - w_2_m) / (N_f - N_m);
-                double a_lin_2 = w_2_m - b_lin_2 * N_m;
-                Eigen::Matrix2d Mat_lin_1 = Airy_Mat(a_lin_1, b_lin_1, N_i, N_m);
-                Eigen::Matrix2d Mat_lin_2 = Airy_Mat(a_lin_2, b_lin_2, N_m, N_f);
-                
-                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
-                double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
-                
                 if(err_lin < PPS_error)
                 {
-                    Seg.at(N_f) = Vars(Q_lin_1);
-                    count += 1;
-                }
-                else
-                {
-                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
-                    N_f = N_m;
+                    Seg[N_f] = Q_lin_1;
+                    break;
                 }
             }
+            Seg[N_m] = {};
+            N_f = N_m;
         }
     }
 
-    return std::prev(Seg.end())->second.Q;
+    return std::prev(Seg.end())->second;
 }
 
 double ModeSolver::w_2(double N, double k)

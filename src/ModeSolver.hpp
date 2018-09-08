@@ -11,12 +11,6 @@
 enum VacuumChoice { BD, HD, RST };
 enum TransitionChoice {neg_exp, lin, pos_exp};
 
-struct Vars
-{
-    Eigen::Vector2cd Q;
-    Vars(Eigen::Vector2cd _Q): Q{_Q} {};
-};
-
 class BasicModeSolver
 {
     public:
@@ -59,6 +53,11 @@ class ModeSolver : public BasicModeSolver
         Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
         Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
         Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
+
+        Eigen::MatrixXd lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::MatrixXd pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::MatrixXd neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+
 };
 
 double _H(double phi, double dphi, Potential* pot);
@@ -88,3 +87,5 @@ class NumericModeSolver : public BasicModeSolver
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
 };
+
+template<typename T> T frac_error(T x, T x0) { return std::abs((x-x0)/x0);}
