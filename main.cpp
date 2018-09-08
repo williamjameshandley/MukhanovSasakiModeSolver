@@ -6,7 +6,7 @@
 
 int main()
 {
-    std::cout<<"Solving for Background..."<<std::endl;
+    //std::cout<<"Solving for Background..."<<std::endl;
     
     //Set Potential and ptr
     Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
@@ -24,7 +24,7 @@ int main()
     //Vacuum Setting Time (no. e-folds before end of inflation)
     double N_r = sols.N_end - 2;
     
-    std::cout<<"Finding PPS Approximately..."<<std::endl;
+    //std::cout<<"Finding PPS Approximately..."<<std::endl;
     //Initialize ModeSolver with background solutions
     ModeSolver ms(sols);
     
@@ -32,12 +32,12 @@ int main()
     ms.Initial_Conditions(BD, N_r);
     
     //Choose error tolerance (By default set to 5e-3)
-    ms.PPS_error = 1e-6;
+    ms.PPS_error = 1e-5;
     
     //Construct PPS linear interpolation
     //ms.Construct_PPS_Tensor(k0, k1, 3e-3);
     
-    std::cout<<"Finding PPS Numerically..."<<std::endl;
+    //std::cout<<"Finding PPS Numerically..."<<std::endl;
     //Initialize Numeric Solver
     NumericModeSolver N_ms(potential_ptr, N_star, N_dagger, N_r);
     
@@ -45,7 +45,7 @@ int main()
     //N_ms.Construct_PPS_Scalar(k0, k1, 3e-3);
 
     //////////////////////////////////////////////////////////////////////////////
-    std::cout<<"Plotting..."<<std::endl;
+    //std::cout<<"Plotting..."<<std::endl;
     std::ofstream mout{"output/PPS.txt"};
     mout.precision(20);
     
@@ -53,12 +53,15 @@ int main()
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
+    //ms.Find_PPS_Scalar(1e-2);
+    //return 0;
     //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
         double True = 0;//N_ms.Find_PPS_Scalar(k);
         double Approx = ms.Find_PPS_Scalar(k);
         //Plot
+        //std::cout << k << std::endl;
         mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
     }
     mout.close();

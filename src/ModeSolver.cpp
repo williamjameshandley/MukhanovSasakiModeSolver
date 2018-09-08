@@ -96,42 +96,60 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
     {
         double N_i = iter->first;
         double N_f = std::next(iter)->first;
+        double w_2_i = w_2(N_i, k);
+        double w_2_f = w_2(N_f, k);
+        Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+        Eigen::Vector2cd Q_pos_1, Q_neg_1;
         
         while(true)
         {
             double N_m = 0.5 * (N_i + N_f);
-            double w_2_i = w_2(N_i, k);
-            double w_2_f = w_2(N_f, k);
             double w_2_m = w_2(N_m, k);
 
-            Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m, w_2_f, N_m, N_f) * lin_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+            Eigen::Vector2cd Q_lin_m = lin_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m, w_2_f, N_m, N_f) * Q_lin_m;
             double err_lin = frac_error(pow(abs(Q_lin_2[0]), 2) , pow(abs(Q_lin_1[0]), 2));
             
             if(w_2_i > 0 and w_2_f > 0)
             {
-                Eigen::VectorXcd Q_log_1 = pos_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_log_2 = pos_exp_step(w_2_m, w_2_f, N_m, N_f) * pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
-                double err_log = frac_error(pow(abs(Q_log_2[0]), 2) , pow(abs(Q_log_1[0]), 2));
+                if (not Q_pos_1.size()) Q_pos_1 = pos_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+                Eigen::VectorXcd Q_pos_m = pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+                Eigen::VectorXcd Q_pos_2 = pos_exp_step(w_2_m, w_2_f, N_m, N_f) * Q_pos_m;
+                double err_pos = frac_error(pow(abs(Q_pos_2[0]), 2) , pow(abs(Q_pos_1[0]), 2));
                 
-                if(err_lin < PPS_error or err_log < PPS_error)
+                if(err_lin < PPS_error or err_pos < PPS_error)
                 {
-                    if (err_lin < err_log) Seg[N_f] = Q_lin_1;
-                    else                   Seg[N_f] = Q_log_1; 
+                    if (err_lin < err_pos) Seg[N_f] = Q_lin_1;
+                    else                   Seg[N_f] = Q_pos_1; 
+                    //std::cout << N_i << " " << +1 << " " << w_2_i << std::endl;
+                    Q_pos_1 = {};
                     break;
+                }
+                else
+                {
+                    Q_lin_1 = Q_lin_m;
+                    Q_pos_1 = Q_pos_m;
                 }
             }
             else if(w_2_i < 0 and w_2_f < 0)
             {
-                Eigen::VectorXcd Q_log_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_log_2 = neg_exp_step(w_2_m, w_2_f, N_m, N_f) * pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
-                double err_log = frac_error(pow(abs(Q_log_2[0]), 2) , pow(abs(Q_log_1[0]), 2)); 
+                if (not Q_neg_1.size()) Q_neg_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
+                Eigen::VectorXcd Q_neg_m = neg_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m, w_2_f, N_m, N_f) * Q_neg_m;
+                double err_neg = frac_error(pow(abs(Q_neg_2[0]), 2) , pow(abs(Q_neg_1[0]), 2)); 
                 
-                if(err_lin < PPS_error or err_log < PPS_error)
+                if(err_lin < PPS_error or err_neg < PPS_error)
                 {
-                    if (err_lin < err_log) Seg[N_f] = Q_lin_1;
-                    else                   Seg[N_f] = Q_log_1; 
+                    if (err_lin < err_neg) Seg[N_f] = Q_lin_1;
+                    else                   Seg[N_f] = Q_neg_1; 
+                    //std::cout << N_i << " " << -1 << " " << w_2_i << std::endl;
+                    Q_neg_1 = {};
                     break;
+                }
+                else
+                {
+                    Q_lin_1 = Q_lin_m;
+                    Q_neg_1 = Q_neg_m;
                 }
             }
             else
@@ -139,11 +157,18 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error)
                 {
                     Seg[N_f] = Q_lin_1;
+                    //std::cout << N_i << " " << 0 << " " << w_2_i << std::endl;
                     break;
                 }
+                else
+                {
+                    Q_lin_1 = Q_lin_m;
+                }
+
             }
             Seg[N_m] = {};
             N_f = N_m;
+            w_2_f = w_2_m;
         }
     }
 
