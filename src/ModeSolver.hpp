@@ -13,10 +13,8 @@ enum TransitionChoice {neg_exp, lin, pos_exp};
 
 struct Vars
 {
-    double a, b;
-    TransitionChoice i;
-    Eigen::Matrix2d Mat;
-    Vars(double _a, double _b, TransitionChoice _i, Eigen::Matrix2d _Mat): a{_a}, b{_b}, i{_i}, Mat{_Mat} {};
+    Eigen::Vector2cd Q;
+    Vars(Eigen::Vector2cd _Q): Q{_Q} {};
 };
 
 class BasicModeSolver

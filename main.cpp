@@ -39,7 +39,7 @@ int main()
     
     std::cout<<"Finding PPS Numerically..."<<std::endl;
     //Initialize Numeric Solver
-    NumericModeSolver N_ms(potential_ptr, N_star);
+    NumericModeSolver N_ms(potential_ptr, N_star, N_dagger, N_r);
     
     //Construct PPS linear interpolation
     //N_ms.Construct_PPS_Scalar(k0, k1, 3e-3);
@@ -53,7 +53,15 @@ int main()
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
-    double a = ms.Find_PPS_Scalar(1e-2);
+    //ms.k_plot_Scalar are k points of linear intepolation
+    for(auto k : kplot)
+    {
+        double True = 0;//N_ms.Find_PPS_Scalar(k);
+        double Approx = ms.Find_PPS_Scalar(k);
+        //Plot
+        mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
+    }
+    mout.close();
     
     return 0;
 }

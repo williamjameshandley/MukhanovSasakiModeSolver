@@ -24,7 +24,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     
     //Evolve Q
     Eigen::Vector2cd Q_f = Evolve(Q_i, k, N_r, N_f);
-    
+
     double F = exp(N_f) * Bsol.dphi_H(N_f) * exp(0.5 * Bsol.log_aH(N_f));
     
     return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q_f[0] / F), 2);
@@ -55,11 +55,10 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double N_final)
 {
     std::map<double, Vars> Seg;
-    Vars Null_var(0, 0, lin, Eigen::Matrix2d::Identity());
-    auto Q_initial = Q_i;
+    Vars Null_var(Q_i * 0);
     
     //Initialize Extrema and end points
-    Seg.insert(std::pair<double,Vars> (N_initial, Null_var));
+    Seg.insert(std::pair<double,Vars> (N_initial, Vars(Q_i)));
     Seg.insert(std::pair<double,Vars> (N_final, Null_var));
     if(Bsol.N_extrema.size() != 0)
     {
@@ -111,31 +110,26 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 Eigen::Matrix2d Mat_log_1 = Bessel_Mat(a_log_1, b_log_1, N_i, N_m);
                 Eigen::Matrix2d Mat_log_2 = Bessel_Mat(a_log_2, b_log_2, N_m, N_f);
                 
-                auto Q_lin_1 = Mat_lin_0 * Q_i;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * Q_i;
+                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
+                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
                 double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
                 
-                auto Q_log_1 = Mat_log_0 * Q_i;
-                auto Q_log_2 = Mat_log_2 * Mat_log_1 * Q_i;
+                auto Q_log_1 = Mat_log_0 * iter->second.Q;
+                auto Q_log_2 = Mat_log_2 * Mat_log_1 * iter->second.Q;
                 double err_log = abs((pow(abs(Q_log_2[0]), 2) - pow(abs(Q_log_1[0]), 2)) / pow(abs(Q_log_2[0]), 2));
                 
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                    {
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
-                        Q_i = Q_lin_1;
-                    }
+                        Seg.at(N_f) = Vars(Q_lin_1);
                     else
-                    {
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, pos_exp, Mat_log_0);
-                        Q_i = Q_log_1;
-                    }
-                    Seg.insert(std::pair<double,Vars> (N_f, Null_var));
+                        Seg.at(N_f) = Vars(Q_log_1);
+
                     count += 1;
                 }
                 else
                 {
+                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
                     N_f = N_m;
                 }
             }
@@ -165,31 +159,26 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 Eigen::Matrix2d Mat_log_1 = Modified_Bessel_Mat(a_log_1, b_log_1, N_i, N_m);
                 Eigen::Matrix2d Mat_log_2 = Modified_Bessel_Mat(a_log_2, b_log_2, N_m, N_f);
                 
-                auto Q_lin_1 = Mat_lin_0 * Q_i;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * Q_i;
+                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
+                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
                 double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
                 
-                auto Q_log_1 = Mat_log_0 * Q_i;
-                auto Q_log_2 = Mat_log_2 * Mat_log_1 * Q_i;
+                auto Q_log_1 = Mat_log_0 * iter->second.Q;
+                auto Q_log_2 = Mat_log_2 * Mat_log_1 * iter->second.Q;
                 double err_log = abs((pow(abs(Q_log_2[0]), 2) - pow(abs(Q_log_1[0]), 2)) / pow(abs(Q_log_2[0]), 2));
                 
                 if(err_lin < PPS_error or err_log < PPS_error)
                 {
                     if(err_lin < err_log)
-                    {
-                        Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
-                        Q_i = Q_lin_1;
-                    }
+                        Seg.at(N_f) = Vars(Q_lin_1);
                     else
-                    {
-                        Seg.at(N_i) = Vars(a_log_0, b_log_0, neg_exp, Mat_log_0);
-                        Q_i = Q_log_1;
-                    }
-                    Seg.insert(std::pair<double,Vars> (N_f, Null_var));
+                        Seg.at(N_f) = Vars(Q_log_1);
+                    
                     count += 1;
                 }
                 else
                 {
+                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
                     N_f = N_m;
                 }
             }
@@ -209,54 +198,25 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 Eigen::Matrix2d Mat_lin_1 = Airy_Mat(a_lin_1, b_lin_1, N_i, N_m);
                 Eigen::Matrix2d Mat_lin_2 = Airy_Mat(a_lin_2, b_lin_2, N_m, N_f);
                 
-                auto Q_lin_1 = Mat_lin_0 * Q_i;
-                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * Q_i;
+                auto Q_lin_1 = Mat_lin_0 * iter->second.Q;
+                auto Q_lin_2 = Mat_lin_2 * Mat_lin_1 * iter->second.Q;
                 double err_lin = abs((pow(abs(Q_lin_2[0]), 2) - pow(abs(Q_lin_1[0]), 2)) / pow(abs(Q_lin_2[0]), 2));
                 
                 if(err_lin < PPS_error)
                 {
-                    Seg.at(N_i) = Vars(a_lin_0, b_lin_0, lin, Mat_lin_0);
-                    Q_i = Q_lin_1;
-                    Seg.insert(std::pair<double,Vars> (N_f, Null_var));
+                    Seg.at(N_f) = Vars(Q_lin_1);
                     count += 1;
                 }
                 else
                 {
+                    Seg.insert(std::pair<double,Vars> (N_m, Null_var));
                     N_f = N_m;
                 }
             }
         }
     }
-    
-    std::ofstream fout {"output/var.txt"};
-    Eigen::Matrix2d Evolve = Eigen::Matrix2d::Identity();
-    for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
-    {
-        double value;
-        int i;
-        if(iter->second.i == lin)
-        {
-            value = iter->second.a + iter->second.b * iter->first;
-            i = 0;
-        }
-        else if(iter->second.i == pos_exp)
-        {
-            value = exp(2 * (iter->second.a + iter->second.b * iter->first));
-            i = 1;
-        }
-        else if(iter->second.i == neg_exp)
-        {
-            value = -exp(2 * (iter->second.a + iter->second.b * iter->first));
-            i = -1;
-        }
-        fout <<iter->first<<"  "<<value<<"   "<<i<<std::endl;
-        
-        Evolve = iter->second.Mat * Evolve;
-    }
-    fout.close();
-    Eigen::Vector2cd Q_f = Evolve * Q_initial;
-    
-    return Q_f;
+
+    return std::prev(Seg.end())->second.Q;
 }
 
 double ModeSolver::w_2(double N, double k)
