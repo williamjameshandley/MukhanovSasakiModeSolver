@@ -20,9 +20,9 @@ CFLAGS += -O3
 FFLAGS += -O3
 
 # Profiling
-CXXFLAGS += -pg
-CFLAGS += -pg
-FFLAGS += -pg
+CXXFLAGS += -pg -g
+CFLAGS += -pg -g
+FFLAGS += -pg -g
 
 # Shared object
 CXXFLAGS += -fPIC
