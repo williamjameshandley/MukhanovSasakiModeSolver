@@ -117,8 +117,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_pos < PPS_error)
                 {
-                    if (err_lin < err_pos) Seg[N_f] = Q_lin_1;
-                    else                   Seg[N_f] = Q_pos_1; 
+                    if (err_lin < err_pos) Seg[N_f] = Q_lin_2;
+                    else                   Seg[N_f] = Q_pos_2;
                     //std::cout << N_i << " " << +1 << " " << w_2_i << std::endl;
                     break;
                 }
@@ -126,13 +126,13 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             else if(w_2_i < 0 and w_2_f < 0)
             {
                 Eigen::VectorXcd Q_neg_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m, w_2_f, N_m, N_f) * pos_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
+                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m, w_2_f, N_m, N_f) * neg_exp_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
                 double err_neg = frac_error(pow(abs(Q_neg_2[0]), 2) , pow(abs(Q_neg_1[0]), 2)); 
                 
                 if(err_lin < PPS_error or err_neg < PPS_error)
                 {
-                    if (err_lin < err_neg) Seg[N_f] = Q_lin_1;
-                    else                   Seg[N_f] = Q_neg_1; 
+                    if (err_lin < err_neg) Seg[N_f] = Q_lin_2;
+                    else                   Seg[N_f] = Q_neg_2;
                     //std::cout << N_i << " " << -1 << " " << w_2_i << std::endl;
                     break;
                 }
@@ -141,7 +141,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             {
                 if(err_lin < PPS_error)
                 {
-                    Seg[N_f] = Q_lin_1;
+                    Seg[N_f] = Q_lin_2;
                     //std::cout << N_i << " " << 0 << " " << w_2_i << std::endl;
                     break;
                 }
