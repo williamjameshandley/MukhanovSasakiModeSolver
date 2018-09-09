@@ -40,6 +40,6 @@ struct BackgroundSolution
 
 
 std::vector<double> Solve_N(double t0, std::vector<double> x0, void* ptrs[]);
-BackgroundSolution solve_equations(Potential* pot, double N_star);
-BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger);
+BackgroundSolution solve_equations(Potential* pot, double N_star, double lim);
+BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger, double lim);
 LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double> x0, std::function<double(const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);

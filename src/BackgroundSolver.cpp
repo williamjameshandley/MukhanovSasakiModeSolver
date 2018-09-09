@@ -1,4 +1,6 @@
 #include "BackgroundSolver.hpp"
+#include <fstream>
+#include <iostream>
 
 double log_aH(const double x[], Potential* pot)
 {
@@ -101,13 +103,14 @@ void Extrema_Tensor(double g[], const double, const double x[], void* data)
     g[1] = params[0] - x[2];
 }
 
-BackgroundSolution solve_equations(Potential* pot, double N_star)
+BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
 {
     void* ptrs[2];
     ptrs[0] = static_cast<void*> (pot);
     double params[2];
     ptrs[1] = static_cast<void*> (params);
     
+    // @TODO make this 'self-consistent'
     double t0 = 1;
     double phi_p = 0, N_temp = 0;
     while(abs(N_temp - (N_star + 20)) > 0.1)
@@ -118,9 +121,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
         
         N_temp = 0.5 * (pot->V(1e-5) / pot->dV(1e-5)) * dx;
         for(int n = 1; n < steps; n++)
-        {
             N_temp += (pot->V(dx * n) / pot->dV(dx * n)) * dx;
-        }
         N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
     }
     
@@ -161,17 +162,18 @@ BackgroundSolution solve_equations(Potential* pot, double N_star)
             _N_extrema_tensor.push_back(x[2]);
     }
 
-    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
-    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, 1e-4);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, lim);
+
+    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
+    LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, lim);
+    LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, lim);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
     return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema, _N_extrema_tensor, aH_star, N_end);
 }
 
-BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger)
+BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger, double lim)
 {
     void* ptrs[2];
     ptrs[0] = static_cast<void*> (pot);
@@ -252,10 +254,14 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
             _N_extrema_tensor.push_back(x[2]);
     }
     
-    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, 1e-4);
-    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, 1e-4);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, 1e-4);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, 1e-4);
+    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, lim);
+    std::ofstream fout{"output/omega_2.txt"};
+    for (auto pair : _omega_2.points)
+        fout << pair.first << " " << pair.second << std::endl;
+
+    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
+    LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, lim);
+    LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, lim);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
@@ -331,7 +337,7 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
             N_f = N_pair[n].second;
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
 
-            if(N_f - N_i > 1e-7)
+            if(N_f - N_i > lim*1e-1)
             {
                 t = t0;
                 x = x0;

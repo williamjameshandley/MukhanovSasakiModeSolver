@@ -72,7 +72,7 @@ Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i,
     return Modified_Bessel_Mat(a_log, b_log, N_i, N_f);
 }
 
-Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double N_final)
+Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double& N_final)
 {
     std::map<double, Eigen::VectorXcd> Seg;
     
@@ -91,10 +91,18 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         }
     }
     
+    //std::ofstream fout{"output/transitions.txt"};
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
     {
         double N_i = iter->first;
         double N_f = std::next(iter)->first;
+        
+        //std::cout << std::log(k) << " " << Bsol.log_aH(N_i) << std::endl;
+        if (std::log(k) < std::log(1e-2) +  Bsol.log_aH(N_i))
+        {
+            N_final = N_i;
+            break;
+        }
         
         while(true)
         {
@@ -104,8 +112,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             double w_2_m = w_2(N_m, k);
 
             Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-            Eigen::Vector2cd Q_lin_m = lin_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
-            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m, w_2_f, N_m, N_f) * Q_lin_m;
+            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m, w_2_f, N_m, N_f) * lin_step(w_2_i, w_2_m, N_i, N_m) * iter->second;
             double err_lin = frac_error(pow(abs(Q_lin_2[0]), 2) , pow(abs(Q_lin_1[0]), 2));
             
             if(w_2_i > 0 and w_2_f > 0)
@@ -116,8 +123,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_pos < PPS_error)
                 {
-                    if (err_lin < err_pos) Seg[N_f] = Q_lin_2;
-                    else                   Seg[N_f] = Q_pos_2;
+                    if (err_lin < err_pos) { Seg[N_f] = Q_lin_2;  }//fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}  
+                    else                   { Seg[N_f] = Q_pos_2;  }//fout << N_i << " " << 3 << " " <<  w_2_i  << std::endl;}  
                     break;
                 }
             }
@@ -129,8 +136,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_neg < PPS_error)
                 {
-                    if (err_lin < err_neg) Seg[N_f] = Q_lin_2;
-                    else                   Seg[N_f] = Q_neg_2;
+                    if (err_lin < err_neg) {Seg[N_f] = Q_lin_2; }//fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}
+                    else                   {Seg[N_f] = Q_neg_2; }//fout << N_i << " " << 1 << " " <<  w_2_i  << std::endl;} 
                     break;
                 }
             }
@@ -139,6 +146,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error)
                 {
                     Seg[N_f] = Q_lin_2;
+                    //fout << N_i << " " << 2 << " " <<  w_2_i  << std::endl;   
                     break;
                 }
             }
@@ -146,8 +154,11 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             N_f = N_m;
         }
     }
+    //fout.open("output/sols.txt");
+    //for (auto pair : Seg)
+    //    fout << pair.first << " " << pair.second[0].real() << " " <<  pair.second[0].imag() << std::endl;
  
-    return std::prev(Seg.end())->second;
+    return Seg[N_final];
 }
 
 double ModeSolver::w_2(double N, double k)

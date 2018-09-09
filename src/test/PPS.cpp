@@ -14,9 +14,11 @@ TEST_CASE("range","[PPS][Scalar]")
     
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
+
+    double err=1e-3;
     
     //Solve Background Variables
-    auto sols = solve_equations(potential_ptr, N_star);
+    auto sols = solve_equations(potential_ptr, N_star, err*1e-1);
    
     //////////////////////////////////////////////////////////////////////////////
     //k range
@@ -31,7 +33,7 @@ TEST_CASE("range","[PPS][Scalar]")
     ms.Initial_Conditions(BD, N_r);
     
     //Choose error tolerance (By default set to 5e-3)
-    ms.PPS_error = 5e-3;
+    ms.PPS_error = err;
     
     //Construct PPS linear interpolation
     //ms.Construct_PPS_Tensor(k0, k1, 3e-3);

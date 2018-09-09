@@ -40,7 +40,7 @@ class ModeSolver : public BasicModeSolver
         
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
         Eigen::Vector2cd Initial_Q(double k);
-        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, double k, double N_i, double N_f);
+        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, double k, double N_i, double& N_f);
         
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
