@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stddef.h>
 #include "Potential.hpp"
-#include "linear_interpolation.hpp"
+#include "interpolation.hpp"
 
 void equations(double dx_dt[], const double t, const double x[], void* data);
 double dphi_H(const double x[], Potential* pot);

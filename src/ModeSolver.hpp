@@ -6,7 +6,7 @@
 #include <Eigen/Dense>
 #include "BackgroundSolver.hpp"
 #include "Special_Functions.hpp"
-#include "linear_interpolation.hpp"
+#include "interpolation.hpp"
 
 enum VacuumChoice { BD, HD, RST };
 enum TransitionChoice {neg_exp, lin, pos_exp};
