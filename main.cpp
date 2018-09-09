@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <ctime>
 #include "src/BackgroundSolver.hpp"
 #include "src/Potential.hpp"
 #include "src/ModeSolver.hpp"
@@ -53,13 +54,15 @@ int main()
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
     
-    //ms.Find_PPS_Scalar(1e-2);
-    //return 0;
-    //ms.k_plot_Scalar are k points of linear intepolation
     for(auto k : kplot)
     {
-        double True = 0;//N_ms.Find_PPS_Scalar(k);
+        std::clock_t t0 = std::clock();
+        double True = N_ms.Find_PPS_Scalar(k);
+        std::clock_t t1 = std::clock();
         double Approx = ms.Find_PPS_Scalar(k);
+        std::clock_t t2 = std::clock();
+        
+        double speed_up = static_cast<double>(t1 - t0) / static_cast<double>(t2 - t1);
         //Plot
         //std::cout << k << std::endl;
         mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;

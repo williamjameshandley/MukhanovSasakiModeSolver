@@ -21,7 +21,6 @@ double ModeSolver::Find_PPS_Scalar(double k)
     double N_f = log(k / 0.05) + 55;
     if(N_f > Bsol.N_end)
         N_f = Bsol.N_end;
-    
     //Evolve Q
     Eigen::Vector2cd Q_f = Evolve(Q_i, k, N_r, N_f);
 
@@ -119,7 +118,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 {
                     if (err_lin < err_pos) Seg[N_f] = Q_lin_2;
                     else                   Seg[N_f] = Q_pos_2;
-                    //std::cout << N_i << " " << +1 << " " << w_2_i << std::endl;
                     break;
                 }
             }
@@ -133,7 +131,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 {
                     if (err_lin < err_neg) Seg[N_f] = Q_lin_2;
                     else                   Seg[N_f] = Q_neg_2;
-                    //std::cout << N_i << " " << -1 << " " << w_2_i << std::endl;
                     break;
                 }
             }
@@ -142,7 +139,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error)
                 {
                     Seg[N_f] = Q_lin_2;
-                    //std::cout << N_i << " " << 0 << " " << w_2_i << std::endl;
                     break;
                 }
             }
@@ -150,7 +146,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             N_f = N_m;
         }
     }
-
+ 
     return std::prev(Seg.end())->second;
 }
 
