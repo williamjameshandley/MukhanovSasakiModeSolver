@@ -8,6 +8,12 @@ double log_aH(const double x[], Potential* pot)
     return n + log(H(x,pot));
 }
 
+double dlog_aH(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1], n = x[2];
+    return 1 -dphi*dphi/2/H(x,pot)/H(x,pot);
+}
+
 double dphi_H(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
@@ -91,6 +97,7 @@ void Extrema_Scalar(double g[], const double, const double x[], void* data)
     
     g[0] = d_omega_2(&x[0], pot);
     g[1] = params[0] - x[2];
+    g[2] = dlog_aH(&x[0],pot);
 }
 
 void Extrema_Tensor(double g[], const double, const double x[], void* data)
@@ -101,6 +108,7 @@ void Extrema_Tensor(double g[], const double, const double x[], void* data)
     
     g[0] = d_omega_2_tensor(&x[0], pot);
     g[1] = params[0] - x[2];
+    g[2] = dlog_aH(&x[0],pot);
 }
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
@@ -141,7 +149,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     t = t0;
     x = x0;
     params[0] = N_end;
-    desolver = dlsodar(3, 2, 10000);
+    desolver = dlsodar(3, 3, 10000);
     while(x[2] < N_end)
     {
         desolver.integrate(t, 1e10, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
@@ -154,7 +162,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     t = t0;
     x = x0;
     params[0] = N_end;
-    desolver = dlsodar(3, 2, 100000);
+    desolver = dlsodar(3, 3, 100000);
     while(x[2] < N_end)
     {
         desolver.integrate(t, 1e10, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
@@ -233,7 +241,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     auto t = t0;
     auto x = x0;
     params[0] = N_end;
-    dlsodar desolver(3, 2, 10000);
+    dlsodar desolver(3, 3, 10000);
     while(x[2] < N_end)
     {
         desolver.integrate(t, 1e10, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
@@ -246,7 +254,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     t = t0;
     x = x0;
     params[0] = N_end;
-    desolver = dlsodar(3, 2, 100000);
+    desolver = dlsodar(3, 3, 100000);
     while(x[2] < N_end)
     {
         desolver.integrate(t, 1e10, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
