@@ -91,7 +91,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         }
     }
     
-    //std::ofstream fout{"output/transitions.txt"};
+    std::ofstream fout{"output/transitions.txt"};
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
     {
         double N_i = iter->first;
@@ -123,8 +123,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_pos < PPS_error)
                 {
-                    if (err_lin < err_pos) { Seg[N_f] = Q_lin_2;  }//fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}  
-                    else                   { Seg[N_f] = Q_pos_2;  }//fout << N_i << " " << 3 << " " <<  w_2_i  << std::endl;}  
+                    if (err_lin < err_pos) { Seg[N_f] = Q_lin_2;  fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}  
+                    else                   { Seg[N_f] = Q_pos_2;  fout << N_i << " " << 3 << " " <<  w_2_i  << std::endl;}  
                     break;
                 }
             }
@@ -136,8 +136,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_neg < PPS_error)
                 {
-                    if (err_lin < err_neg) {Seg[N_f] = Q_lin_2; }//fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}
-                    else                   {Seg[N_f] = Q_neg_2; }//fout << N_i << " " << 1 << " " <<  w_2_i  << std::endl;} 
+                    if (err_lin < err_neg) {Seg[N_f] = Q_lin_2; fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}
+                    else                   {Seg[N_f] = Q_neg_2; fout << N_i << " " << 1 << " " <<  w_2_i  << std::endl;} 
                     break;
                 }
             }
@@ -146,7 +146,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error)
                 {
                     Seg[N_f] = Q_lin_2;
-                    //fout << N_i << " " << 2 << " " <<  w_2_i  << std::endl;   
+                    fout << N_i << " " << 2 << " " <<  w_2_i  << std::endl;   
                     break;
                 }
             }
@@ -168,22 +168,48 @@ double ModeSolver::w_2(double N, double k)
 
 Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
 {
-    Eigen::Matrix2d A;
+    double p = pow(abs(b), 2.0/3.0);
+    double x0 = -((a + b * N0) /p);
+    double x1 = -((a + b * N1) /p);
+
+    Eigen::Matrix2d A1, A;
     
-    double p = pow(abs(b), 1.0/3.0);
-    double x0 = -((a + b * N0) /p/p);
-    double x1 = -((a + b * N1) /p/p);
+    if(x0 < 25 and x1 < 25)
+    {
+        double Ai0, Bi0, Aip0, Bip0, Ai1, Bi1, Aip1, Bip1;
+        Airy(x0, Ai0, Aip0, Bi0, Bip0);
+        Airy(x1, Ai1, Aip1, Bi1, Bip1);
+
+        A << (Ai1*Bip0-Aip0*Bi1),          (Ai1*Bi0-Ai0*Bi1)*p/b,
+             (Aip0*Bip1-Aip1*Bip0) * b/p,  (Ai0*Bip1-Aip1*Bi0);
+        A*=M_PI;
+    }
+    else
+    {
+        auto b0 = pow(x0, 0.25), b1 = pow(x1, 0.25);
+        auto x = 2.0/3 * (pow(x1, 1.5) - pow(x0, 1.5));
+        
+        A << std::cosh(x) * b0 / b1,          std::sinh(x) / (-b/p * b0 * b1),
+             std::sinh(x) * (-b/p * b0 * b1), std::cosh(x) * b1 / b0;
+    }
     
-    return Airy_gen(-p * b / abs(b), x0, x1);
+    return A;
 }
 
 Eigen::Matrix2d ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
 {
-    double p = b;
-    double x0 = exp(a + b * N0);
-    double x1 = exp(a + b * N1);
-    
-    return Bessel_gen(p, x0, x1);
+    Eigen::Matrix2d A;
+    double p = std::abs(b);
+    double x0 = exp(a + b * N0)/std::abs(b);
+    double x1 = exp(a + b * N1)/std::abs(b);
+
+    double J0_0 = j0(x0), J1_0 = j1(x0), Y0_0 = y0(x0), Y1_0 = y1(x0);
+    double J0_1 = j0(x1), J1_1 = j1(x1), Y0_1 = y0(x1), Y1_1 = y1(x1);
+
+    A <<  (J1_0*Y0_1-J0_1*Y1_0)*x0,        (J0_0*Y0_1-J0_1*Y0_0) / b,
+          (J1_1*Y1_0-J1_0*Y1_1)*x0*x1 * b ,(J1_1*Y0_0-J0_0*Y1_1)*x1;
+    A *= M_PI/2;
+    return A;
 }
 
 Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, double N1)
@@ -192,76 +218,6 @@ Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, d
     double x0 = exp(a + b * N0);
     double x1 = exp(a + b * N1);
     
-    return Modified_Bessel_gen(p, x0, x1);
-}
-
-Eigen::Matrix2d ModeSolver::Airy_gen(double p, double x0, double x1)
-{
-    Eigen::Matrix2d A0, A1, A;
-    double Ai0, Bi0, Aip0, Bip0, Ai, Bi, Aip, Bip;
-    
-    if(x0 < 25 and x1 < 25)
-    {
-        Airy(x0, Ai0, Aip0, Bi0, Bip0);
-        Airy(x1, Ai, Aip, Bi, Bip);
-        
-        Aip0 *= p;
-        Bip0 *= p;
-        Aip *= p;
-        Bip *= p;
-        
-        A0 << Ai0,  Bi0,
-        Aip0, Bip0;
-        
-        A1 << Ai,  Bi,
-        Aip, Bip;
-        
-        A = A1 * A0.inverse();
-    }
-    else
-    {
-        auto a0 = pow(x0, 1.5), b0 = pow(x0, 0.25), a1 = pow(x1, 1.5), b1 = pow(x1, 0.25);
-        
-        auto a00 = 0.5 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b0 / b1;
-        auto a01 = 0.5 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) / (p * b0 * b1);
-        auto a10 = 0.5 * (exp((2.0/3) * (a1 - a0)) - exp(-(2.0/3) * (a1 - a0))) * (p * b0 * b1);
-        auto a11 = 0.5 * (exp((2.0/3) * (a1 - a0)) + exp(-(2.0/3) * (a1 - a0))) * b1 / b0;
-        
-        A << a00,  a01,
-        a10, a11;
-    }
-    
-    return A;
-}
-
-Eigen::Matrix2d ModeSolver::Bessel_gen(double p, double x0, double x1)
-{
-    Eigen::Matrix2cd B0, B1;
-    Eigen::Matrix2d B;
-    
-    auto J0 = Bessel_J(0, x0 / p);
-    auto Y0 = Bessel_Y(0, x0 / p);
-    auto Jp0 = -x0 * Bessel_J(1, x0 / p);
-    auto Yp0 = -x0 * Bessel_Y(1, x0 / p);
-    
-    auto J = Bessel_J(0, x1 / p);
-    auto Y = Bessel_Y(0, x1 / p);
-    auto Jp = -x1 * Bessel_J(1, x1 / p);
-    auto Yp = -x1 * Bessel_Y(1, x1 / p);
-    
-    B0 << J0,  Y0,
-    Jp0, Yp0;
-    
-    B1 << J,  Y,
-    Jp, Yp;
-    
-    B = (B1 * B0.inverse()).real();
-    
-    return B;
-}
-
-Eigen::Matrix2d ModeSolver::Modified_Bessel_gen(double p, double x0, double x1)
-{
     Eigen::Matrix2cd MB0, MB1;
     Eigen::Matrix2d MB;
     
