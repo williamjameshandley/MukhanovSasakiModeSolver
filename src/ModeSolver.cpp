@@ -86,10 +86,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
     for (auto i=1;i<99;i++)
         Seg[N_initial + i*(N_final-N_initial)/100] = {};
 
-    Seg[Bsol.logaH_max] = {};
-    Seg[std::log(k) -Bsol.log_aH(Bsol.logaH_max)+Bsol.logaH_max] = {};
     
-    std::ofstream fout{"output/transitions.txt"};
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
     {
         double N_i = iter->first;
@@ -123,8 +120,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 
                 if(err_lin < PPS_error or err_pos < PPS_error)
                 {
-                    if (err_lin < err_pos) { Seg[N_f] = Q_lin_2;  fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}  
-                    else                   { Seg[N_f] = Q_pos_2;  fout << N_i << " " << 3 << " " <<  w_2_i  << std::endl;}  
+                    if (err_lin < err_pos) Seg[N_f] = Q_lin_2; 
+                    else                   Seg[N_f] = Q_pos_2; 
                     break;
                 }
             }
@@ -136,8 +133,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             //    
             //    if(err_lin < PPS_error or err_neg < PPS_error)
             //    {
-            //        if (err_lin < err_neg) {Seg[N_f] = Q_lin_2; fout << N_i << " " << 2  << " " <<  w_2_i  << std::endl;}
-            //        else                   {Seg[N_f] = Q_neg_2; fout << N_i << " " << 1 << " " <<  w_2_i  << std::endl;} 
+            //        if (err_lin < err_neg) Seg[N_f] = Q_lin_2;
+            //        else                   Seg[N_f] = Q_neg_2; 
             //        break;
             //    }
             //}
@@ -146,7 +143,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
                 if(err_lin < PPS_error)
                 {
                     Seg[N_f] = Q_lin_2;
-                    fout << N_i << " " << 2 << " " <<  w_2_i  << std::endl;   
                     break;
                 }
             }
@@ -154,10 +150,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             N_f = N_m1;
         }
     }
-    //fout.open("output/sols.txt");
-    //for (auto pair : Seg)
-    //    fout << pair.first << " " << pair.second[0].real() << " " <<  pair.second[0].imag() << std::endl;
- 
     return Seg[N_final];
 }
 

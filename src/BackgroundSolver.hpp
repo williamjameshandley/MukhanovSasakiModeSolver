@@ -11,24 +11,21 @@ void equations(double dx_dt[], const double t, const double x[], void* data);
 double dphi_H(const double x[], Potential* pot);
 double H(const double x[], Potential* pot);
 double log_aH(const double x[], Potential* pot);
-double dlog_aH(const double x[], Potential* pot);
 double omega_2(const double x[], Potential* pot);
 double d_omega_2(const double x[], Potential* pot);
 double omega_2_tensor(const double x[], Potential* pot);
 double d_omega_2_tensor(const double x[], Potential* pot);
-
 
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);
 void Find_N(double g[], const double, const double x[], void* data);
 void Extrema_Scalar(double g[], const double, const double x[], void* data);
 void Extrema_Tensor(double g[], const double, const double x[], void* data);
-void peak_horizon(double g[], const double, const double x[], void* data);
 
 struct BackgroundSolution
 {
-    BackgroundSolution(LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _omega_2_tensor, LinearInterpolator<double, double> _log_aH, LinearInterpolator<double, double> _dphi_H, std::vector<double> _N_extrema, std::vector<double> _N_extrema_tensor, double _aH_star, double _logaH_max, double _N_end) :
-    omega_2{_omega_2}, omega_2_tensor{_omega_2_tensor}, log_aH{_log_aH}, dphi_H{_dphi_H}, N_extrema{_N_extrema}, N_extrema_tensor{_N_extrema_tensor}, aH_star{_aH_star}, logaH_max{_logaH_max}, N_end{_N_end} {}
+    BackgroundSolution(LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _omega_2_tensor, LinearInterpolator<double, double> _log_aH, LinearInterpolator<double, double> _dphi_H, std::vector<double> _N_extrema, std::vector<double> _N_extrema_tensor, double _aH_star, double _N_end) :
+    omega_2{_omega_2}, omega_2_tensor{_omega_2_tensor}, log_aH{_log_aH}, dphi_H{_dphi_H}, N_extrema{_N_extrema}, N_extrema_tensor{_N_extrema_tensor}, aH_star{_aH_star}, N_end{_N_end} {}
     
     LinearInterpolator<double, double> omega_2;
     LinearInterpolator<double, double> omega_2_tensor;
@@ -37,7 +34,6 @@ struct BackgroundSolution
     std::vector<double> N_extrema;
     std::vector<double> N_extrema_tensor;
     double aH_star;
-    double logaH_max;
     double N_end;
     
 };
