@@ -16,13 +16,13 @@ int main()
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
     
-    double err = 1e-5;
+    double err = 1e-3;
     //Solve Background Variables
     auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
    
     //////////////////////////////////////////////////////////////////////////////
     //k range
-    double k0 = 1e-6, k1 = 1;
+    double k0 = 1e-5, k1 = 1;
     //Vacuum Setting Time (no. e-folds before end of inflation)
     double N_r = sols.N_end - 2;
     
@@ -45,7 +45,11 @@ int main()
     
     //Construct PPS linear interpolation
     //N_ms.Construct_PPS_Scalar(k0, k1, 3e-3);
-
+    //ms.Find_PPS_Scalar(1e-1);
+    //ms.Find_PPS_Scalar(0.047863009232263817316);
+    //ms.Find_PPS_Scalar(0.0485288500162121203  );
+    //ms.Find_PPS_Scalar(0.049203953568145143704);
+    //return 0;
     //////////////////////////////////////////////////////////////////////////////
     //std::cout<<"Plotting..."<<std::endl;
     std::ofstream mout{"output/PPS.txt"};
@@ -57,16 +61,17 @@ int main()
     
     for(auto k : kplot)
     {
-        std::clock_t t0 = std::clock();
-        double True = N_ms.Find_PPS_Scalar(k);
-        std::clock_t t1 = std::clock();
+        //std::clock_t t0 = std::clock();
+        //double True = N_ms.Find_PPS_Scalar(k);
+        //std::clock_t t1 = std::clock();
         double Approx = ms.Find_PPS_Scalar(k);
         std::clock_t t2 = std::clock();
         
-        double speed_up = static_cast<double>(t1 - t0) / static_cast<double>(t2 - t1);
+        //double speed_up = static_cast<double>(t1 - t0) / static_cast<double>(t2 - t1);
         //Plot
-        //std::cout << k << std::endl;
-        mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
+        std::cout << k << std::endl;
+        //mout << k <<"  "<< Approx <<"  "<<(Approx - True) / True<<std::endl;
+        mout << k <<"  "<< Approx <<std::endl;
     }
     mout.close();
     

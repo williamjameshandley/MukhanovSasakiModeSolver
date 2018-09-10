@@ -88,4 +88,4 @@ class NumericModeSolver : public BasicModeSolver
         virtual double Find_PPS_Tensor(double k) override;
 };
 
-template<typename T> T frac_error(T x, T x0) { return std::abs((x-x0)/x0);}
+template<typename T> T frac_error(T x, T x0) { return std::abs((x-x0)/std::min(x0,x));}

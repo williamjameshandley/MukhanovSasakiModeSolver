@@ -5,13 +5,19 @@
 double log_aH(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1], n = x[2];
-    return n + log(sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0));
+    return n + log(H(x,pot));
+}
+
+double dlog_aH(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1], n = x[2];
+    return 1 -dphi*dphi/2/H(x,pot)/H(x,pot);
 }
 
 double dphi_H(const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return dphi / sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0);
+    return dphi / H(x,pot);
 }
 
 double H(const double x[], Potential* pot)
@@ -93,6 +99,16 @@ void Extrema_Scalar(double g[], const double, const double x[], void* data)
     g[1] = params[0] - x[2];
 }
 
+void peak_horizon(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = dlog_aH(&x[0],pot);
+    g[1] = params[0] - x[2];
+}
+
 void Extrema_Tensor(double g[], const double, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
@@ -149,6 +165,17 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
             _N_extrema.push_back(x[2]);
     }
 
+    t = t0;
+    x = x0;
+    params[0] = N_end;
+    desolver = dlsodar(3, 2, 10000);
+    double logaH_max;
+    while(x[2] < N_end)
+    {
+        desolver.integrate(t, 1e10, &x[0], equations, peak_horizon, static_cast<void*>(ptrs));
+        logaH_max = x[2];
+    }
+
     //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
     t = t0;
@@ -170,7 +197,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
-    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema, _N_extrema_tensor, aH_star, N_end);
+    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema, _N_extrema_tensor, aH_star, logaH_max, N_end);
 }
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger, double lim)
@@ -240,6 +267,17 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         if(x[2] < N_end)
             _N_extrema.push_back(x[2]);
     }
+
+    t = t0;
+    x = x0;
+    params[0] = N_end;
+    desolver = dlsodar(3, 2, 10000);
+    double logaH_max;
+    while(x[2] < N_end)
+    {
+        desolver.integrate(t, 1e10, &x[0], equations, peak_horizon, static_cast<void*>(ptrs));
+        logaH_max = x[2];
+    }
     
     //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
@@ -265,7 +303,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
-    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema,_N_extrema_tensor, aH_star, N_end);
+    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema,_N_extrema_tensor, aH_star, logaH_max, N_end);
 }
 
 
