@@ -81,7 +81,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
     Seg[N_final] =  {};
 
     for (auto N : Bsol.N_extrema)
-        Seg[N] = {};
+        if (N>N_initial and N<N_final)
+            Seg[N] = {};
 
     for (auto i=1;i<99;i++)
         Seg[N_initial + i*(N_final-N_initial)/100] = {};
