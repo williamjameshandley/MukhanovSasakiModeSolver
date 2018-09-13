@@ -16,7 +16,7 @@ int main()
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
     
-    double err = 1e-5;
+    double err = 1e-4;
     //Solve Background Variables
     auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
    
@@ -54,11 +54,12 @@ int main()
     std::vector<double> kplot(1000);
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
+
     
     for(auto k : kplot)
     {
         std::clock_t t0 = std::clock();
-        double True = N_ms.Find_PPS_Scalar(k);
+        double True = 0;//N_ms.Find_PPS_Scalar(k);
         std::clock_t t1 = std::clock();
         double Approx = ms.Find_PPS_Scalar(k);
         std::clock_t t2 = std::clock();
@@ -67,7 +68,6 @@ int main()
         //Plot
         std::cout << k << std::endl;
         mout << k <<"  "<< Approx <<"  "<<std::abs((Approx - True) / True)<< " " << speed_up << std::endl;
-        //mout << k <<"  "<< Approx <<std::endl;
     }
     mout.close();
     

@@ -156,7 +156,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
         if(x[2] < N_end)
             _N_extrema.push_back(x[2]);
     }
-
+    
     //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
     t = t0;
@@ -169,9 +169,9 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
         if(x[2] < N_end)
             _N_extrema_tensor.push_back(x[2]);
     }
-
+    
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, lim);
-
+    
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, lim);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, lim);
@@ -233,7 +233,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         }
         
     }
-
+    
     std::vector<double> x0 = {phi_p, dphi_p, 0};
     
     //Find Scalar Extrema
@@ -248,7 +248,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
         if(x[2] < N_end)
             _N_extrema.push_back(x[2]);
     }
-
+    
     //Find Tensor Extrema
     std::vector<double> _N_extrema_tensor;
     t = t0;
@@ -266,7 +266,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     std::ofstream fout{"output/omega_2.txt"};
     for (auto pair : _omega_2.points)
         fout << pair.first << " " << pair.second << std::endl;
-
+    
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, lim);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, lim);
@@ -344,7 +344,7 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
             N_i = N_pair[n].first;
             N_f = N_pair[n].second;
             N_pair.erase(N_pair.begin() + static_cast<int>(n));
-
+            
             if(N_f - N_i > lim*1e-1)
             {
                 t = t0;
