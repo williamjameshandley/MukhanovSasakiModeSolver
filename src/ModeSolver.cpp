@@ -57,34 +57,32 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
         if (N>N_initial and N<N_final)
             Seg[N] = {};
 
+    auto phi = (1+std::sqrt(5))/2;
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
     {
-        double N_i = iter->first, N_m1, N_m2, N_f = std::next(iter)->first;
-        double w_2_i = w_2(N_i, k), w_2_m1, w_2_m2, w_2_f = w_2(N_f, k);
-        Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second, Q_lin_m1, Q_lin_m2, Q_lin_2;
+        double N_i = iter->first, N_m1, N_f = std::next(iter)->first;
+        double w_2_i = w_2(N_i, k), w_2_m1, w_2_f = w_2(N_f, k);
+        Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second, Q_lin_m1, Q_lin_2;
         
         while(true)
         {
-            N_m1 = (2*N_i/3 + N_f/3);
+            N_m1 = N_i + (N_f-N_i)/2;
             w_2_m1 = w_2(N_m1, k);
             Q_lin_m1 = lin_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second; 
 
-            N_m2 = (N_i/3 + 2*N_f/3);
-            w_2_m2 = w_2(N_m2, k);
-            Q_lin_2 = lin_step(w_2_m2, w_2_f, N_m2, N_f) * lin_step(w_2_m1, w_2_m2, N_m1, N_m2) * Q_lin_m1;
+            Q_lin_2 = lin_step(w_2_m1, w_2_f, N_m1, N_f)  * Q_lin_m1;
+            double err_lin = abs((Q_lin_2[0]-Q_lin_1[0])/Q_lin_2[0]);
 
-            double err_lin = std::abs(std::log(abs(Q_lin_2[0]))- std::log(abs(Q_lin_1[0])));
-
-            if(abs(w_2_i) > 5)
-                err_lin *= 5e1;
+            //if(abs(w_2_i) > 5)
+            //    err_lin *= 5e1;
     
             if(w_2_i > 0 and w_2_f > 0)
             {
                 Eigen::VectorXcd Q_pos_1 = pos_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_pos_2 = pos_exp_step(w_2_m2, w_2_f, N_m2, N_f) * pos_exp_step(w_2_m1, w_2_m2, N_m1, N_m2) * pos_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
-                double err_pos = std::abs(std::log(abs(Q_pos_2[0]))- std::log(abs(Q_pos_1[0])));
-                if(abs(w_2_i) > 5)
-                    err_pos *= 5e1;
+                Eigen::VectorXcd Q_pos_2 = pos_exp_step(w_2_m1, w_2_f, N_m1, N_f) * pos_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
+                double err_pos = abs((Q_pos_2[0]-Q_pos_1[0])/Q_pos_2[0]);
+                //if(abs(w_2_i) > 5)
+                //    err_pos *= 5e1;
                 
                 if(err_lin < PPS_error or err_pos < PPS_error)
                 {
@@ -96,10 +94,10 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             else if(w_2_i < 0 and w_2_f < 0)
             {
                 Eigen::VectorXcd Q_neg_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m2, w_2_f, N_m2, N_f) * neg_exp_step(w_2_m1, w_2_m2, N_m1, N_m2) * neg_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
-                double err_neg = std::abs(std::log(abs(Q_neg_2[0]))- std::log(abs(Q_neg_1[0])));
-                if(abs(w_2_i) > 5)
-                    err_neg *= 5e1;
+                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m1, w_2_f, N_m1, N_f) * neg_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
+                double err_neg = abs((Q_neg_2[0]-Q_neg_1[0])/Q_neg_2[0]);
+                //if(abs(w_2_i) > 5)
+                //    err_neg *= 5e1;
                 
                 if(err_lin < PPS_error or err_neg < PPS_error)
                 {
