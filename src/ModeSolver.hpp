@@ -87,6 +87,14 @@ class NumericModeSolver : public BasicModeSolver
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
 
-        struct Transition { double w2; Eigen::Matrix2d M_lin, M_pos, M_neg; };
+        struct Transition { 
+            enum type {lin, pos, neg};
+            double w2; 
+            Eigen::Matrix2d M_lin, M_pos, M_neg; 
+            type i;
+        };
 
 };
+
+inline double Q_err(Eigen::Vector2cd Q,Eigen::Vector2cd Q0)
+{return std::max( abs((abs(Q0[0])-abs(Q[0]))/abs(Q0[0])), abs((abs(Q0[1])-abs(Q[1]))/abs(Q0[1])));}
