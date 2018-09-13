@@ -86,4 +86,7 @@ class NumericModeSolver : public BasicModeSolver
         double Find_PPS(double k);
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
+
+        struct Transition { double w2; Eigen::Matrix2d M_lin, M_pos, M_neg; };
+
 };

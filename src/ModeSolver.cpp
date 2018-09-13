@@ -46,82 +46,92 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 }
 
 
-Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_initial, double& N_final)
+Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_initial, double& N_final)
 {
-    std::map<double, Eigen::VectorXcd> Seg;
+    std::map<double, NumericModeSolver::Transition> T;
     
     //Initialize Extrema and end points
-    Seg[N_initial] =  Q_i;
-    Seg[N_final] =  {};
-    for (auto N : Bsol.N_extrema)
-        if (N>N_initial and N<N_final)
-            Seg[N] = {};
+    T[N_initial] =  {};
+    T[N_final] =  {};
+    for (auto N : Bsol.N_extrema) if (N>N_initial and N<N_final) T[N] = {};
 
-    auto phi = (1+std::sqrt(5))/2;
-    for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
+    for (auto& t : T) t.second.w2 =  w_2(t.first, k);
+
+    auto iter = T.begin();
+    while(iter != std::prev(T.end()))
     {
-        double N_i = iter->first, N_m1, N_f = std::next(iter)->first;
-        double w_2_i = w_2(N_i, k), w_2_m1, w_2_f = w_2(N_f, k);
-        Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second, Q_lin_m1, Q_lin_2;
-        
-        while(true)
+        double N_i = iter->first;
+        double w2_i = iter->second.w2; 
+        //std::cout << N_i << " " << w2_i << std::endl;
+
+        auto niter = std::next(iter);
+        double N_f = niter->first;
+        double w2_f = niter->second.w2;
+
+        double N_m = (N_i + N_f)/2;
+        double w2_m = w_2(N_m, k);
+        niter = T.insert(niter,{N_m,{w2_m,{}}});
+
+        if (not iter->second.M_pos.size()) 
+            iter->second.M_lin = lin_step(w2_i, w2_f, N_i, N_f);
+
+        Eigen::Vector2cd Q_lin_1 = iter->second.M_lin * Q_0;
+
+        iter->second.M_lin = lin_step(w2_i, w2_m, N_i, N_m);
+        niter->second.M_lin = lin_step(w2_m, w2_f, N_m, N_f);
+
+        Eigen::Vector2cd Q_lin_2 =  niter->second.M_lin * iter->second.M_lin * Q_0;
+
+        double err_lin = abs((Q_lin_2[0]-Q_lin_1[0])/Q_lin_2[0]);
+
+        if(w2_i > 0 and w2_f > 0)
         {
-            N_m1 = N_i + (N_f-N_i)/2;
-            w_2_m1 = w_2(N_m1, k);
-            Q_lin_m1 = lin_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second; 
+            if (not iter->second.M_pos.size()) 
+                iter->second.M_pos = pos_exp_step(w2_i, w2_f, N_i, N_f);
 
-            Q_lin_2 = lin_step(w_2_m1, w_2_f, N_m1, N_f)  * Q_lin_m1;
-            double err_lin = abs((Q_lin_2[0]-Q_lin_1[0])/Q_lin_2[0]);
+            Eigen::VectorXcd Q_pos_1 = iter->second.M_pos * Q_0;
 
-            //if(abs(w_2_i) > 5)
-            //    err_lin *= 5e1;
-    
-            if(w_2_i > 0 and w_2_f > 0)
+            iter->second.M_pos = pos_exp_step(w2_i, w2_m, N_i, N_m);
+            niter->second.M_pos = pos_exp_step(w2_m, w2_f, N_m, N_f);
+
+            Eigen::VectorXcd Q_pos_2 = niter->second.M_pos * iter->second.M_pos  * Q_0;
+
+            double err_pos = abs((Q_pos_2[0]-Q_pos_1[0])/Q_pos_2[0]);
+
+            if(err_lin < PPS_error or err_pos < PPS_error)
             {
-                Eigen::VectorXcd Q_pos_1 = pos_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_pos_2 = pos_exp_step(w_2_m1, w_2_f, N_m1, N_f) * pos_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
-                double err_pos = abs((Q_pos_2[0]-Q_pos_1[0])/Q_pos_2[0]);
-                //if(abs(w_2_i) > 5)
-                //    err_pos *= 5e1;
-                
-                if(err_lin < PPS_error or err_pos < PPS_error)
-                {
-                    if (err_lin < err_pos) Seg[N_f] = Q_lin_2; 
-                    else                   Seg[N_f] = Q_pos_2; 
-                    break;
-                }
+                if (err_lin < err_pos) Q_0 = Q_lin_2; 
+                else                   Q_0 = Q_pos_2; 
+                ++++iter;
             }
-            else if(w_2_i < 0 and w_2_f < 0)
+        }
+        else if(w2_i < 0 and w2_f < 0)
+        {
+            if (not iter->second.M_neg.size()) 
+                iter->second.M_neg = neg_exp_step(w2_i, w2_f, N_i, N_f);
+
+            Eigen::VectorXcd Q_neg_1 = iter->second.M_neg * Q_0;
+
+            iter->second.M_neg = neg_exp_step(w2_i, w2_m, N_i, N_m);
+            niter->second.M_neg = neg_exp_step(w2_m, w2_f, N_m, N_f);
+            Eigen::VectorXcd Q_neg_2 = niter->second.M_neg  * iter->second.M_neg * Q_0;
+            double err_neg = abs((Q_neg_2[0]-Q_neg_1[0])/Q_neg_2[0]);
+
+            if(err_lin < PPS_error or err_neg < PPS_error)
             {
-                Eigen::VectorXcd Q_neg_1 = neg_exp_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-                Eigen::VectorXcd Q_neg_2 = neg_exp_step(w_2_m1, w_2_f, N_m1, N_f) * neg_exp_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
-                double err_neg = abs((Q_neg_2[0]-Q_neg_1[0])/Q_neg_2[0]);
-                //if(abs(w_2_i) > 5)
-                //    err_neg *= 5e1;
-                
-                if(err_lin < PPS_error or err_neg < PPS_error)
-                {
-                    if (err_lin < err_neg) Seg[N_f] = Q_lin_2;
-                    else                   Seg[N_f] = Q_neg_2; 
-                    break;
-                }
+                if (err_lin < err_neg) Q_0 = Q_lin_2;
+                else                   Q_0 = Q_neg_2; 
+                ++++iter;
             }
-            else
-            {
-                if(err_lin < PPS_error)
-                {
-                    Seg[N_f] = Q_lin_2;
-                    break;
-                }
-            }
-            Seg[N_m1] = {};
-            N_f = N_m1;
-            w_2_f = w_2_m1;
-            Q_lin_1 = Q_lin_m1;
+        }
+        else if(err_lin < PPS_error)
+        {
+            Q_0 = Q_lin_2;
+            ++++iter;
         }
     }
 
-    return Seg[N_final];
+    return Q_0;
 }
 
 double ModeSolver::w_2(double N, double k)
