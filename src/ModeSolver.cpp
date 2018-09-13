@@ -20,7 +20,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     //Find F
     double F = exp(Bsol.N_end) * Bsol.dphi_H(Bsol.N_end) * exp(0.5 * Bsol.log_aH(Bsol.N_end));
     
-    return (pow(k, 3) / (2 * M_PI * M_PI)) * pow(abs(Q_f[0] / F), 2);
+    return (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
 
 double ModeSolver::Find_PPS_Tensor(double k)
@@ -32,7 +32,7 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 {
     //Setting Vacuum
     double aH_r = exp(Bsol.log_aH(N_r));
-    double epsilon = 0.5 * pow(Bsol.dphi_H(N_r), 2);
+    double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q_i;
     
     Q_i[0] = sqrt(aH_r / (2 * k));
@@ -59,21 +59,22 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
 
     for(auto iter = Seg.begin(); iter != std::prev(Seg.end()); ++iter)
     {
-        double N_i = iter->first;
-        double N_f = std::next(iter)->first;
+        double N_i = iter->first, N_m1, N_m2, N_f = std::next(iter)->first;
+        double w_2_i = w_2(N_i, k), w_2_m1, w_2_m2, w_2_f = w_2(N_f, k);
+        Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second, Q_lin_m1, Q_lin_m2, Q_lin_2;
         
         while(true)
         {
-            double N_m1 = (2*N_i/3 + N_f/3);
-            double N_m2 = (N_i/3 + 2*N_f/3);
-            double w_2_i = w_2(N_i, k);
-            double w_2_m1 = w_2(N_m1, k);
-            double w_2_m2 = w_2(N_m2, k);
-            double w_2_f = w_2(N_f, k);
+            N_m1 = (2*N_i/3 + N_f/3);
+            w_2_m1 = w_2(N_m1, k);
+            Q_lin_m1 = lin_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second; 
 
-            Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
-            Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m2, w_2_f, N_m2, N_f) * lin_step(w_2_m1, w_2_m2, N_m1, N_m2) * lin_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
+            N_m2 = (N_i/3 + 2*N_f/3);
+            w_2_m2 = w_2(N_m2, k);
+            Q_lin_2 = lin_step(w_2_m2, w_2_f, N_m2, N_f) * lin_step(w_2_m1, w_2_m2, N_m1, N_m2) * Q_lin_m1;
+
             double err_lin = std::abs(std::log(abs(Q_lin_2[0]))- std::log(abs(Q_lin_1[0])));
+
             if(abs(w_2_i) > 5)
                 err_lin *= 5e1;
     
@@ -117,6 +118,8 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             }
             Seg[N_m1] = {};
             N_f = N_m1;
+            w_2_f = w_2_m1;
+            Q_lin_1 = Q_lin_m1;
         }
     }
 
@@ -151,7 +154,7 @@ Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i,
 
 Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
 {
-    double p = pow(abs(b), 2.0/3.0);
+    double p = std::pow(abs(b), 2.0/3.0);
     double x0 = -((a + b * N0) /p);
     double x1 = -((a + b * N1) /p);
 
@@ -169,7 +172,7 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
     }
     else
     {
-        auto x = 2.0/3 * (pow(x1, 1.5) - pow(x0, 1.5));
+        auto x = 2.0/3 * (std::pow(x1, 1.5) - std::pow(x0, 1.5));
         A <<  std::cosh(x) * std::pow(x0/x1, 0.25),          - std::sinh(x)/ std::pow( x0 * x1, 0.25) / (b/p),
              -std::sinh(x)  * std::pow( x0 * x1, 0.25)* (b/p), std::cosh(x) * std::pow(x1/x0, 0.25);
     }
