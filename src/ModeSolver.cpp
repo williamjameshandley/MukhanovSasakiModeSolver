@@ -16,9 +16,10 @@ double ModeSolver::Find_PPS_Scalar(double k)
     //Initial Q
     Eigen::Vector2cd Q_i = Initial_Q(k);
     //Evolve Q
-    Eigen::Vector2cd Q_f = Evolve(Q_i, k, N_r, Bsol.N_end);
+    double N_final = Bsol.N_end;
+    Eigen::Vector2cd Q_f = Evolve(Q_i, k, N_r, N_final);
     //Find F
-    double F = exp(Bsol.N_end) * Bsol.dphi_H(Bsol.N_end) * exp(0.5 * Bsol.log_aH(Bsol.N_end));
+    double F = Bsol.dphi_H(N_final) * exp(N_final + 0.5 * Bsol.log_aH(N_final));
     
     return (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -46,14 +47,13 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 }
 
 
-Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_initial, double& N_final)
+Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_initial, double& N_f)
 {
     std::map<double, NumericModeSolver::Transition> T;
     
     //Initialize Extrema and end points
-    T[N_initial] =  {}; T[N_final] =  {}; for (auto N : Bsol.N_extrema) if (N>N_initial and N<N_final) T[N] = {};
-
-    //for (auto N = N_initial; N<N_final; N++) T[N] = {};
+    T[N_initial] =  {}; T[N_f] =  {}; 
+    for (auto N : Bsol.N_extrema) if (N>N_initial and N<N_f) T[N] = {};
 
     for (auto& t : T) t.second.w2 =  w_2(t.first, k);
 
@@ -62,10 +62,12 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
     while(iter != std::prev(T.end()))
     {
         double N_i = iter->first;
+        //std::cout << N_i << " " << Bsol.log_aH(N_i) << " " << (std::log(k) < Bsol.log_aH(N_i)) << " " << Q_0[0] << std::endl;
+
         double w2_i = iter->second.w2; 
 
         auto niter = std::next(iter);
-        double N_f = niter->first;
+        N_f = niter->first;
         double w2_f = niter->second.w2;
 
         double N_m = (N_i + N_f)/2;
@@ -106,6 +108,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
                 else                   
                 {Q_0 = Q_pos_2; iter->second.i = niter->second.i = NumericModeSolver::Transition::pos;}  
                 ++++iter;
+                if (std::log(k) < Bsol.log_aH(N_f) + std::log(1e-2)) break; 
             }
         }
         else if(w2_i < 0 and w2_f < 0)
@@ -127,12 +130,14 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
                 else                   
                 {Q_0 = Q_neg_2; iter->second.i = niter->second.i = NumericModeSolver::Transition::neg;}
                 ++++iter;
+                if (std::log(k) < Bsol.log_aH(N_f) + std::log(1e-2)) break; 
             }
         }
         else if(err_lin < PPS_error)
         {
             Q_0 = Q_lin_2;
             ++++iter;
+            if (std::log(k) < Bsol.log_aH(N_f) + std::log(1e-2)) break; 
         }
     }
 
