@@ -1,115 +1,4 @@
 #include "BackgroundSolver.hpp"
-#include <fstream>
-#include <iostream>
-
-double log_aH(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1], n = x[2];
-    return n + log(H(x,pot));
-}
-
-double dlog_aH(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1], n = x[2];
-    return 1 -dphi*dphi/2/H(x,pot)/H(x,pot);
-}
-
-double dphi_H(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return dphi / H(x,pot);
-}
-
-double H(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0);
-}
-
-double omega_2(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return (pot->ddV(phi) + 1.5 * pot->dV(phi) * dphi / H(x, pot)) / pow(H(x, pot), 2) - (pow(dphi/H(x, pot), 2) - 6) * (5 * pow(dphi/H(x, pot), 2) - 6) / 16.0;
-}
-
-double omega_2_tensor(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return (3 * pow(dphi/H(x, pot), 2) + 6) * (pow(dphi/H(x, pot), 2) - 6) / 16.0 - 0.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3);
-}
-
-double d_omega_2_tensor(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return (3 * pow(dphi , 6)) / (8. * pow(H(x, pot), 6)) - (3 * pow(dphi, 4)) / pow(H(x, pot), 4) + (9 * pow(dphi, 2))/(2. * pow(H(x, pot) ,2)) - (3 * pow(dphi, 3) * pot->dV(phi)) / (2. * pow(H(x, pot), 5)) + (3 * dphi * pot->dV(phi)) / pow(H(x, pot), 3) + pow(pot->dV(phi), 2) / (2. * pow(H(x, pot), 4)) - (pow(dphi, 2) * pot->ddV(phi)) / (2. * pow(H(x, pot), 4));
-}
-
-double d_omega_2(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return -3 * pow(pot->dV(phi) / H(x, pot) / H(x, pot), 2) - 9 * pot->dV(phi) * dphi / pow(H(x, pot), 3) + (7.0/2) * pot->dV(phi) * pow(dphi, 3) / pow(H(x, pot), 5) + (5.0/2) * pot->ddV(phi) * pow(dphi / H(x, pot) / H(x, pot), 2) - (27.0/2) * pow(dphi / H(x, pot), 2) + 6 * pow(dphi / H(x, pot), 4) - (5.0/8) * pow(dphi / H(x, pot), 6) + pot->dddV(phi) * dphi / pow(H(x, pot), 3);
-}
-
-void equations(double dx_dt[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    dx_dt[0] = x[1];
-    dx_dt[1] = - (3 * H(x, pot) * x[1] + pot->dV(x[0]));
-    dx_dt[2] = H(x, pot);
-}
-
-void inflation_end(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    auto params = static_cast<double*> (ptr[1]);
-    
-    auto p = -(2.5 * x[1] * x[1] + x[1] * pot->dV(x[0]) / H(x, pot) - pow(0.5 * x[1] * x[1] / H(x, pot), 2));
-    if(p > 0)
-        g[0] = (-H(x, pot) + 0.5 * x[1] * x[1] / H(x, pot));
-    else if(p < 0)
-        g[0] = p;
-}
-
-void inflation_begin(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    
-    g[0] = (-H(x, pot) + 0.5 * x[1] * x[1] / H(x, pot));
-    
-}
-
-void Find_N(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto params = static_cast<double*> (ptr[1]);
-    
-    g[0] = params[0] - x[2];
-}
-
-void Extrema_Scalar(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    auto params = static_cast<double*> (ptr[1]);
-    
-    g[0] = d_omega_2(&x[0], pot);
-    g[1] = params[0] - x[2];
-    g[2] = dlog_aH(&x[0],pot);
-}
-
-void Extrema_Tensor(double g[], const double, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    auto params = static_cast<double*> (ptr[1]);
-    
-    g[0] = d_omega_2_tensor(&x[0], pot);
-    g[1] = params[0] - x[2];
-    g[2] = dlog_aH(&x[0],pot);
-}
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
 {
@@ -262,11 +151,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
             _N_extrema_tensor.push_back(x[2]);
     }
     
-    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, lim);
-    std::ofstream fout{"output/omega_2.txt"};
-    for (auto pair : _omega_2.points)
-        fout << pair.first << " " << pair.second << std::endl;
-    
+    LinearInterpolator<double, double> _omega_2 = Solve_Variable(t0, x0, omega_2, _N_extrema, ptrs, lim);    
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(t0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
     LinearInterpolator<double, double> _dphi_H = Solve_Variable(t0, x0, dphi_H, _N_extrema, ptrs, lim);
     LinearInterpolator<double, double> _log_aH = Solve_Variable(t0, x0, log_aH, _N_extrema, ptrs, lim);
@@ -396,4 +281,113 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     
     return _Var;
     
+}
+
+double log_aH(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1], n = x[2];
+    return n + log(H(x,pot));
+}
+
+double dlog_aH(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1], n = x[2];
+    return 1 -dphi*dphi/2/H(x,pot)/H(x,pot);
+}
+
+double dphi_H(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return dphi / H(x,pot);
+}
+
+double H(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return sqrt((0.5 * dphi * dphi + pot->V(phi)) / 3.0);
+}
+
+double omega_2(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return (pot->ddV(phi) + 1.5 * pot->dV(phi) * dphi / H(x, pot)) / pow(H(x, pot), 2) - (pow(dphi/H(x, pot), 2) - 6) * (5 * pow(dphi/H(x, pot), 2) - 6) / 16.0;
+}
+
+double omega_2_tensor(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return (3 * pow(dphi/H(x, pot), 2) + 6) * (pow(dphi/H(x, pot), 2) - 6) / 16.0 - 0.5 * pot->dV(phi) * dphi / pow(H(x, pot), 3);
+}
+
+double d_omega_2_tensor(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return (3 * pow(dphi , 6)) / (8. * pow(H(x, pot), 6)) - (3 * pow(dphi, 4)) / pow(H(x, pot), 4) + (9 * pow(dphi, 2))/(2. * pow(H(x, pot) ,2)) - (3 * pow(dphi, 3) * pot->dV(phi)) / (2. * pow(H(x, pot), 5)) + (3 * dphi * pot->dV(phi)) / pow(H(x, pot), 3) + pow(pot->dV(phi), 2) / (2. * pow(H(x, pot), 4)) - (pow(dphi, 2) * pot->ddV(phi)) / (2. * pow(H(x, pot), 4));
+}
+
+double d_omega_2(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return -3 * pow(pot->dV(phi) / H(x, pot) / H(x, pot), 2) - 9 * pot->dV(phi) * dphi / pow(H(x, pot), 3) + (7.0/2) * pot->dV(phi) * pow(dphi, 3) / pow(H(x, pot), 5) + (5.0/2) * pot->ddV(phi) * pow(dphi / H(x, pot) / H(x, pot), 2) - (27.0/2) * pow(dphi / H(x, pot), 2) + 6 * pow(dphi / H(x, pot), 4) - (5.0/8) * pow(dphi / H(x, pot), 6) + pot->dddV(phi) * dphi / pow(H(x, pot), 3);
+}
+
+void equations(double dx_dt[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    dx_dt[0] = x[1];
+    dx_dt[1] = - (3 * H(x, pot) * x[1] + pot->dV(x[0]));
+    dx_dt[2] = H(x, pot);
+}
+
+void inflation_end(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    auto p = -(2.5 * x[1] * x[1] + x[1] * pot->dV(x[0]) / H(x, pot) - pow(0.5 * x[1] * x[1] / H(x, pot), 2));
+    if(p > 0)
+        g[0] = (-H(x, pot) + 0.5 * x[1] * x[1] / H(x, pot));
+    else if(p < 0)
+        g[0] = p;
+}
+
+void inflation_begin(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    
+    g[0] = (-H(x, pot) + 0.5 * x[1] * x[1] / H(x, pot));
+    
+}
+
+void Find_N(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = params[0] - x[2];
+}
+
+void Extrema_Scalar(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = d_omega_2(&x[0], pot);
+    g[1] = params[0] - x[2];
+    g[2] = dlog_aH(&x[0],pot);
+}
+
+void Extrema_Tensor(double g[], const double, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    auto params = static_cast<double*> (ptr[1]);
+    
+    g[0] = d_omega_2_tensor(&x[0], pot);
+    g[1] = params[0] - x[2];
+    g[2] = dlog_aH(&x[0],pot);
 }
