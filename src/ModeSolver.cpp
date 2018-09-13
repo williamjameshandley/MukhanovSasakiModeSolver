@@ -169,11 +169,9 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
     }
     else
     {
-        auto b0 = pow(x0, 0.25), b1 = pow(x1, 0.25);
         auto x = 2.0/3 * (pow(x1, 1.5) - pow(x0, 1.5));
-        
-        A << std::cosh(x) * b0 / b1,          std::sinh(x) / (-b/p * b0 * b1),
-             std::sinh(x) * (-b/p * b0 * b1), std::cosh(x) * b1 / b0;
+        A <<  std::cosh(x) * std::pow(x0/x1, 0.25),          - std::sinh(x)/ std::pow( x0 * x1, 0.25) / (b/p),
+             -std::sinh(x)  * std::pow( x0 * x1, 0.25)* (b/p), std::cosh(x) * std::pow(x1/x0, 0.25);
     }
     
     return A;
@@ -197,38 +195,22 @@ Eigen::Matrix2d ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
 
 Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, double N1)
 {
-    double p = b;
-    double x0 = exp(a + b * N0);
-    double x1 = exp(a + b * N1);
+    double x0 = exp(a + b * N0)/std::abs(b);
+    double x1 = exp(a + b * N1)/std::abs(b);
     
-    Eigen::Matrix2cd MB0, MB1;
     Eigen::Matrix2d MB;
     
-    if((x0 / p) < 20 and (x1 / p) < 20 and (x0 / p) > -15 and (x1 / p) > -15)
+    if(x0 < 20 and x1 < 20)
     {
-        auto I0 = Bessel_I(0, x0 / p);
-        auto K0 = Bessel_K(0, x0 / p);
-        auto Ip0 = x0 * Bessel_I(1, x0 / p);
-        auto Kp0 = -x0 * Bessel_K(1, x0 / p);
-        
-        auto I1 = Bessel_I(0, x1 / p);
-        auto K1 = Bessel_K(0, x1 / p);
-        auto Ip1 = x1 * Bessel_I(1, x1 / p);
-        auto Kp1 = -x1 * Bessel_K(1, x1 / p);
-        
-        MB0 << I0,  K0,
-        Ip0, Kp0;
-        
-        MB1 << I1,  K1,
-        Ip1, Kp1;
-        
-        MB = (MB1 * MB0.inverse()).real();
+        double I0_0 = i0(x0), I1_0 = i1(x0), K0_0 = k0(x0), K1_0 = k1(x0);
+        double I0_1 = i0(x1), I1_1 = i1(x1), K0_1 = k0(x1), K1_1 = k1(x1);
+
+        MB <<  (I1_0*K0_1+I0_1*K1_0)*x0,        (I0_0*K0_1+I0_1*K0_0) / b,
+               (I1_1*K1_0+I1_0*K1_1)*x0*x1 * b ,(I1_1*K0_0+I0_0*K1_1)*x1;
     }
     else
-    {
-        MB<< cosh((x1 - x0) / p) * pow(x0/x1, 0.5), sinh((x1 - x0) / p) * pow(x0 * x1, -0.5),
-             sinh((x1 - x0) / p) * pow(x0 * x1, 0.5), cosh((x1 - x0) / p) * pow(x0/x1, -0.5);
-    }
+        MB<< cosh((x1 - x0)) * pow(x0 / x1, 0.5),     sinh((x1 - x0)) / pow(x0 * x1, 0.5) / b,
+             sinh((x1 - x0)) * pow(x0 * x1, 0.5) * b, cosh((x1 - x0)) * pow(x1 / x0, 0.5);
     
     return MB;
 }
