@@ -67,9 +67,9 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_i, double k, double N_ini
             double N_m1 = (2*N_i/3 + N_f/3);
             double N_m2 = (N_i/3 + 2*N_f/3);
             double w_2_i = w_2(N_i, k);
-            double w_2_f = w_2(N_f, k);
             double w_2_m1 = w_2(N_m1, k);
             double w_2_m2 = w_2(N_m2, k);
+            double w_2_f = w_2(N_f, k);
 
             Eigen::Vector2cd Q_lin_1 = lin_step(w_2_i, w_2_f, N_i, N_f) * iter->second;
             Eigen::VectorXcd Q_lin_2 = lin_step(w_2_m2, w_2_f, N_m2, N_f) * lin_step(w_2_m1, w_2_m2, N_m1, N_m2) * lin_step(w_2_i, w_2_m1, N_i, N_m1) * iter->second;
@@ -184,8 +184,11 @@ Eigen::Matrix2d ModeSolver::Bessel_Mat(double a, double b, double N0, double N1)
     double x0 = exp(a + b * N0)/std::abs(b);
     double x1 = exp(a + b * N1)/std::abs(b);
 
-    double J0_0 = j0(x0), J1_0 = j1(x0), Y0_0 = y0(x0), Y1_0 = y1(x0);
-    double J0_1 = j0(x1), J1_1 = j1(x1), Y0_1 = y0(x1), Y1_1 = y1(x1);
+    double J0_0, J1_0, Y0_0, Y1_0, J0_1, J1_1, Y0_1, Y1_1;
+    bessel0(x0,&J0_0,&Y0_0);
+    bessel0(x1,&J0_1,&Y0_1);
+    bessel1(x0,&J1_0,&Y1_0);
+    bessel1(x1,&J1_1,&Y1_1);
 
     B <<  (J1_0*Y0_1-J0_1*Y1_0)*x0,        (J0_0*Y0_1-J0_1*Y0_0) / b,
           (J1_1*Y1_0-J1_0*Y1_1)*x0*x1 * b ,(J1_1*Y0_0-J0_0*Y1_1)*x1;

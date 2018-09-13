@@ -2,7 +2,7 @@
 CC = gcc
 CXX = g++
 FC = gfortran
-LD = $(CXX)  -pg -g  -std=legacy
+LD = $(CXX)  -g
 
 CXXFLAGS += -std=c++11
 FFLAGS += -std=legacy
@@ -20,9 +20,9 @@ CFLAGS += -O3
 FFLAGS += -O3
 
 # Profiling
-CXXFLAGS += -pg -g
-CFLAGS += -pg -g
-FFLAGS += -pg -g
+CXXFLAGS += -g
+CFLAGS += -g
+FFLAGS += -g
 
 # Shared object
 CXXFLAGS += -fPIC

@@ -513,3 +513,39 @@ xn = x - THPIO4;
 p = p * sin(xn) + w * q * cos(xn);
 return( p * SQ2OPI / sqrt(x) );
 }
+
+
+double bessel1(x, j, y)
+double x, *j, *y;
+{
+
+double w, z, p, q, xn;
+
+if( x <= 5.0 )
+{
+    if( x <= 0.0 )
+    {
+        mtherr( "bessel1", DOMAIN );
+        *j = -MAXNUM ;
+        *y = -MAXNUM ;
+        return(1);
+    }
+	z = x * x;
+	w = x * (polevl( z, YP, 5 ) / p1evl( z, YQ, 8 ));
+	w += TWOOPI * ( j1(x) * log(x)  -  1.0/x );
+    *y = w;
+
+	w = polevl( z, RP, 3 ) / p1evl( z, RQ, 8 );
+	w = w * x * (z - Z1) * (z - Z2);
+    *j = w;
+	return(0);
+	}
+
+w = 5.0/x;
+z = w * w;
+p = polevl( z, PP, 6)/polevl( z, PQ, 6 );
+q = polevl( z, QP, 7)/p1evl( z, QQ, 7 );
+xn = x - THPIO4;
+*j = (p * cos(xn) - w * q * sin(xn))  * SQ2OPI / sqrt(x);
+*y = (p * sin(xn) + w * q * cos(xn))  * SQ2OPI / sqrt(x);
+}
