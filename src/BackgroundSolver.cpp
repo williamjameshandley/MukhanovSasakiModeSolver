@@ -59,8 +59,8 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(0, x0, omega_2, _N_extrema, ptrs, lim);
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, _N_extrema, ptrs, lim);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, _N_extrema, ptrs, lim);
+    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, {}, ptrs, lim);
+    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, {}, ptrs, lim);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
@@ -149,8 +149,8 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     
     LinearInterpolator<double, double> _omega_2 = Solve_Variable(0, x0, omega_2, _N_extrema, ptrs, lim);
     LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, _N_extrema, ptrs, lim);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, _N_extrema, ptrs, lim);
+    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, {}, ptrs, lim);
+    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, {}, ptrs, lim);
     
     double aH_star = exp(_log_aH(N_end - N_star));
     
@@ -177,25 +177,19 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
     _Var[N_i] = NAN; _Var[N_f] = NAN;
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
     
-    auto iter = _Var.begin();
-    iter->second = Var(N_i, &x0[0], pot);
-    ++iter;
     
-    desolver = dlsodar(2, 1, 1e5);
-    n = n0;
-    x = x0;
-    while(iter != _Var.end())
+    desolver = dlsodar(2, 0, 1e5);
+    n = n0; x = x0;
+    for(auto &v : _Var)
     {
-        desolver.integrate(n, iter->first, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        iter->second = Var(n, &x[0], pot);
-        ++iter;
+        desolver.integrate(n, v.first, &x[0], equations, nullptr, static_cast<void*>(ptrs));
+        v.second = Var(n, &x[0], pot);
     }
 
     //Fill as necessary
-    iter = _Var.begin();
-    desolver = dlsodar(2, 1, 1e5);
-    n = n0;
-    x = x0;
+    auto iter = _Var.begin();
+    desolver = dlsodar(2, 0, 1e5);
+    n = n0; x = x0;
     while(iter != std::prev(_Var.end()))
     {
         N_i =  iter->first;
@@ -204,13 +198,14 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         n0 = n;
         
         auto N_m = (N_i + N_f) / 2;
-        if(N_f - n > lim*1e-1)
+        if(N_f - N_i > 1e-8)
         {
-            desolver.integrate(n, N_m, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+            desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
 
             auto Approx = _Var(N_m);
             auto True = Var(n, &x[0], pot);
             
+            //std::cout << abs(True - Approx) << std::endl;
             if(abs(True - Approx) < lim)
                 ++iter;
             else
@@ -221,8 +216,13 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
                 desolver.reset();
             }
         }
-        else ++iter;
+        else{
+            std::cout.precision(20);
+            std::cout << N_i << " " << N_m << " " << N_f << " " << " " << Var(n, &x[0], pot) - _Var(N_m) << std::endl;
+            ++iter;
+        }
     }
+    std::cout << "-------------------------------" << std::endl;
     
     return _Var;
 }
