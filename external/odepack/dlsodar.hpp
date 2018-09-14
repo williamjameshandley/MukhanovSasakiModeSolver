@@ -43,5 +43,7 @@ class dlsodar
         void integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, void *data);
         void integrate(double &t, double tout, double q[], Field f_func, void *data);
 
+        void reset() {istate=1;}
+
 };
 

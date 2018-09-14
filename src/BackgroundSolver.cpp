@@ -7,7 +7,6 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     double params[2];
     ptrs[1] = static_cast<void*> (params);
     
-    // @TODO make this 'self-consistent'
     double t0 = 1;
     double phi_p = 0, N_temp = 0;
     while(abs(N_temp - (N_star + 20)) > 0.1)
@@ -168,116 +167,63 @@ LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double>
     double params[2];
     ptrs[1] = static_cast<void*> (params);
     
-    std::vector<std::pair<double, double>> N_pair;
     LinearInterpolator<double, double> _Var;
     
     //Find N_end
     double t = t0;
     std::vector<double> x = x0;
-    double N_i = x0[2];
-
-    dlsodar desolver(3, 1, 10000);
+    double N_i = x[2];
+    dlsodar desolver(3, 1, 1e5);
     desolver.integrate(t, 1e10, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-    std::vector<double> x_end = x;
-
-    params[0] = x_end[2];
-    double N_f = x_end[2];
+    double N_f = x[2];
     
-    //Initialize Extrema
-    if(N_extrema.size() != 0)
-    {
-        auto p0 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_i) - N_extrema.begin());
-        auto p1 = static_cast<size_t>(std::lower_bound(N_extrema.begin(), N_extrema.end(), N_f) - N_extrema.begin());
-        if(p1 <= N_extrema.size())
-        {
-            N_pair.push_back(std::make_pair(N_i, N_extrema[p0]));
-            for(size_t n = p0+1; n < p1; n++)
-                N_pair.push_back(std::make_pair(N_extrema[n-1], N_extrema[n]));
-            
-            N_pair.push_back(std::make_pair(N_extrema[p1-1], N_f));
-        }
-    }
+    //Initialize Extrema in a single pass.
+    _Var[N_i] = NAN; _Var[N_f] = NAN;
+    for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
     
-    if(N_pair.size() == 0)
-    {
-        N_pair.push_back(std::make_pair(N_i, N_f));
-    }
+    auto iter = _Var.begin();
+    iter->second = Var(&x0[0], pot);
+    ++iter;
     
-    
-    _Var[N_pair[0].first] =  Var(&x0[0], pot);
-    
-    desolver = dlsodar(3, 1, 100000);
+    desolver = dlsodar(3, 1, 1e5);
     t = t0;
     x = x0;
-    for(size_t n = 1; n < N_pair.size(); n++)
+    while(iter != _Var.end())
     {
-        params[0] = N_pair[n].first;
+        params[0] = iter->first;
         desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
-        
-        _Var[N_pair[n].first] = Var(&x[0], pot);
+        iter->second = Var(&x[0], pot);
+        ++iter;
     }
-    
-    params[0] = N_pair.back().second;
-    desolver.integrate(t, 1e10, &x[0], equations, Find_N, ptrs);
-    
-    _Var[N_pair.back().second] = Var(&x[0], pot);
-    
-    int count = 0;
-    while(N_pair.size() != 0)
+
+    //Fill as necessary
+    iter = _Var.begin();
+    desolver = dlsodar(3, 1);
+    t = t0;
+    x = x0;
+    while(iter != std::prev(_Var.end()))
     {
-        desolver = dlsodar(3, 1, 1000000);
-        for(size_t n = 0; n < N_pair.size(); n++)
+        N_i =  iter->first;
+        N_f =  std::next(iter)->first;
+        x0 = x;
+        t0 = t;
+
+        auto N_m = (N_i + N_f) / 2;
+        params[0] = N_m;
+        desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
+        auto x_m1 = x;
+
+        auto Approx = _Var(N_m);
+        auto True = Var(&x[0], pot);
+        
+        if(abs(True - Approx) < lim)
+            ++iter;
+        else
         {
-            N_i = N_pair[n].first;
-            N_f = N_pair[n].second;
-            N_pair.erase(N_pair.begin() + static_cast<int>(n));
-            
-            if(N_f - N_i > lim*1e-1)
-            {
-                t = t0;
-                x = x0;
-                auto N_m1 = (2 * N_i + N_f) / 3.0;
-                params[0] = N_m1;
-                desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
-                std::vector<double> x_m1 = x;
-                
-                auto N_m2 = (N_i + 2 * N_f) / 3.0;
-                params[0] = N_m2;
-                desolver.integrate(t, 1e10, &x[0], equations, Find_N, static_cast<void*>(ptrs));
-                std::vector<double> x_m2 = x;
-                
-                count += 2;
-                
-                auto temp_approx1 = _Var(N_m1);
-                auto temp_approx2 = _Var(N_m2);
-                auto temp_true1 = Var(&x_m1[0], pot);
-                auto temp_true2 = Var(&x_m2[0], pot);
-                
-                
-                if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) > lim)
-                {
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_m2));
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 2, std::make_pair(N_m2, N_f));
-                    n += 2;
-                    _Var[N_m1] = (temp_true1);
-                    _Var[N_m2] = (temp_true2);
-                }
-                if(abs(temp_true1 - temp_approx1) > lim and abs(temp_true2 - temp_approx2) < lim)
-                {
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m1));
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m1, N_f));
-                    n += 1;
-                    _Var[N_m1] = (temp_true1);
-                }
-                if(abs(temp_true1 - temp_approx1) < lim and abs(temp_true2 - temp_approx2) > lim)
-                {
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n), std::make_pair(N_i, N_m2));
-                    N_pair.insert(N_pair.begin() + static_cast<int>(n) + 1, std::make_pair(N_m2, N_f));
-                    n += 1;
-                    _Var[N_m2] = temp_true2;
-                }
-            }
+            _Var[N_m] = True;
+            x = x0;
+            t = t0;
+            desolver.reset();
         }
     }
     
