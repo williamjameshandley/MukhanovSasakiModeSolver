@@ -14,7 +14,7 @@ int main()
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
     
-    double err = 1e-4;
+    double err = 1e-5;
     //Solve Background Variables
     auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
    

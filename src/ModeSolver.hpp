@@ -5,8 +5,10 @@
 #include <memory>
 #include <Eigen/Dense>
 #include "BackgroundSolver.hpp"
-#include "Special_Functions.hpp"
 #include "interpolation.hpp"
+#include "cephes.hpp"
+
+const std::complex<double> I(0, 1);
 
 enum VacuumChoice { BD, HD, RST };
 enum TransitionChoice {neg_exp, lin, pos_exp};
