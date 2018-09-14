@@ -297,7 +297,14 @@ void inflation_end(double g[], const double n, const double x[], void* data)
 
 void inflation_begin(double g[], const double n, const double x[], void* data)
 {
-    g[0] = -(1 - 0.5 * x[1] * x[1]);
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    
+    auto p = -(3 - 0.5 * x[1] * x[1] - 0.5 * x[1] * pot->dV(x[0]) / pot->V(x[0])) * x[1] * x[1] - 3 * pot->dV(x[0]) * x[1] / pot->V(x[0]);
+    if(p < 0)
+        g[0] = -(1 - 0.5 * x[1] * x[1]);
+    else if(p > 0)
+        g[0] = p;
 }
 
 void Extrema_Scalar(double g[], const double n, const double x[], void* data)

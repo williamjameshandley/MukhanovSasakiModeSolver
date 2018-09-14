@@ -8,7 +8,6 @@
 int main()
 {
     //std::cout<<"Solving for Background..."<<std::endl;
-    
     //Set Potential and ptr
     Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
     auto potential_ptr = static_cast<Potential*> (&pot);
@@ -57,7 +56,6 @@ int main()
     
     for(auto k : kplot)
     {
-
         std::clock_t t0 = std::clock();
         double True = 0;//N_ms.Find_PPS_Scalar(k);
         std::clock_t t1 = std::clock();
@@ -67,7 +65,6 @@ int main()
         //Plot
         std::cout << k << std::endl;
         mout << k <<"  "<< Approx<<std::endl;
-
     }
     mout.close();
 
