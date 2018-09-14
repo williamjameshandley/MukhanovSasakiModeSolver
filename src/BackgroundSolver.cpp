@@ -190,7 +190,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         iter->second = Var(n, &x[0], pot);
         ++iter;
     }
-    
+
     //Fill as necessary
     iter = _Var.begin();
     desolver = dlsodar(2, 1, 1e5);
@@ -204,21 +204,24 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         n0 = n;
         
         auto N_m = (N_i + N_f) / 2;
-        desolver.integrate(n, N_m, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-        auto x_m1 = x;
-
-        auto Approx = _Var(N_m);
-        auto True = Var(n, &x[0], pot);
-        
-        if(abs(True - Approx) < lim)
-            ++iter;
-        else
+        if(N_f - n > lim*1e-1)
         {
-            _Var[N_m] = True;
-            x = x0;
-            n = n0;
-            desolver.reset();
+            desolver.integrate(n, N_m, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+
+            auto Approx = _Var(N_m);
+            auto True = Var(n, &x[0], pot);
+            
+            if(abs(True - Approx) < lim)
+                ++iter;
+            else
+            {
+                _Var[N_m] = True;
+                x = x0;
+                n = n0;
+                desolver.reset();
+            }
         }
+        else ++iter;
     }
     
     return _Var;

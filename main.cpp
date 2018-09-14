@@ -18,7 +18,7 @@ int main()
     
     double err = 1e-5;
     //Solve Background Variables
-    auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e2);
+    auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
    
     //////////////////////////////////////////////////////////////////////////////
     //k range
