@@ -17,7 +17,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     Eigen::Vector2cd Q_i = Initial_Q(k);
     //Evolve Q
     double N_final = Bsol.N_end;
-    Eigen::Vector2cd Q_f = Evolve(Q_i, k, N_r, N_final);
+    Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
     //Find F
     double F = Bsol.dphi_H(N_final) * exp(N_final + 0.5 * Bsol.log_aH(N_final));
     
@@ -26,7 +26,17 @@ double ModeSolver::Find_PPS_Scalar(double k)
 
 double ModeSolver::Find_PPS_Tensor(double k)
 {
-    return 0;
+    //Scale k
+    k *= Bsol.aH_star / 0.05;
+    //Initial Q
+    Eigen::Vector2cd Q_i = Initial_Q(k);
+    //Evolve Q
+    double N_final = Bsol.N_end;
+    Eigen::Vector2cd Q_f = Evolve(Q_i, tensor, k, N_r, N_final);
+    //Find F
+    double F = exp(N_final + 0.5 * Bsol.log_aH(N_final));
+    
+    return 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
 
 Eigen::Vector2cd ModeSolver::Initial_Q(double k)
@@ -47,7 +57,7 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 }
 
 
-Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_initial, double& N_f)
+Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, double k, double N_initial, double& N_f)
 {
     std::map<double, ModeSolver::Transition> T;
     
@@ -55,7 +65,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
     T[N_initial] =  {}; T[N_f] =  {}; 
     for (auto N : Bsol.N_extrema) if (N>N_initial and N<N_f) T[N] = {};
 
-    for (auto& t : T) t.second.w2 =  w_2(t.first, k);
+    for (auto& t : T) t.second.w2 =  w_2(t.first, k, _PSChoice);
 
 
     auto iter = T.begin();
@@ -69,7 +79,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
         double w2_f = niter->second.w2;
 
         double N_m = (N_i + N_f)/2;
-        double w2_m = w_2(N_m, k);
+        double w2_m = w_2(N_m, k, _PSChoice);
         niter = T.insert(niter,{N_m,{w2_m,{}}});
 
         if (not iter->second.M_pos.size()) 
@@ -142,9 +152,11 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
     return Q_0;
 }
 
-double ModeSolver::w_2(double N, double k)
+double ModeSolver::w_2(double N, double k, PSChoice _PSChoice)
 {
-    return Bsol.omega_2(N) + k * k * exp(-2 * Bsol.log_aH(N));
+    if(_PSChoice == scalar) {return Bsol.omega_2(N) + k * k * exp(-2 * Bsol.log_aH(N));}
+    else if(_PSChoice == tensor) {return Bsol.omega_2_tensor(N) + k * k * exp(-2 * Bsol.log_aH(N));}
+    else {return 0;}
 }
 
 Eigen::MatrixXd ModeSolver::lin_step(double w_2_i, double w_2_f, double N_i, double N_f)

@@ -10,6 +10,7 @@
 
 enum VacuumChoice { BD, HD, RST };
 enum TransitionChoice {neg_exp, lin, pos_exp};
+enum PSChoice {scalar, tensor};
 
 class BasicModeSolver
 {
@@ -40,12 +41,12 @@ class ModeSolver : public BasicModeSolver
         
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
         Eigen::Vector2cd Initial_Q(double k);
-        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, double k, double N_i, double& N_f);
+        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, PSChoice _PSChoice, double k, double N_i, double& N_f);
         
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
         
-        double w_2(double N, double k);
+        double w_2(double N, double k, PSChoice _PSChoice);
         Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Bessel_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Modified_Bessel_Mat(double a, double b, double N0, double N1);
