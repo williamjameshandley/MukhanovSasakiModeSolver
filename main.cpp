@@ -9,7 +9,7 @@ int main()
 {
     //std::cout<<"Solving for Background..."<<std::endl;
     //Set Potential and ptr
-    Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
+    Poly_Step pot(6.48757e-6, 1e-3, 5e-3, 15.5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
@@ -17,7 +17,7 @@ int main()
     
     double err = 1e-5;
     //Solve Background Variables
-    auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
+    auto sols = solve_equations(potential_ptr, N_star, err*1e-1);
    
     //////////////////////////////////////////////////////////////////////////////
     //k range
@@ -40,7 +40,7 @@ int main()
     
     //std::cout<<"Finding PPS Numerically..."<<std::endl;
     //Initialize Numeric Solver
-    NumericModeSolver N_ms(potential_ptr, N_star, N_dagger, N_r);
+    //NumericModeSolver N_ms(potential_ptr, N_star, N_dagger, N_r);
     
     //Construct PPS linear interpolation
     //N_ms.Construct_PPS_Scalar(k0, k1, 3e-3);
@@ -63,7 +63,7 @@ int main()
         std::clock_t t2 = std::clock();
 
         //Plot
-        std::cout << k << std::endl;
+        //std::cout << k << std::endl;
         mout << k <<"  "<< Approx<<std::endl;
     }
     mout.close();

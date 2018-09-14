@@ -197,15 +197,18 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         x0 = x;
         n0 = n;
         
+        double A, T;
         auto N_m = (N_i + N_f) / 2;
-        if(N_f - N_i > 1e-8)
+        if(N_f - N_i > 1e-15)
         {
             desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
 
             auto Approx = _Var(N_m);
             auto True = Var(n, &x[0], pot);
             
-            //std::cout << abs(True - Approx) << std::endl;
+            A = Approx;
+            T = True;
+            
             if(abs(True - Approx) < lim)
                 ++iter;
             else
@@ -216,13 +219,8 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
                 desolver.reset();
             }
         }
-        else{
-            std::cout.precision(20);
-            std::cout << N_i << " " << N_m << " " << N_f << " " << " " << Var(n, &x[0], pot) - _Var(N_m) << std::endl;
-            ++iter;
-        }
+        else ++iter;
     }
-    std::cout << "-------------------------------" << std::endl;
     
     return _Var;
 }
