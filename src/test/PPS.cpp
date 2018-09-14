@@ -18,7 +18,7 @@ TEST_CASE("range","[PPS][Scalar]")
     double err=1e-3;
     
     //Solve Background Variables
-    auto sols = solve_equations(potential_ptr, N_star, err*1e-1);
+    auto sols = solve_equations(potential_ptr, N_star, N_dagger, err*1e-1);
    
     //////////////////////////////////////////////////////////////////////////////
     //k range

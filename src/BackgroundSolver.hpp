@@ -8,14 +8,14 @@
 #include "interpolation.hpp"
 
 void equations(double dx_dt[], const double t, const double x[], void* data);
-double dphi_H(const double x[], Potential* pot);
-double H(const double x[], Potential* pot);
-double log_aH(const double x[], Potential* pot);
-double dlog_aH(const double x[], Potential* pot);
-double omega_2(const double x[], Potential* pot);
-double d_omega_2(const double x[], Potential* pot);
-double omega_2_tensor(const double x[], Potential* pot);
-double d_omega_2_tensor(const double x[], Potential* pot);
+double H(const double n, const double x[], Potential* pot);
+double dphi_H(const double n, const double x[], Potential* pot);
+double log_aH(const double n, const double x[], Potential* pot);
+double dlog_aH(const double n, const double x[], Potential* pot);
+double omega_2(const double n, const double x[], Potential* pot);
+double d_omega_2(const double n, const double x[], Potential* pot);
+double omega_2_tensor(const double n, const double x[], Potential* pot);
+double d_omega_2_tensor(const double n, const double x[], Potential* pot);
 
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);
@@ -42,4 +42,4 @@ struct BackgroundSolution
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double lim);
 BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger, double lim);
-LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double> x0, std::function<double(const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
+LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
