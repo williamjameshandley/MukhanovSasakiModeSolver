@@ -8,9 +8,9 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     ptrs[1] = static_cast<void*> (params);
     
     double phi_p = 0, N_temp = 0;
+    phi_p += 0.01;
     while(abs(N_temp - (N_star + 20)) > 0.1)
     {
-        phi_p += 0.01;
         int steps = 1000;
         auto dx = (phi_p - 1e-5) / steps;
         
@@ -18,6 +18,9 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
         for(int n = 1; n < steps; n++)
             N_temp += (pot->V(dx * n) / pot->dV(dx * n)) * dx;
         N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
+        
+        if(N_temp - (N_star + 20) < 0) {phi_p += 0.01;}
+        else {phi_p -= 0.01 / phi_p;}
     }
     
     double dphi_p = - pot->dV(phi_p) / sqrt(pow(pot->V(phi_p), 2) - pow(pot->dV(phi_p), 2));
@@ -198,7 +201,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         n0 = n;
         
         auto N_m = (N_i + N_f) / 2;
-        if(N_f - N_i > 1e-15)
+        if(N_f - N_i > 1e-8)
         {
             desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
 
