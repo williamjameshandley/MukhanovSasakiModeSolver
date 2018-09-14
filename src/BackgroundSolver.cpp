@@ -197,7 +197,6 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         x0 = x;
         n0 = n;
         
-        double A, T;
         auto N_m = (N_i + N_f) / 2;
         if(N_f - N_i > 1e-15)
         {
@@ -205,9 +204,6 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
 
             auto Approx = _Var(N_m);
             auto True = Var(n, &x[0], pot);
-            
-            A = Approx;
-            T = True;
             
             if(abs(True - Approx) < lim)
                 ++iter;
