@@ -57,6 +57,13 @@ class ModeSolver : public BasicModeSolver
         Eigen::MatrixXd lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
         Eigen::MatrixXd pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
         Eigen::MatrixXd neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+    
+        struct Transition {
+            enum type {lin, pos, neg};
+            double w2;
+            Eigen::Matrix2d M_lin, M_pos, M_neg;
+            type i;
+        };
 
 };
 
@@ -86,13 +93,6 @@ class NumericModeSolver : public BasicModeSolver
         double Find_PPS(double k);
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
-
-        struct Transition { 
-            enum type {lin, pos, neg};
-            double w2; 
-            Eigen::Matrix2d M_lin, M_pos, M_neg; 
-            type i;
-        };
 
 };
 

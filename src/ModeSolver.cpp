@@ -49,7 +49,7 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 
 Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_initial, double& N_f)
 {
-    std::map<double, NumericModeSolver::Transition> T;
+    std::map<double, ModeSolver::Transition> T;
     
     //Initialize Extrema and end points
     T[N_initial] =  {}; T[N_f] =  {}; 
@@ -86,7 +86,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
 
         double err_lin = Q_err(Q_lin_2,Q_lin_1);
 
-        iter->second.i = niter->second.i = NumericModeSolver::Transition::lin;
+        iter->second.i = niter->second.i = ModeSolver::Transition::lin;
 
         if(w2_i > 0 and w2_f > 0)
         {
@@ -106,7 +106,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
             {
                 if (err_lin < err_pos) Q_0 = Q_lin_2;
                 else                   
-                {Q_0 = Q_pos_2; iter->second.i = niter->second.i = NumericModeSolver::Transition::pos;}  
+                {Q_0 = Q_pos_2; iter->second.i = niter->second.i = ModeSolver::Transition::pos;}
                 ++++iter;
                 if (std::log(k) < Bsol.log_aH(N_f) + std::log(1e-2)) break; 
             }
@@ -128,7 +128,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, double k, double N_ini
             {
                 if (err_lin < err_neg) Q_0 = Q_lin_2;
                 else                   
-                {Q_0 = Q_neg_2; iter->second.i = niter->second.i = NumericModeSolver::Transition::neg;}
+                {Q_0 = Q_neg_2; iter->second.i = niter->second.i = ModeSolver::Transition::neg;}
                 ++++iter;
                 if (std::log(k) < Bsol.log_aH(N_f) + std::log(1e-2)) break; 
             }
