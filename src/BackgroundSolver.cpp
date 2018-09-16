@@ -1,4 +1,6 @@
 #include "BackgroundSolver.hpp"
+#include <limits>
+#include "utils.hpp"
 
 BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
 {
@@ -27,7 +29,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     double n = 0;
     std::vector<double> x = x0;
     dlsodar desolver(2, 1, 1e5);
-    desolver.integrate(n, 1000, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+    desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*>(ptrs));
     std::vector<double> x_end = x;
     double N_end = n;
     
@@ -38,7 +40,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     desolver = dlsodar(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, 1000, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
         if(n < N_end)
         {
             _N_extrema.push_back(n);
@@ -52,7 +54,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
     desolver = dlsodar(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, 1000, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
         if(n < N_end)
             _N_extrema_tensor.push_back(n);
     }
@@ -73,52 +75,24 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     ptrs[0] = static_cast<void*> (pot);
     double params[2];
     ptrs[1] = static_cast<void*> (params);
+    auto N_tot = N_star + N_dagger, N_end=0.;
     
-    double phi_p = 0, dphi_p, N_temp_d = 0, N_end = 0, NN = 0;
-    
-    while(N_end < N_star + N_dagger)
+    auto f = [&pot, &ptrs, N_tot, &N_end](double phi_p) -> double
     {
-        phi_p += 0.5;
-        dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
+        auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
         double n = 0;
         std::vector<double> x = {phi_p, dphi_p};
         dlsodar desolver(2, 1, 1e5);
-        desolver.integrate(n, 1000, &x[0], equations, inflation_end, static_cast<void*> (ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_begin, static_cast<void*> (ptrs));
+        auto N_start = n;
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*> (ptrs));
         N_end = n;
-    }
-    double phi_old = phi_p - 0.5;
-    phi_p += 0.001;
-    while(abs(N_temp_d - N_dagger) > 0.01)
-    {
-        dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
-        double n = 0;
-        std::vector<double> x = {phi_p, dphi_p};
-        dlsodar desolver(2, 1, 1e5);
-        desolver.integrate(n, 1000, &x[0], equations, inflation_end, static_cast<void*> (ptrs));
-        N_end = n;
-        
-        n = 0;
-        x = {phi_p, dphi_p};
-        desolver = dlsodar(2, 1, 1e5);
-        desolver.integrate(n, 1000, &x[0], equations, inflation_begin, static_cast<void*> (ptrs));
-        NN = n;
-        
-        desolver.integrate(n, N_end - N_star, &x[0], equations, inflation_end, static_cast<void*> (ptrs));
-        N_temp_d = n - NN;
-        
-        if(N_temp_d < N_dagger)
-        {
-            phi_old = phi_p;
-            phi_p += 0.001;
-        }
-        else if(N_temp_d > N_dagger)
-        {
-            phi_p -= (phi_p - phi_old) / phi_p;
-        }
-        
-    }
+        return (N_end - N_start) - N_tot;
+    };
     
-    dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
+    auto a = 10., b=100.;
+    auto phi_p = find_root<double>(f,a,b,lim);
+    auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
     std::vector<double> x0 = {phi_p, dphi_p};
     
     //Find Scalar Extrema
@@ -128,7 +102,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     dlsodar desolver(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, 1000, &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
         if(n < N_end)
         {
             _N_extrema.push_back(n);
@@ -142,7 +116,7 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     desolver = dlsodar(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, 1000, &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
         if(n < N_end)
             _N_extrema_tensor.push_back(n);
     }
@@ -170,7 +144,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
     double N_i = n0;
     std::vector<double> x = x0;
     dlsodar desolver(2, 1, 1e5);
-    desolver.integrate(n, 1000, &x[0], equations, inflation_end, static_cast<void*>(ptrs));
+    desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*>(ptrs));
     double N_f = n;
     
     //Initialize Extrema in a single pass.
@@ -178,7 +152,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
     
     
-    desolver = dlsodar(2, 0, 1e5);
+    desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
     n = n0; x = x0;
     for(auto &v : _Var)
     {
@@ -188,34 +162,33 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
 
     //Fill as necessary
     auto iter = _Var.begin();
-    desolver = dlsodar(2, 0, 1e5);
+    desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
     n = n0; x = x0;
     while(iter != std::prev(_Var.end()))
     {
-        N_i =  iter->first;
-        N_f =  std::next(iter)->first;
-        x0 = x;
-        n0 = n;
-        
-        auto N_m = (N_i + N_f) / 2;
-        if(N_f - N_i > 1e-15)
+        N_i =  iter->first; N_f =  std::next(iter)->first;
+
+        if(N_f - N_i > lim)
         {
+            auto N_m = (N_i + N_f) / 2;
+            x0 = x; n0 = n;
             desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
 
             auto Approx = _Var(N_m);
             auto True = Var(n, &x[0], pot);
             
-            if(abs(True - Approx) < lim)
-                ++iter;
+            if(abs(True - Approx) < lim) ++iter;
             else
             {
                 _Var[N_m] = True;
-                x = x0;
-                n = n0;
                 desolver.reset();
+                x = x0; n = n0;
             }
         }
-        else ++iter;
+        else{
+            std::cout << "Broken" << std::endl;
+            ++iter;
+        }
     }
     
     return _Var;

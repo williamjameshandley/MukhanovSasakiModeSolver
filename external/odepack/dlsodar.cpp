@@ -6,8 +6,8 @@
 dlsodar::dlsodar(int neq_, int ng_, int max_steps_): 
         neq{neq_},
         itol{1},
-        rtol{1e-15},
-        atol{1e-15},
+        rtol{1e-10},
+        atol{1e-10},
         itask{1},
         istate{1},
         iopt{1},
