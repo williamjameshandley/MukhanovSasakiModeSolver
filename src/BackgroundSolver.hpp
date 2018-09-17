@@ -13,7 +13,7 @@ void equations_n(double dx_dn[], const double n, const double x[], void* data);
 double H(const double n, const double x[], Potential* pot);
 double H_t(const double x[], Potential* pot);
 double dphi_H(const double n, const double x[], Potential* pot);
-double log_aH(const double n, const double x[], Potential* pot);
+double aH(const double n, const double x[], Potential* pot);
 double dlog_aH(const double n, const double x[], Potential* pot);
 double omega_2(const double n, const double x[], Potential* pot);
 double d_omega_2(const double n, const double x[], Potential* pot);
@@ -31,7 +31,7 @@ struct BackgroundSolution
 {
     SemiLogInterpolator<double, double> omega_2;
     SemiLogInterpolator<double, double> omega_2_tensor;
-    SemiLogInterpolator<double, double> log_aH;
+    SemiLogInterpolator<double, double> aH;
     SemiLogInterpolator<double, double> dphi_H;
     std::vector<double> N_extrema;
     std::vector<double> N_extrema_tensor;

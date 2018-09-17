@@ -55,10 +55,10 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     std::cout << Bsol.omega_2_tensor.size() << std::endl;
     Bsol.dphi_H = Solve_Variable(0, N_end, x0, dphi_H, {}, ptrs, lim);
     std::cout << Bsol.dphi_H.size() << std::endl;
-    Bsol.log_aH = Solve_Variable(0, N_end, x0, log_aH, {}, ptrs, lim);
-    std::cout << Bsol.log_aH.size() << std::endl;
+    Bsol.aH = Solve_Variable(0, N_end, x0, aH, {}, ptrs, lim);
+    std::cout << Bsol.aH.size() << std::endl;
 
-    Bsol.aH_star = exp(Bsol.log_aH(N_end - N_star));
+    Bsol.aH_star = Bsol.aH(N_end - N_star);
     Bsol.N_end = N_end;
 
     return Bsol;
@@ -99,7 +99,7 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
 
         auto True = Var(n, &x[0], pot);
 
-        if(_Var.insert(iter,n,True,lim)) ++iter;
+        if(_Var.insert(iter,n,True,(1+std::abs(True))*lim)) ++iter;
         else
         {
             desolver.reset();
@@ -116,10 +116,10 @@ double dphi_H(const double n, const double x[], Potential* pot)
     return dphi;
 }
 
-double log_aH(const double n, const double x[], Potential* pot)
+double aH(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return n + log(H(n, x, pot));
+    return exp(n + log(H(n, x, pot)));
 }
 
 double dlog_aH(const double n, const double x[], Potential* pot)

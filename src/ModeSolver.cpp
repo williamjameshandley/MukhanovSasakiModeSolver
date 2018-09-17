@@ -19,7 +19,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
     //Find F
-    double F = Bsol.dphi_H(N_final) * exp(N_final + 0.5 * Bsol.log_aH(N_final));
+    double F = Bsol.dphi_H(N_final) * exp(N_final + 0.5 * log(Bsol.aH(N_final)));
     
     return (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -34,7 +34,7 @@ double ModeSolver::Find_PPS_Tensor(double k)
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, tensor, k, N_r, N_final);
     //Find F
-    double F = exp(N_final + 0.5 * Bsol.log_aH(N_final));
+    double F = exp(N_final + 0.5 * log(Bsol.aH(N_final)));
     
     return 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -42,7 +42,7 @@ double ModeSolver::Find_PPS_Tensor(double k)
 Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 {
     //Setting Vacuum
-    double aH_r = exp(Bsol.log_aH(N_r));
+    double aH_r = Bsol.aH(N_r);
     double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q_i;
     
@@ -58,8 +58,8 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 
 double ModeSolver::w_2(double N, double k, PSChoice _PSChoice)
 {
-    if(_PSChoice == scalar) {return Bsol.omega_2(N) + k * k * exp(-2 * Bsol.log_aH(N));}
-    else if(_PSChoice == tensor) {return Bsol.omega_2_tensor(N) + k * k * exp(-2 * Bsol.log_aH(N));}
+    if(_PSChoice == scalar) {return Bsol.omega_2(N) + k * k /Bsol.aH(N)/Bsol.aH(N);}
+    else if(_PSChoice == tensor) {return Bsol.omega_2_tensor(N) + k * k /Bsol.aH(N)/Bsol.aH(N);}
     else {return 0;}
 }
 
@@ -122,7 +122,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
                 else                   
                 {Q_0 = Q_pos_2; iter->second.i = niter->second.i = ModeSolver::Transition::pos;}
                 ++++iter;
-                if (std::log(k) < N_f + Bsol.log_aH(Bsol.N_end) - Bsol.N_end + std::log(1e-3)) break;
+                if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
         }
         else if(w2_i < 0 and w2_f < 0)
@@ -144,14 +144,14 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
                 else                   
                 {Q_0 = Q_neg_2; iter->second.i = niter->second.i = ModeSolver::Transition::neg;}
                 ++++iter;
-                if (std::log(k) < N_f + Bsol.log_aH(Bsol.N_end) - Bsol.N_end + std::log(1e-3)) break;
+                if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
         }
         else if(err_lin < PPS_error)
         {
             Q_0 = Q_lin_2;
             ++++iter;
-            if (std::log(k) < N_f + Bsol.log_aH(Bsol.N_end) - Bsol.N_end + std::log(1e-3)) break;
+            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
         }
     }
 
