@@ -9,6 +9,8 @@ int main()
 {
     //Set Potential and ptr
     Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
+    //Poly_Step pot(6.48757e-6, 1e-4, 5e-3, 15.5);
+    //Starobinsky pot(1.2e-5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
@@ -42,7 +44,7 @@ int main()
     for(auto k : kplot)
     {
         //Plot
-        std::cout << k << std::endl;
+        //std::cout << k << std::endl;
         mout << k << "  " << ms.Find_PPS_Scalar(k) << "  " << ms.Find_PPS_Tensor(k) << std::endl;
     }
     mout.close();

@@ -56,6 +56,12 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
     return Q_i;
 }
 
+double ModeSolver::w_2(double N, double k, PSChoice _PSChoice)
+{
+    if(_PSChoice == scalar) {return Bsol.omega_2(N) + k * k * exp(-2 * Bsol.log_aH(N));}
+    else if(_PSChoice == tensor) {return Bsol.omega_2_tensor(N) + k * k * exp(-2 * Bsol.log_aH(N));}
+    else {return 0;}
+}
 
 Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, double k, double N_initial, double& N_f)
 {
@@ -80,7 +86,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 
         double N_m = (N_i + N_f)/2;
         double w2_m = w_2(N_m, k, _PSChoice);
-        niter = T.insert(niter,{N_m,{w2_m,{}}});
+        niter = T.insert(niter,{N_m,{w2_m, {}, {}, {}, {}}});
 
         if (not iter->second.M_pos.size()) 
             iter->second.M_lin = lin_step(w2_i, w2_f, N_i, N_f);
@@ -152,13 +158,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
     return Q_0;
 }
 
-double ModeSolver::w_2(double N, double k, PSChoice _PSChoice)
-{
-    if(_PSChoice == scalar) {return Bsol.omega_2(N) + k * k * exp(-2 * Bsol.log_aH(N));}
-    else if(_PSChoice == tensor) {return Bsol.omega_2_tensor(N) + k * k * exp(-2 * Bsol.log_aH(N));}
-    else {return 0;}
-}
-
 Eigen::MatrixXd ModeSolver::lin_step(double w_2_i, double w_2_f, double N_i, double N_f)
 {
     double b_lin = (w_2_f - w_2_i) / (N_f - N_i);
@@ -191,8 +190,8 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
     if(x0 < 25 and x1 < 25)
     {
         double Ai0, Bi0, Aip0, Bip0, Ai1, Bi1, Aip1, Bip1;
-        Airy(x0, Ai0, Aip0, Bi0, Bip0);
-        Airy(x1, Ai1, Aip1, Bi1, Bip1);
+        airy(x0, &Ai0, &Aip0, &Bi0, &Bip0);
+        airy(x1, &Ai1, &Aip1, &Bi1, &Bip1);
 
         A << (Ai1*Bip0-Aip0*Bi1),          (Ai1*Bi0-Ai0*Bi1)*p/b,
              (Aip0*Bip1-Aip1*Bip0) * b/p,  (Ai0*Bip1-Aip1*Bi0);

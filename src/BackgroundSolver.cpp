@@ -10,7 +10,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     double params[2];
     ptrs[1] = static_cast<void*> (params);
     auto N_tot = N_star + N_dagger, N_end=0.;
-    
+
     auto f = [&pot, &ptrs, N_tot, &N_end](double phi_p) -> double
     {
         auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
@@ -23,12 +23,12 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
         N_end = n;
         return (N_end - N_start) - N_tot;
     };
-    
+
     auto a = 10., b=100.;
     auto phi_p = find_root<double>(f,a,b,lim);
     auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
     std::vector<double> x0 = {phi_p, dphi_p};
-    
+
     //Find Scalar Extrema
     double n = 0;
     auto x = x0;
@@ -38,7 +38,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
         if(n < N_end) Bsol.N_extrema.push_back(n);
     }
-    
+
     //Find Tensor Extrema
     n = 0;
     x = x0;
@@ -49,15 +49,15 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
         if(n < N_end)
             Bsol.N_extrema_tensor.push_back(n);
     }
-    
+
     Bsol.omega_2 = Solve_Variable(0, N_end, x0, omega_2, Bsol.N_extrema, ptrs, lim);
     Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
     Bsol.dphi_H = Solve_Variable(0, N_end, x0, dphi_H, {}, ptrs, lim);
     Bsol.log_aH = Solve_Variable(0, N_end, x0, log_aH, {}, ptrs, lim);
-    
+
     Bsol.aH_star = exp(Bsol.log_aH(N_end - N_star));
     Bsol.N_end = N_end;
-    
+
     return Bsol;
 }
 
@@ -66,14 +66,14 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
     auto pot = static_cast<Potential*> (ptrs[0]);
     double params[2];
     ptrs[1] = static_cast<void*> (params);
-    
+
     LinearInterpolator<double, double> _Var;
-    
+
     //Initialize Extrema in a single pass.
     _Var[N_i] = NAN; _Var[N_f] = NAN;
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
-    
-    
+
+
     auto desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
     auto n = N_i; 
     auto x = x0;
@@ -99,7 +99,7 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
 
             auto Approx = _Var(N_m);
             auto True = Var(n, &x[0], pot);
-            
+
             if(abs(True - Approx) < lim) ++iter;
             else
             {
@@ -113,7 +113,7 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
             ++iter;
         }
     }
-    
+
     return _Var;
 }
 
@@ -177,7 +177,7 @@ void inflation_end(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
-    
+
     auto p = -(3 - 0.5 * x[1] * x[1] - 0.5 * x[1] * pot->dV(x[0]) / pot->V(x[0])) * x[1] * x[1] - 3 * pot->dV(x[0]) * x[1] / pot->V(x[0]);
     if(p > 0)
         g[0] = -(1 - 0.5 * x[1] * x[1]);
@@ -189,7 +189,7 @@ void inflation_begin(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
-    
+
     auto p = -(3 - 0.5 * x[1] * x[1] - 0.5 * x[1] * pot->dV(x[0]) / pot->V(x[0])) * x[1] * x[1] - 3 * pot->dV(x[0]) * x[1] / pot->V(x[0]);
     if(p < 0)
         g[0] = -(1 - 0.5 * x[1] * x[1]);
@@ -201,7 +201,7 @@ void Extrema_Scalar(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
-    
+
     g[0] = d_omega_2(n, x, pot);
     g[1] = dlog_aH(n, x, pot);
 }
@@ -210,7 +210,7 @@ void Extrema_Tensor(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
-    
+
     g[0] = d_omega_2_tensor(n, x, pot);
     g[1] = dlog_aH(n, x, pot);
 }
