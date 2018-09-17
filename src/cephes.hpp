@@ -1,11 +1,6 @@
 #pragma once
 
 extern "C" int airy ( double, double *, double *, double *, double * );
-extern "C" double jv ( double, double);
-extern "C" double yv ( double, double);
-extern "C" double iv ( double, double);
-extern "C" double kn ( int, double);
-
 extern "C" int bessel0( double, double *, double *);
 extern "C" int bessel1( double, double *, double *);
 extern "C" double j0 (double);
