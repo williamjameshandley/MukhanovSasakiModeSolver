@@ -24,7 +24,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
         return (N_end - N_start) - N_tot;
     };
 
-    auto a = 10., b=100.;
+    auto a = 15., b=100.;
     auto phi_p = find_root<double>(f,a,b,lim);
     auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
     std::vector<double> x0 = {phi_p, dphi_p};
@@ -74,7 +74,7 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
 
 
-    auto desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
+    auto desolver = dlsodar(2, 0, 1e5);
     auto n = N_i; 
     auto x = x0;
     for(auto &v : _Var)
@@ -85,7 +85,7 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
 
     //Fill as necessary
     auto iter = _Var.begin();
-    desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
+    desolver = dlsodar(2, 0, 1e5);
     n = N_i; x = x0;
     while(iter != std::prev(_Var.end()))
     {
