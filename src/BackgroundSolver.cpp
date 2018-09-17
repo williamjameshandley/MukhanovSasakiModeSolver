@@ -13,19 +13,19 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
 
     auto f = [&pot, &ptrs, N_tot, &N_end](double phi_p) -> double
     {
-        auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
-        double n = 0;
-        std::vector<double> x = {phi_p, dphi_p};
-        dlsodar desolver(2, 1, 1e5);
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_begin, static_cast<void*> (ptrs));
-        auto N_start = n;
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*> (ptrs));
-        N_end = n;
+        auto dphi_p = -sqrt(2./3);
+        double t = 1.;
+        std::vector<double> x = {phi_p, dphi_p, 0.};
+        dlsodar desolver(3, 1, 1e5);
+        desolver.integrate(t, std::numeric_limits<double>::max(), &x[0], equations_t, inflating, static_cast<void*> (ptrs));
+        auto N_start = x[2];
+        desolver.integrate(t, std::numeric_limits<double>::max(), &x[0], equations_t, inflating, static_cast<void*> (ptrs));
+        N_end = x[2];
         return (N_end - N_start) - N_tot;
     };
 
-    auto a = 15., b=100.;
-    auto phi_p = find_root<double>(f,a,b,lim);
+    auto phi_p = find_root<double>(f,0.1,100.,lim);
+
     auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
     std::vector<double> x0 = {phi_p, dphi_p};
 
@@ -35,7 +35,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     dlsodar desolver(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, Extrema_Scalar, static_cast<void*>(ptrs));
         if(n < N_end) Bsol.N_extrema.push_back(n);
     }
 
@@ -45,15 +45,18 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     desolver = dlsodar(2, 2, 1e5);
     while(n < N_end)
     {
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
-        if(n < N_end)
-            Bsol.N_extrema_tensor.push_back(n);
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, Extrema_Tensor, static_cast<void*>(ptrs));
+        if(n < N_end) Bsol.N_extrema_tensor.push_back(n);
     }
 
     Bsol.omega_2 = Solve_Variable(0, N_end, x0, omega_2, Bsol.N_extrema, ptrs, lim);
+    std::cout << Bsol.omega_2.size() << std::endl;
     Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
+    std::cout << Bsol.omega_2_tensor.size() << std::endl;
     Bsol.dphi_H = Solve_Variable(0, N_end, x0, dphi_H, {}, ptrs, lim);
+    std::cout << Bsol.dphi_H.size() << std::endl;
     Bsol.log_aH = Solve_Variable(0, N_end, x0, log_aH, {}, ptrs, lim);
+    std::cout << Bsol.log_aH.size() << std::endl;
 
     Bsol.aH_star = exp(Bsol.log_aH(N_end - N_star));
     Bsol.N_end = N_end;
@@ -61,26 +64,25 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     return Bsol;
 }
 
-LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double lim)
+SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double lim)
 {
     auto pot = static_cast<Potential*> (ptrs[0]);
     double params[2];
     ptrs[1] = static_cast<void*> (params);
 
-    LinearInterpolator<double, double> _Var;
+    SemiLogInterpolator<double, double> _Var;
 
     //Initialize Extrema in a single pass.
-    _Var[N_i] = NAN; _Var[N_f] = NAN;
-    for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
-
+    _Var[N_i] = {NAN,NAN}; _Var[N_f] = {NAN,NAN};
+    for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = {NAN,NAN};
 
     auto desolver = dlsodar(2, 0, 1e5);
     auto n = N_i; 
     auto x = x0;
     for(auto &v : _Var)
     {
-        desolver.integrate(n, v.first, &x[0], equations, nullptr, static_cast<void*>(ptrs));
-        v.second = Var(n, &x[0], pot);
+        desolver.integrate(n, v.first, &x[0], equations_n, nullptr, static_cast<void*>(ptrs));
+        v.second.first = Var(n, &x[0], pot);
     }
 
     //Fill as necessary
@@ -90,27 +92,18 @@ LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::v
     while(iter != std::prev(_Var.end()))
     {
         N_i =  iter->first; N_f =  std::next(iter)->first;
+        auto N_m = (N_i + N_f) / 2;
 
-        if(N_f - N_i > lim)
+        x0 = x; N_i = n;
+        desolver.integrate(n, N_m, &x[0], equations_n, nullptr, static_cast<void*>(ptrs));
+
+        auto True = Var(n, &x[0], pot);
+
+        if(_Var.insert(iter,n,True,lim)) ++iter;
+        else
         {
-            auto N_m = (N_i + N_f) / 2;
-            x0 = x; N_i = n;
-            desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
-
-            auto Approx = _Var(N_m);
-            auto True = Var(n, &x[0], pot);
-
-            if(abs(True - Approx) < lim) ++iter;
-            else
-            {
-                _Var[N_m] = True;
-                desolver.reset();
-                x = x0; n = N_i;
-            }
-        }
-        else{
-            std::cout << "Broken" << std::endl;
-            ++iter;
+            desolver.reset();
+            x = x0; n = N_i;
         }
     }
 
@@ -141,6 +134,12 @@ double H(const double n, const double x[], Potential* pot)
     return sqrt(pot->V(phi) / (3. - 0.5 * dphi * dphi));
 }
 
+double H_t(const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return sqrt((dphi*dphi/2 + pot->V(phi)) / 3);
+}
+
 double omega_2(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
@@ -165,36 +164,29 @@ double d_omega_2(const double n, const double x[], Potential* pot)
     return -3 * pow(pot->dV(phi) / H(n, x, pot) / H(n, x, pot), 2) - 9 * pot->dV(phi) * dphi / pow(H(n, x, pot), 2) + (7.0/2) * pot->dV(phi) * pow(dphi, 3) / pow(H(n, x, pot), 2) + (5.0/2) * pot->ddV(phi) * pow(dphi / H(n, x, pot), 2) - (27.0/2) * pow(dphi, 2) + 6 * pow(dphi , 4) - (5.0/8) * pow(dphi , 6) + pot->dddV(phi) * dphi / pow(H(n, x, pot), 2);
 }
 
-void equations(double dx_dt[], const double n, const double x[], void* data)
+void equations_n(double dx_dn[], const double n, const double x[], void* data)
+{
+    auto ptr = static_cast<void**>(data);
+    auto pot = static_cast<Potential*> (ptr[0]);
+    dx_dn[0] = x[1];
+    dx_dn[1] = - ((3 - 0.5 * x[1] * x[1] - 0.5 * pot->dV(x[0]) * x[1] / pot->V(x[0])) * x[1] + 3 * pot->dV(x[0]) / pot->V(x[0]));
+}
+
+void equations_t(double dx_dt[], const double t, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
     dx_dt[0] = x[1];
-    dx_dt[1] = - ((3 - 0.5 * x[1] * x[1] - 0.5 * pot->dV(x[0]) * x[1] / pot->V(x[0])) * x[1] + 3 * pot->dV(x[0]) / pot->V(x[0]));
+    dx_dt[1] = -3*H_t(x,pot)*x[1] - pot->dV(x[0]);
+    dx_dt[2] = H_t(x,pot);
 }
 
-void inflation_end(double g[], const double n, const double x[], void* data)
+void inflating(double g[], const double t, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
 
-    auto p = -(3 - 0.5 * x[1] * x[1] - 0.5 * x[1] * pot->dV(x[0]) / pot->V(x[0])) * x[1] * x[1] - 3 * pot->dV(x[0]) * x[1] / pot->V(x[0]);
-    if(p > 0)
-        g[0] = -(1 - 0.5 * x[1] * x[1]);
-    else if(p < 0)
-        g[0] = p;
-}
-
-void inflation_begin(double g[], const double n, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-
-    auto p = -(3 - 0.5 * x[1] * x[1] - 0.5 * x[1] * pot->dV(x[0]) / pot->V(x[0])) * x[1] * x[1] - 3 * pot->dV(x[0]) * x[1] / pot->V(x[0]);
-    if(p < 0)
-        g[0] = -(1 - 0.5 * x[1] * x[1]);
-    else if(p > 0)
-        g[0] = p;
+    g[0] = pot->V(x[0]) - x[1]*x[1];
 }
 
 void Extrema_Scalar(double g[], const double n, const double x[], void* data)

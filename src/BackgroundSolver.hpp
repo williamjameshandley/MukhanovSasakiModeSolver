@@ -8,8 +8,10 @@
 #include "Potential.hpp"
 #include "interpolation.hpp"
 
-void equations(double dx_dt[], const double t, const double x[], void* data);
+void equations_t(double dx_dt[], const double t, const double x[], void* data);
+void equations_n(double dx_dn[], const double n, const double x[], void* data);
 double H(const double n, const double x[], Potential* pot);
+double H_t(const double x[], Potential* pot);
 double dphi_H(const double n, const double x[], Potential* pot);
 double log_aH(const double n, const double x[], Potential* pot);
 double dlog_aH(const double n, const double x[], Potential* pot);
@@ -18,6 +20,7 @@ double d_omega_2(const double n, const double x[], Potential* pot);
 double omega_2_tensor(const double n, const double x[], Potential* pot);
 double d_omega_2_tensor(const double n, const double x[], Potential* pot);
 
+void inflating(double g[], const double, const double x[], void* data);
 void inflation_end(double g[], const double, const double x[], void* data);
 void inflation_begin(double g[], const double, const double x[], void* data);
 void Find_N(double g[], const double, const double x[], void* data);
@@ -26,10 +29,10 @@ void Extrema_Tensor(double g[], const double, const double x[], void* data);
 
 struct BackgroundSolution
 {
-    LinearInterpolator<double, double> omega_2;
-    LinearInterpolator<double, double> omega_2_tensor;
-    LinearInterpolator<double, double> log_aH;
-    LinearInterpolator<double, double> dphi_H;
+    SemiLogInterpolator<double, double> omega_2;
+    SemiLogInterpolator<double, double> omega_2_tensor;
+    SemiLogInterpolator<double, double> log_aH;
+    SemiLogInterpolator<double, double> dphi_H;
     std::vector<double> N_extrema;
     std::vector<double> N_extrema_tensor;
     double aH_star;
@@ -39,4 +42,4 @@ struct BackgroundSolution
 
 BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, double N_dagger=20);
 
-LinearInterpolator<double, double> Solve_Variable(double t0, double N_end, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
+SemiLogInterpolator<double, double> Solve_Variable(double t0, double N_end, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
