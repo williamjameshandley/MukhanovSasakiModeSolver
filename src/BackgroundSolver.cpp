@@ -2,75 +2,9 @@
 #include <limits>
 #include "utils.hpp"
 
-BackgroundSolution solve_equations(Potential* pot, double N_star, double lim)
+BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, double N_dagger)
 {
-    void* ptrs[2];
-    ptrs[0] = static_cast<void*> (pot);
-    double params[2];
-    ptrs[1] = static_cast<void*> (params);
-    
-    double phi_p = 0, N_temp = 0;
-    while(abs(N_temp - (N_star + 20)) > 0.1)
-    {
-        phi_p += 0.01;
-        int steps = 1000;
-        auto dx = (phi_p - 1e-5) / steps;
-        
-        N_temp = 0.5 * (pot->V(1e-5) / pot->dV(1e-5)) * dx;
-        for(int n = 1; n < steps; n++)
-            N_temp += (pot->V(dx * n) / pot->dV(dx * n)) * dx;
-        N_temp += 0.5 * (pot->V(phi_p) / pot->dV(phi_p)) * dx;
-    }
-    
-    double dphi_p = - pot->dV(phi_p) / sqrt(pow(pot->V(phi_p), 2) - pow(pot->dV(phi_p), 2));
-    std::vector<double> x0 = {phi_p, dphi_p};
-
-    //Find N_end
-    double n = 0;
-    std::vector<double> x = x0;
-    dlsodar desolver(2, 1, 1e5);
-    desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-    std::vector<double> x_end = x;
-    double N_end = n;
-    
-    //Find Scalar Extrema
-    std::vector<double> _N_extrema;
-    n = 0;
-    x = x0;
-    desolver = dlsodar(2, 2, 1e5);
-    while(n < N_end)
-    {
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
-        if(n < N_end)
-        {
-            _N_extrema.push_back(n);
-        }
-    }
-    
-    //Find Tensor Extrema
-    std::vector<double> _N_extrema_tensor;
-    n = 0;
-    x = x0;
-    desolver = dlsodar(2, 2, 1e5);
-    while(n < N_end)
-    {
-        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
-        if(n < N_end)
-            _N_extrema_tensor.push_back(n);
-    }
-    
-    LinearInterpolator<double, double> _omega_2 = Solve_Variable(0, x0, omega_2, _N_extrema, ptrs, lim);
-    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, {}, ptrs, lim);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, {}, ptrs, lim);
-    
-    double aH_star = exp(_log_aH(N_end - N_star));
-    
-    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema,_N_extrema_tensor, aH_star, N_end);
-}
-
-BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger, double lim)
-{
+    BackgroundSolution Bsol;
     void* ptrs[2];
     ptrs[0] = static_cast<void*> (pot);
     double params[2];
@@ -96,21 +30,16 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     std::vector<double> x0 = {phi_p, dphi_p};
     
     //Find Scalar Extrema
-    std::vector<double> _N_extrema;
     double n = 0;
     auto x = x0;
     dlsodar desolver(2, 2, 1e5);
     while(n < N_end)
     {
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Scalar, static_cast<void*>(ptrs));
-        if(n < N_end)
-        {
-            _N_extrema.push_back(n);
-        }
+        if(n < N_end) Bsol.N_extrema.push_back(n);
     }
     
     //Find Tensor Extrema
-    std::vector<double> _N_extrema_tensor;
     n = 0;
     x = x0;
     desolver = dlsodar(2, 2, 1e5);
@@ -118,20 +47,21 @@ BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagge
     {
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, Extrema_Tensor, static_cast<void*>(ptrs));
         if(n < N_end)
-            _N_extrema_tensor.push_back(n);
+            Bsol.N_extrema_tensor.push_back(n);
     }
     
-    LinearInterpolator<double, double> _omega_2 = Solve_Variable(0, x0, omega_2, _N_extrema, ptrs, lim);
-    LinearInterpolator<double, double> _omega_2_tensor = Solve_Variable(0, x0, omega_2_tensor, _N_extrema_tensor, ptrs, lim);
-    LinearInterpolator<double, double> _dphi_H = Solve_Variable(0, x0, dphi_H, {}, ptrs, lim);
-    LinearInterpolator<double, double> _log_aH = Solve_Variable(0, x0, log_aH, {}, ptrs, lim);
+    Bsol.omega_2 = Solve_Variable(0, N_end, x0, omega_2, Bsol.N_extrema, ptrs, lim);
+    Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
+    Bsol.dphi_H = Solve_Variable(0, N_end, x0, dphi_H, {}, ptrs, lim);
+    Bsol.log_aH = Solve_Variable(0, N_end, x0, log_aH, {}, ptrs, lim);
     
-    double aH_star = exp(_log_aH(N_end - N_star));
+    Bsol.aH_star = exp(Bsol.log_aH(N_end - N_star));
+    Bsol.N_end = N_end;
     
-    return BackgroundSolution(_omega_2, _omega_2_tensor, _log_aH, _dphi_H, _N_extrema,_N_extrema_tensor, aH_star, N_end);
+    return Bsol;
 }
 
-LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double lim)
+LinearInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double lim)
 {
     auto pot = static_cast<Potential*> (ptrs[0]);
     double params[2];
@@ -139,21 +69,14 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
     
     LinearInterpolator<double, double> _Var;
     
-    //Find N_end
-    double n = n0;
-    double N_i = n0;
-    std::vector<double> x = x0;
-    dlsodar desolver(2, 1, 1e5);
-    desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations, inflation_end, static_cast<void*>(ptrs));
-    double N_f = n;
-    
     //Initialize Extrema in a single pass.
     _Var[N_i] = NAN; _Var[N_f] = NAN;
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = NAN;
     
     
-    desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
-    n = n0; x = x0;
+    auto desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
+    auto n = N_i; 
+    auto x = x0;
     for(auto &v : _Var)
     {
         desolver.integrate(n, v.first, &x[0], equations, nullptr, static_cast<void*>(ptrs));
@@ -163,7 +86,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
     //Fill as necessary
     auto iter = _Var.begin();
     desolver = dlsodar(2, 0, 1e5).set_tol(1e-15,1e-15);
-    n = n0; x = x0;
+    n = N_i; x = x0;
     while(iter != std::prev(_Var.end()))
     {
         N_i =  iter->first; N_f =  std::next(iter)->first;
@@ -171,7 +94,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
         if(N_f - N_i > lim)
         {
             auto N_m = (N_i + N_f) / 2;
-            x0 = x; n0 = n;
+            x0 = x; N_i = n;
             desolver.integrate(n, N_m, &x[0], equations, nullptr, static_cast<void*>(ptrs));
 
             auto Approx = _Var(N_m);
@@ -182,7 +105,7 @@ LinearInterpolator<double, double> Solve_Variable(double n0, std::vector<double>
             {
                 _Var[N_m] = True;
                 desolver.reset();
-                x = x0; n = n0;
+                x = x0; n = N_i;
             }
         }
         else{
