@@ -88,18 +88,22 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
     while(iter != std::prev(_Var.end()))
     {
         N_i =  iter->first; N_f =  std::next(iter)->first;
-        auto N_m = (N_i + N_f) / 2;
-
-        x0 = x; N_i = n;
-        desolver.integrate(n, N_m, &x[0], equations_n, nullptr, static_cast<void*>(ptrs));
-
-        auto True = Var(n, &x[0], pot);
-
-        if(_Var.insert(iter,n,True,lim)) ++iter;
+        if (N_f-N_i < lim) (iter++)->second.second = 0;
         else
         {
-            desolver.reset();
-            x = x0; n = N_i;
+            auto N_m = (N_i + N_f) / 2;
+
+            x0 = x; N_i = n;
+            desolver.integrate(n, N_m, &x[0], equations_n, nullptr, static_cast<void*>(ptrs));
+
+            auto True = Var(n, &x[0], pot);
+
+            if(_Var.insert(iter,n,True,lim)) ++iter;
+            else
+            {
+                desolver.reset();
+                x = x0; n = N_i;
+            }
         }
     }
 
