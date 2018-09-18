@@ -62,12 +62,12 @@ struct SemiLogInterpolator : public std::map<X,std::pair<Y,int>>
         auto y1 = std::next(iter)->second.first;
 
         auto y = ( y0 * (x1-x) + y1 * (x-x0) ) / (x1-x0); 
-        auto err = std::abs(y-y_);
+        auto err = std::abs((y-y_)/y_);
 
         if (y0>0 and y1>0)
         {
             auto yp =  std::exp((std::log(y0) * (x1-x) + std::log(y1) * (x-x0) ) / (x1-x0));
-            auto errp = std::abs(yp-y_);
+            auto errp = std::abs((yp-y_)/y_);
             if (err < lim or errp < lim)
             {
                 iter->second.second =  err < errp ? 0 : 1; 
@@ -76,8 +76,8 @@ struct SemiLogInterpolator : public std::map<X,std::pair<Y,int>>
         }
         else if (y0<0 and y1<0)
         {
-            auto yp = -std::exp((std::log(-y0) * (x1-x) + std::log(-y1) * (x-x0) ) / (x1-x0));
-            auto errp = std::abs(yp-y_);
+            auto yn = -std::exp((std::log(-y0) * (x1-x) + std::log(-y1) * (x-x0) ) / (x1-x0));
+            auto errp = std::abs((yn-y_)/y_);
             if (err < lim or errp < lim)
             {
                 iter->second.second =  err < errp ? 0 : -1; 
@@ -111,10 +111,8 @@ struct SemiLogInterpolator : public std::map<X,std::pair<Y,int>>
 
         if (i==0)
             return ( y0 * (x1-x) + y1 * (x-x0) ) / (x1-x0);
-        else if (i==1)
-            return  std::exp((std::log(y0) * (x1-x) + std::log(y1) * (x-x0) ) / (x1-x0));
-        else if (i==-1) 
-            return -std::exp((std::log(-y0) * (x1-x) + std::log(-y1) * (x-x0) ) / (x1-x0));
+        else if (i==1 or i==-1)
+            return i*std::exp((std::log(i*y0) * (x1-x) + std::log(i*y1) * (x-x0) ) / (x1-x0));
         else
             throw std::runtime_error("SemiLogInterpolator: type not set");
     }

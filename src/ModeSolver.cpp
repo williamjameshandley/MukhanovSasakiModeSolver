@@ -19,7 +19,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
     //Find F
-    double F = Bsol.dphi_H(N_final) * exp(N_final + 0.5 * log(Bsol.aH(N_final)));
+    double F = Bsol.dphi_H(N_final) * std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
     
     return (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -34,7 +34,7 @@ double ModeSolver::Find_PPS_Tensor(double k)
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, tensor, k, N_r, N_final);
     //Find F
-    double F = exp(N_final + 0.5 * log(Bsol.aH(N_final)));
+    double F = std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
     
     return 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -46,7 +46,7 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
     double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q_i;
     
-    Q_i[0] = sqrt(aH_r / (2 * k));
+    Q_i[0] = std::sqrt(aH_r / (2 * k));
     
     if(vacuum == BD)
         Q_i[1] = Q_i[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
