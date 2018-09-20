@@ -1,5 +1,4 @@
 #include "ModeSolver.hpp"
-#include <fstream>
 
 ModeSolver::ModeSolver(BackgroundSolution _Bsol): Bsol{_Bsol}, N_r{0}, PPS_error{5e-3}, vacuum{BD} {}
 

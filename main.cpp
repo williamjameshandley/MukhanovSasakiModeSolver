@@ -8,8 +8,8 @@
 int main()
 {
     //Set Potential and ptr
-    Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
-    //Poly_Step pot(6.48757e-6, 1e-4, 5e-3, 15.5);
+    AxionMonodromy pot(6e-6, 4./3, 12.38, 4e-4, 0.01, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
+    //Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
     //Starobinsky pot(1.2e-5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
@@ -18,7 +18,7 @@ int main()
     
     double err = 1e-4;
     //Solve Background Variables
-    auto sols = solve_equations(err*1e-1,potential_ptr, N_star, N_dagger);
+    auto sols = solve_equations(err*1e-1, potential_ptr, N_star);
     //auto sols = solve_equations(err*1e-1,potential_ptr, N_star);
    
     //////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ int main()
     std::ofstream mout{"output/PPS.txt"};
     mout.precision(20);
     
-    //k rang
+    //k range
     double k0 = 1e-6, k1 = 1;
     std::vector<double> kplot(1000);
     for(size_t n = 0; n < kplot.size(); n++)
@@ -44,7 +44,7 @@ int main()
     for(auto k : kplot)
     {
         //Plot
-        //std::cout << k << std::endl;
+        std::cout << k << std::endl;
         mout << k << "  " << ms.Find_PPS_Scalar(k) << "  " << ms.Find_PPS_Tensor(k) << std::endl;
     }
     mout.close();
