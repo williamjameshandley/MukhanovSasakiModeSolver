@@ -13,14 +13,14 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
 
     auto f = [&pot, &ptrs, N_tot, &N_end](double phi_p) -> double
     {
-        auto dphi_p = -sqrt(2./3);
-        double t = 1.;
-        std::vector<double> x = {phi_p, dphi_p, 0.};
-        dlsodar desolver(3, 1, 1e5);
-        desolver.integrate(t, std::numeric_limits<double>::max(), &x[0], equations_t, inflating, static_cast<void*> (ptrs));
-        auto N_start = x[2];
-        desolver.integrate(t, std::numeric_limits<double>::max(), &x[0], equations_t, inflating, static_cast<void*> (ptrs));
-        N_end = x[2];
+        double n = 0;
+        auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
+        std::vector<double> x = {phi_p, dphi_p};
+        dlsodar desolver(2, 1, 1e5);
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
+        auto N_start = n;
+        desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
+        N_end = n;
         return (N_end - N_start) - N_tot;
     };
 
@@ -51,7 +51,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
 
     Bsol.omega_2 = Solve_Variable(0, N_end, x0, omega_2, Bsol.N_extrema, ptrs, lim);
     Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
-    Bsol.dphi_H = Solve_Variable(0, N_end, x0, dphi_H, {}, ptrs, lim);
+    Bsol.dphi_H = Solve_Variable(0, N_end, x0, phi_dot_H, {}, ptrs, lim);
     Bsol.aH = Solve_Variable(0, N_end, x0, aH, {}, ptrs, lim);
 
     Bsol.aH_star = Bsol.aH(N_end - N_star);
@@ -110,7 +110,7 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
     return _Var;
 }
 
-double dphi_H(const double n, const double x[], Potential* pot)
+double phi_dot_H(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
     return dphi;
@@ -132,12 +132,6 @@ double H(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
     return sqrt(pot->V(phi) / (3. - 0.5 * dphi * dphi));
-}
-
-double H_t(const double x[], Potential* pot)
-{
-    double phi = x[0], dphi = x[1];
-    return sqrt((dphi*dphi/2 + pot->V(phi)) / 3);
 }
 
 double omega_2(const double n, const double x[], Potential* pot)
@@ -172,21 +166,12 @@ void equations_n(double dx_dn[], const double n, const double x[], void* data)
     dx_dn[1] = - ((3 - 0.5 * x[1] * x[1] - 0.5 * pot->dV(x[0]) * x[1] / pot->V(x[0])) * x[1] + 3 * pot->dV(x[0]) / pot->V(x[0]));
 }
 
-void equations_t(double dx_dt[], const double t, const double x[], void* data)
-{
-    auto ptr = static_cast<void**>(data);
-    auto pot = static_cast<Potential*> (ptr[0]);
-    dx_dt[0] = x[1];
-    dx_dt[1] = -3*H_t(x,pot)*x[1] - pot->dV(x[0]);
-    dx_dt[2] = H_t(x,pot);
-}
-
-void inflating(double g[], const double t, const double x[], void* data)
+void inflating(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
 
-    g[0] = pot->V(x[0]) - x[1]*x[1];
+    g[0] = pot->V(x[0]) - x[1]*x[1]*H(n, &x[0], pot)*H(n, &x[0], pot);
 }
 
 void Extrema_Scalar(double g[], const double n, const double x[], void* data)

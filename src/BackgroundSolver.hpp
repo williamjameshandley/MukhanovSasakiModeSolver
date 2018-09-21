@@ -8,11 +8,9 @@
 #include "Potential.hpp"
 #include "interpolation.hpp"
 
-void equations_t(double dx_dt[], const double t, const double x[], void* data);
 void equations_n(double dx_dn[], const double n, const double x[], void* data);
 double H(const double n, const double x[], Potential* pot);
-double H_t(const double x[], Potential* pot);
-double dphi_H(const double n, const double x[], Potential* pot);
+double phi_dot_H(const double n, const double x[], Potential* pot);
 double aH(const double n, const double x[], Potential* pot);
 double dlog_aH(const double n, const double x[], Potential* pot);
 double omega_2(const double n, const double x[], Potential* pot);
@@ -21,9 +19,6 @@ double omega_2_tensor(const double n, const double x[], Potential* pot);
 double d_omega_2_tensor(const double n, const double x[], Potential* pot);
 
 void inflating(double g[], const double, const double x[], void* data);
-void inflation_end(double g[], const double, const double x[], void* data);
-void inflation_begin(double g[], const double, const double x[], void* data);
-void Find_N(double g[], const double, const double x[], void* data);
 void Extrema_Scalar(double g[], const double, const double x[], void* data);
 void Extrema_Tensor(double g[], const double, const double x[], void* data);
 

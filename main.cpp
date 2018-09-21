@@ -8,17 +8,17 @@
 int main()
 {
     //Set Potential and ptr
-    AxionMonodromy pot(6e-6, 4./3, 12.38, 4e-4, 0.01, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
-    //Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
+    //AxionMonodromy pot(6e-6, 4./3, 12.38, 0.01, 0.01, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
+    Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
     //Starobinsky pot(1.2e-5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
     
-    double err = 1e-4;
+    double err = 1e-5;
     //Solve Background Variables
-    auto sols = solve_equations(err*1e-1, potential_ptr, N_star);
+    auto sols = solve_equations(err*1e-1, potential_ptr, N_star, N_dagger);
     //auto sols = solve_equations(err*1e-1,potential_ptr, N_star);
    
     //////////////////////////////////////////////////////////////////////////////

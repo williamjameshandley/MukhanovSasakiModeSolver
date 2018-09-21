@@ -65,8 +65,8 @@ struct AxionMonodromy : public Potential
     
     double m, p, phi0, f0, b, pf, gamma0;
     
-    double V(double phi)   { return std::pow(m,4 - p)*(std::pow(phi,p) + (b*f0*p*std::pow(phi0,-1 + p)*cos(gamma0 + (std::pow(phi/phi0,1 + pf)*phi0)/f0))/(1 + pf)); }
-    double dV(double phi)  { return std::pow(m,4 - p)*p*(std::pow(phi,-1 + p) - b*std::pow(phi/phi0,pf)*std::pow(phi0,-1 + p)*sin(gamma0 + (phi*std::pow(phi/phi0,pf))/f0)); }
-    double ddV(double phi) { return -(std::pow(m,4 - p)*p*std::pow(phi,-2 + p)) + std::pow(m,4 - p)*std::pow(p,2)*std::pow(phi,-2 + p) - (b*std::pow(m,4 - p)*p*std::pow(phi/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (phi*std::pow(phi/phi0,pf))/f0))/f0 - (b*std::pow(m,4 - p)*p*pf*std::pow(phi/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (phi*std::pow(phi/phi0,pf))/f0))/f0 - b*std::pow(m,4 - p)*p*pf*std::pow(phi/phi0,-1 + pf)*std::pow(phi0,-2 + p)*sin(gamma0 + (phi*std::pow(phi/phi0,pf))/f0); }
+    double V(double phi)   { return std::pow(m,4 - p)*(std::pow(std::abs(phi),p) + (b*f0*p*std::pow(phi0,-1 + p)*cos(gamma0 + (std::pow(std::abs(phi)/phi0,1 + pf)*phi0)/f0))/(1 + pf)); }
+    double dV(double phi)  { return std::pow(m,4 - p)*p*(std::pow(std::abs(phi),-1 + p) - b*std::pow(std::abs(phi)/phi0,pf)*std::pow(phi0,-1 + p)*sin(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0)); }
+    double ddV(double phi) { return -(std::pow(m,4 - p)*p*std::pow(std::abs(phi),-2 + p)) + std::pow(m,4 - p)*std::pow(p,2)*std::pow(std::abs(phi),-2 + p) - (b*std::pow(m,4 - p)*p*std::pow(std::abs(phi)/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0))/f0 - (b*std::pow(m,4 - p)*p*pf*std::pow(std::abs(phi)/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0))/f0 - b*std::pow(m,4 - p)*p*pf*std::pow(std::abs(phi)/phi0,-1 + pf)*std::pow(phi0,-2 + p)*sin(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0); }
     virtual ~AxionMonodromy() {}
 };
