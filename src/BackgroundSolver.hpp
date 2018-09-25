@@ -4,42 +4,37 @@
 #include <odepack/dlsodar.hpp>
 #include <math.h>
 #include <stddef.h>
+#include <limits>
 #include "Potential.hpp"
-#include "linear_interpolation.hpp"
+#include "interpolation.hpp"
 
-void equations(double dx_dt[], const double t, const double x[], void* data);
-double dphi_H(const double x[], Potential* pot);
-double H(const double x[], Potential* pot);
-double log_aH(const double x[], Potential* pot);
-double omega_2(const double x[], Potential* pot);
-double d_omega_2(const double x[], Potential* pot);
-double omega_2_tensor(const double x[], Potential* pot);
-double d_omega_2_tensor(const double x[], Potential* pot);
+void equations_n(double dx_dn[], const double n, const double x[], void* data);
+double H(const double n, const double x[], Potential* pot);
+double phi_dot_H(const double n, const double x[], Potential* pot);
+double aH(const double n, const double x[], Potential* pot);
+double dlog_aH(const double n, const double x[], Potential* pot);
+double omega_2(const double n, const double x[], Potential* pot);
+double d_omega_2(const double n, const double x[], Potential* pot);
+double omega_2_tensor(const double n, const double x[], Potential* pot);
+double d_omega_2_tensor(const double n, const double x[], Potential* pot);
 
-void inflation_end(double g[], const double, const double x[], void* data);
-void inflation_begin(double g[], const double, const double x[], void* data);
-void Find_N(double g[], const double, const double x[], void* data);
+void inflating(double g[], const double, const double x[], void* data);
 void Extrema_Scalar(double g[], const double, const double x[], void* data);
 void Extrema_Tensor(double g[], const double, const double x[], void* data);
 
 struct BackgroundSolution
 {
-    BackgroundSolution(LinearInterpolator<double, double> _omega_2, LinearInterpolator<double, double> _omega_2_tensor, LinearInterpolator<double, double> _log_aH, LinearInterpolator<double, double> _dphi_H, std::vector<double> _N_extrema, std::vector<double> _N_extrema_tensor, double _aH_star, double _N_end) :
-    omega_2{_omega_2}, omega_2_tensor{_omega_2_tensor}, log_aH{_log_aH}, dphi_H{_dphi_H}, N_extrema{_N_extrema}, N_extrema_tensor{_N_extrema_tensor}, aH_star{_aH_star}, N_end{_N_end} {}
-    
-    LinearInterpolator<double, double> omega_2;
-    LinearInterpolator<double, double> omega_2_tensor;
-    LinearInterpolator<double, double> log_aH;
-    LinearInterpolator<double, double> dphi_H;
+    SemiLogInterpolator<double, double> omega_2;
+    SemiLogInterpolator<double, double> omega_2_tensor;
+    SemiLogInterpolator<double, double> aH;
+    SemiLogInterpolator<double, double> dphi_H;
     std::vector<double> N_extrema;
     std::vector<double> N_extrema_tensor;
     double aH_star;
     double N_end;
-    
 };
 
 
-std::vector<double> Solve_N(double t0, std::vector<double> x0, void* ptrs[]);
-BackgroundSolution solve_equations(Potential* pot, double N_star);
-BackgroundSolution solve_equations(Potential* pot, double N_star, double N_dagger);
-LinearInterpolator<double, double> Solve_Variable(double t0, std::vector<double> x0, std::function<double(const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
+BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, double N_dagger=20);
+
+SemiLogInterpolator<double, double> Solve_Variable(double t0, double N_end, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);

@@ -4,12 +4,15 @@
 #include <complex>
 #include <memory>
 #include <Eigen/Dense>
-#include "Transitions.hpp"
 #include "BackgroundSolver.hpp"
-#include "Special_Functions.hpp"
-#include "linear_interpolation.hpp"
+#include "interpolation.hpp"
+#include "cephes.hpp"
+
+const std::complex<double> I(0, 1);
 
 enum VacuumChoice { BD, HD, RST };
+enum TransitionChoice {neg_exp, lin, pos_exp};
+enum PSChoice {scalar, tensor};
 
 class BasicModeSolver
 {
@@ -31,27 +34,40 @@ class BasicModeSolver
 class ModeSolver : public BasicModeSolver
 {
     public:
-        BackgroundSolution Bsol;    
-        TransitionsSolution Tsol;
-    
+        BackgroundSolution Bsol;
+        
         double N_r, PPS_error;
         VacuumChoice vacuum;
-    
+        
         ModeSolver(BackgroundSolution _Bsol);
-    
+        
         void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
-        Eigen::Vector2cd Match(double k);
-    
+        Eigen::Vector2cd Initial_Q(double k);
+        Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, PSChoice _PSChoice, double k, double N_i, double& N_f);
+        
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
-    
+        
+        double w_2(double N, double k, PSChoice _PSChoice);
         Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Bessel_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Modified_Bessel_Mat(double a, double b, double N0, double N1);
-    
+        
         Eigen::Matrix2d Airy_gen(double p, double x1, double x0);
         Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
         Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
+
+        Eigen::MatrixXd lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::MatrixXd pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::MatrixXd neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+    
+        struct Transition {
+            enum type {lin, pos, neg};
+            double w2;
+            Eigen::Matrix2d M_lin, M_pos, M_neg;
+            type i;
+        };
+
 };
 
 double _H(double phi, double dphi, Potential* pot);
@@ -80,4 +96,8 @@ class NumericModeSolver : public BasicModeSolver
         double Find_PPS(double k);
         virtual double Find_PPS_Scalar(double k) override;
         virtual double Find_PPS_Tensor(double k) override;
+
 };
+
+inline double Q_err(Eigen::Vector2cd Q,Eigen::Vector2cd Q0)
+{return std::max( abs((abs(Q0[0])-abs(Q[0]))/abs(Q0[0])), abs((abs(Q0[1])-abs(Q[1]))/abs(Q0[1])));}

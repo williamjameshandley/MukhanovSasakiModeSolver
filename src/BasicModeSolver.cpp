@@ -6,8 +6,8 @@ void BasicModeSolver::Construct_PPS_Scalar(double k_i, double k_f, double error 
     
     k_pair.push_back(std::make_pair(k_i, k_f));
     
-    PPS_Scalar.insert(k_pair[0].first, (Find_PPS_Scalar(k_pair[0].first)));
-    PPS_Scalar.insert(k_pair[0].second, (Find_PPS_Scalar(k_pair[0].second)));
+    PPS_Scalar[k_pair[0].first] =  Find_PPS_Scalar(k_pair[0].first);
+    PPS_Scalar[k_pair[0].second] = Find_PPS_Scalar(k_pair[0].second);
     
     double lim = error;
     while(k_pair.size() != 0)
@@ -83,9 +83,9 @@ void BasicModeSolver::Construct_PPS_Scalar(double k_i, double k_f, double error 
                 n += 1;
             }
             
-            PPS_Scalar.insert(k_m1, (temp_true1));
-            PPS_Scalar.insert(k_m2, (temp_true2));
-            PPS_Scalar.insert(k_m3, (temp_true3));
+            PPS_Scalar[k_m1 ] = (temp_true1);
+            PPS_Scalar[k_m2 ] = (temp_true2);
+            PPS_Scalar[k_m3 ] = (temp_true3);
             k_plot_Scalar.push_back(k_m1);
             k_plot_Scalar.push_back(k_m2);
             k_plot_Scalar.push_back(k_m3);
@@ -100,8 +100,8 @@ void BasicModeSolver::Construct_PPS_Tensor(double k_i, double k_f, double error 
     
     k_pair.push_back(std::make_pair(k_i, k_f));
     
-    PPS_Tensor.insert(k_pair[0].first, (Find_PPS_Tensor(k_pair[0].first)));
-    PPS_Tensor.insert(k_pair[0].second, (Find_PPS_Tensor(k_pair[0].second)));
+    PPS_Tensor[k_pair[0].first] = (Find_PPS_Tensor(k_pair[0].first));
+    PPS_Tensor[k_pair[0].second] = (Find_PPS_Tensor(k_pair[0].second));
     
     double lim = error;
     while(k_pair.size() != 0)
@@ -177,9 +177,9 @@ void BasicModeSolver::Construct_PPS_Tensor(double k_i, double k_f, double error 
                 n += 1;
             }
             
-            PPS_Tensor.insert(k_m1, (temp_true1));
-            PPS_Tensor.insert(k_m2, (temp_true2));
-            PPS_Tensor.insert(k_m3, (temp_true3));
+            PPS_Tensor[k_m1] = (temp_true1);
+            PPS_Tensor[k_m2] = (temp_true2);
+            PPS_Tensor[k_m3] = (temp_true3);
             k_plot_Tensor.push_back(k_m1);
             k_plot_Tensor.push_back(k_m2);
             k_plot_Tensor.push_back(k_m3);

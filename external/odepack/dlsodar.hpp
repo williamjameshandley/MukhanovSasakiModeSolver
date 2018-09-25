@@ -43,5 +43,10 @@ class dlsodar
         void integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, void *data);
         void integrate(double &t, double tout, double q[], Field f_func, void *data);
 
+        void reset() {istate=1;}
+        dlsodar& set_atol(double atol_) {atol={atol_}; return *this;}
+        dlsodar& set_rtol(double rtol_) {rtol={rtol_}; return *this;}
+        dlsodar& set_tol(double atol_, double rtol_) {return set_atol(atol_).set_rtol(rtol_);}
+
 };
 

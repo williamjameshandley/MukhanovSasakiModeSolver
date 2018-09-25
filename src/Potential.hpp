@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <math.h>
+#include <cmath>
 
 struct Potential {
     double dphi = 1e-8;
@@ -58,3 +59,14 @@ struct Starobinsky : public Potential
     virtual ~Starobinsky() {}
 };
 
+struct AxionMonodromy : public Potential
+{
+    AxionMonodromy(double _m, double _p, double _phi0, double _f0, double _b, double _pf, double _gamma0) : m{_m}, p{_p}, phi0{_phi0}, f0{_f0}, b{_b}, pf{_pf}, gamma0{_gamma0} {}
+    
+    double m, p, phi0, f0, b, pf, gamma0;
+    
+    double V(double phi)   { return std::pow(m,4 - p)*(std::pow(std::abs(phi),p) + (b*f0*p*std::pow(phi0,-1 + p)*cos(gamma0 + (std::pow(std::abs(phi)/phi0,1 + pf)*phi0)/f0))/(1 + pf)); }
+    double dV(double phi)  { return std::pow(m,4 - p)*p*(std::pow(std::abs(phi),-1 + p) - b*std::pow(std::abs(phi)/phi0,pf)*std::pow(phi0,-1 + p)*sin(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0)); }
+    double ddV(double phi) { return -(std::pow(m,4 - p)*p*std::pow(std::abs(phi),-2 + p)) + std::pow(m,4 - p)*std::pow(p,2)*std::pow(std::abs(phi),-2 + p) - (b*std::pow(m,4 - p)*p*std::pow(std::abs(phi)/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0))/f0 - (b*std::pow(m,4 - p)*p*pf*std::pow(std::abs(phi)/phi0,2*pf)*std::pow(phi0,-1 + p)*cos(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0))/f0 - b*std::pow(m,4 - p)*p*pf*std::pow(std::abs(phi)/phi0,-1 + pf)*std::pow(phi0,-2 + p)*sin(gamma0 + (std::abs(phi)*std::pow(std::abs(phi)/phi0,pf))/f0); }
+    virtual ~AxionMonodromy() {}
+};

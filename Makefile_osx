@@ -2,7 +2,7 @@
 CC = /usr/bin/gcc
 CXX = /usr/bin/g++
 FC = /usr/local/bin/gfortran
-LD = $(CXX)
+LD = $(CXX) -g
 
 CXXFLAGS += -std=c++11
 FFLAGS += -std=legacy
@@ -16,12 +16,14 @@ CFLAGS += -O3
 FFLAGS += -O3
 
 # Profiling
-CXXFLAGS += -pg
-CFLAGS += -pg
+CXXFLAGS += -g
+CFLAGS += -g
+FFLAGS += -g
 
 # Shared object
 CXXFLAGS += -fPIC
 CFLAGS += -fPIC
+FFLAGS += -fPIC
 
 #LDFLAGS += -lgfortran -std=legacy
 LDFLAGS = -L/usr/local/Cellar/gcc/8.2.0/lib/gcc/8 -lgfortran
