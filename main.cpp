@@ -8,8 +8,8 @@
 int main()
 {
     //Set Potential and ptr
-    //AxionMonodromy pot(6e-6, 4./3, 12.38, 0.01, 0.01, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
-    Poly_Step pot(6.48757e-6, 0, 5e-3, 15.5);
+    //AxionMonodromy pot(1.4e-5, 4./3, 12.38, 0.01, 0.05, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
+    Poly_Step pot(6.48757e-6, 0, 5e-2, 14.5);
     //Starobinsky pot(1.2e-5);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
@@ -19,8 +19,7 @@ int main()
     double err = 1e-5;
     //Solve Background Variables
     auto sols = solve_equations(err*1e-1, potential_ptr, N_star, N_dagger);
-    //auto sols = solve_equations(err*1e-1,potential_ptr, N_star);
-   
+    
     //////////////////////////////////////////////////////////////////////////////
     //Initialize ModeSolver with background solutions
     ModeSolver ms(sols);
@@ -32,19 +31,17 @@ int main()
     ms.PPS_error = err;
 
     //////////////////////////////////////////////////////////////////////////////
-    std::ofstream mout{"output/PPS.txt"};
-    mout.precision(20);
-    
     //k range
     double k0 = 1e-6, k1 = 1;
     std::vector<double> kplot(1000);
     for(size_t n = 0; n < kplot.size(); n++)
         kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
-    
+
+    std::ofstream mout{"output/PPS.txt"};
+    mout.precision(20);
     for(auto k : kplot)
     {
         //Plot
-        std::cout << k << std::endl;
         mout << k << "  " << ms.Find_PPS_Scalar(k) << "  " << ms.Find_PPS_Tensor(k) << std::endl;
     }
     mout.close();
