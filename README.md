@@ -15,7 +15,7 @@ Set up:
 
 -   Solve for background variables
 
-\`\`\`bash
+\`\`\`sh
 
 auto sols = solve_equations(Error, potential_ptr, N_star, N_dagger);
 
@@ -23,7 +23,7 @@ auto sols = solve_equations(Error, potential_ptr, N_star, N_dagger);
 
 -   Initialise ModeSolver with background solutions
 
-\`\`\`bash
+\`\`\`sh
 
 ModeSolver ms(sols);
 
@@ -32,7 +32,7 @@ ModeSolver ms(sols);
 -   Choose the vacuum and initial setting time (no. e-folds before end of
     inflation) for the Mukhanov-Sasaki equation.
 
-\`\`\`bash
+\`\`\`sh
 
 ms.Initial_Conditions(BD, N_r);
 
@@ -40,7 +40,7 @@ ms.Initial_Conditions(BD, N_r);
 
 -   Evaluate the power spectrum directly using
 
-\`\`\`bash
+\`\`\`sh
 
 ms.Find_PPS_Scalar(k)
 
