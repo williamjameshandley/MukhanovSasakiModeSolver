@@ -17,7 +17,7 @@ Set up:
 
 ```bash
 
-auto sols = solve_equations(Error, potential_ptr, N_star, N_dagger);
+auto sols = solve_equations(Error, potential_ptr, N_star, N_dagger)
 
 ```
 
@@ -25,7 +25,7 @@ auto sols = solve_equations(Error, potential_ptr, N_star, N_dagger);
 
 ```bash
 
-ModeSolver ms(sols);
+ModeSolver ms(sols)
 
 ```
 
@@ -34,7 +34,7 @@ ModeSolver ms(sols);
 
 ```bash
 
-ms.Initial_Conditions(BD, N_r);
+ms.Initial_Conditions(BD, N_r)
 
 ```
 
