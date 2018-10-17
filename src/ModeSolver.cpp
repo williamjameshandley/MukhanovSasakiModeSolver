@@ -5,7 +5,7 @@ ModeSolver::ModeSolver(BackgroundSolution _Bsol): Bsol{_Bsol}, N_r{0}, PPS_error
 void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
 {
     vacuum = _vacuum;
-    N_r = Bsol.N_end - _N_r;
+    N_r = _N_r;
 }
 
 double ModeSolver::Find_PPS_Scalar(double k)

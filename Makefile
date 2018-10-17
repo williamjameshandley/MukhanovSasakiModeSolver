@@ -38,7 +38,7 @@ LDSHARED = $(LD) -shared
 #LDFLAGS += -pthread
 LDLIBS +=  -l$(libname)
 
-all: test main
+all: main
 extra: tags doc
 main: $(binary_dir)/main 
 test: $(binary_dir)/test 

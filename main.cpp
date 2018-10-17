@@ -14,23 +14,23 @@ int main()
     //AxionMonodromy pot(1.4e-5, 4./3, 12.38, 0.01, 0.05, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)
     auto potential_ptr = static_cast<Potential*> (&pot);
     
-    //Background Initial Conditions
-    double N_star = 55, N_dagger = 7;
     
     //error for background variables and PPS
     double err = 1e-5;
     //Solve Background Variables
-    auto sols = solve_equations(err*1e-1, potential_ptr, N_star, N_dagger);
+    auto phi_p = 23.5;
+    auto t0 = 1.;
+    auto ti = 1e4;
+    auto sols = solve_equations(err*1e-1, potential_ptr, t0, ti, phi_p);
     
     //////////////////////////////////////////////////////////////////////////////
     //Initialize ModeSolver with background solutions
     ModeSolver ms(sols);
     //Vacuum Setting Time (no. e-folds before end of inflation)
     //sols.N_end is the total no. of e-folds from beginning of background varibale evolution till end of inflation.
-    double N_r = sols.N_end - 2;
     //Set Vacuum Initial Conditions
     //BD = Bunch-Davies. (We did not add any other initial conditions yet, but these could be easily added in the ModeSolver::Initial_Conditions
-    ms.Initial_Conditions(BD, N_r);
+    ms.Initial_Conditions(BD, 0);
     //Choose error tolerance (By default set to 5e-3)
     ms.PPS_error = err;
 

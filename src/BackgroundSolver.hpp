@@ -9,6 +9,7 @@
 #include "interpolation.hpp"
 
 void equations_n(double dx_dn[], const double n, const double x[], void* data);
+void equations_t(double dx_dn[], const double n, const double x[], void* data);
 double H(const double n, const double x[], Potential* pot);
 double phi_dot_H(const double n, const double x[], Potential* pot);
 double aH(const double n, const double x[], Potential* pot);
@@ -19,6 +20,7 @@ double omega_2_tensor(const double n, const double x[], Potential* pot);
 double d_omega_2_tensor(const double n, const double x[], Potential* pot);
 
 void inflating(double g[], const double, const double x[], void* data);
+void inflating_t(double g[], const double, const double x[], void* data);
 void Extrema_Scalar(double g[], const double, const double x[], void* data);
 void Extrema_Tensor(double g[], const double, const double x[], void* data);
 
@@ -35,6 +37,6 @@ struct BackgroundSolution
 };
 
 
-BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, double N_dagger=20);
+BackgroundSolution solve_equations(double lim, Potential* pot, double, double, double);
 
 SemiLogInterpolator<double, double> Solve_Variable(double t0, double N_end, std::vector<double> x0, std::function<double(const double n, const double x[], Potential* pot)> Var, std::vector<double> N_extrema, void* ptrs[], double error);
