@@ -22,6 +22,9 @@ int main()
     auto t0 = 1.;
     auto ti = 1e4;
     auto sols = solve_equations(err*1e-1, potential_ptr, t0, ti, phi_p);
+
+    auto N_star = 55;
+    sols.aH_star = sols.aH(sols.N_end - N_star);
     
     //////////////////////////////////////////////////////////////////////////////
     //Initialize ModeSolver with background solutions
