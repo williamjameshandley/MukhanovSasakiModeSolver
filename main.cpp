@@ -16,7 +16,10 @@ int main()
     
     
     //error for background variables and PPS
-    double err = 1e-5;
+    double err = 1e-6;
+    double PPS_err = 1e-3;
+    double dlogk = err;
+
     //Solve Background Variables
     auto phi_p = 23.5;
     auto t0 = 1.;
@@ -39,14 +42,39 @@ int main()
 
     //////////////////////////////////////////////////////////////////////////////
     //k range to solve (logarithmic scale)
-    double k0 = 1e-6, k1 = 1;
-    std::vector<double> kplot(1000);
-    for(size_t n = 0; n < kplot.size(); n++)
-        kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
-
-    for(auto k : kplot)
+    double kmin = 1e-6, kmax = 1;
+    std::map<double,double> PPS_Scalar;
+    PPS_Scalar[log(kmin)] = log(ms.Find_PPS_Scalar(kmin));
+    PPS_Scalar[log(kmax)] = log(ms.Find_PPS_Scalar(kmax));
+    auto iter = PPS_Scalar.begin();
+    while (iter != std::prev(PPS_Scalar.end()))
     {
-        std::cout<< k << "  " << ms.Find_PPS_Scalar(k) << "  " << ms.Find_PPS_Tensor(k) << std::endl;
+        auto x0 = iter->first;
+        auto y0 = iter->second;
+        auto iter_ = std::next(iter);
+        auto x3 = iter_->first;
+        auto y3 = iter_->second;
+
+        auto x1 = 2*x0/3 + x3/3;
+        auto x2 = x0/3 + 2*x3/3;
+        auto y1 = log(ms.Find_PPS_Scalar(exp(x1))); 
+        auto y2 = log(ms.Find_PPS_Scalar(exp(x2))); 
+
+        auto y1_ = y0 * (x3-x1)/(x3-x0) + y3 * (x1-x0)/(x3-x0);
+        auto y2_ = y0 * (x3-x2)/(x3-x0) + y3 * (x2-x0)/(x3-x0);
+
+        PPS_Scalar[x1]=y1;
+        PPS_Scalar[x2]=y2;
+
+        if ( std::abs(x2-x1) < dlogk or
+                (std::abs(y1-y1_) < PPS_err and std::abs(y2-y2_) < PPS_err
+           ))
+        {
+            iter = iter_;
+            std::cout << exp(x0) << " " << exp(y0) << std::endl;
+            std::cout << exp(x1) << " " << exp(y1) << std::endl;
+            std::cout << exp(x2) << " " << exp(y2) << std::endl;
+        }
     }
 
     return 0;
