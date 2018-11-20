@@ -5,8 +5,10 @@
 #include "src/Potential.hpp"
 #include "src/ModeSolver.hpp"
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc != 3) return -1;
+    std::cout.precision(18);
     //Choose Potential and set potential_ptr which is passed to background solver
     Polynomial pot(6e-6); // (m)
     //Poly_Step pot(6.48757e-6, 2e-3, 5e-2, 14.5); // (m, A, Delta, phi_0)
@@ -18,9 +20,13 @@ int main()
     double N_star = 55, N_dagger = 7;
     
     //error for background variables and PPS
-    double err = 1e-5;
+    //double err = 1e-5;
+    double err = atof(argv[1]);
+    double PPS_err = atof(argv[2]);
+    double dlogk = 1e-3;
+
     //Solve Background Variables
-    auto sols = solve_equations(err*1e-1, potential_ptr, N_star, N_dagger);
+    auto sols = solve_equations(err, potential_ptr, N_star, N_dagger);
     
     //////////////////////////////////////////////////////////////////////////////
     //Initialize ModeSolver with background solutions
@@ -36,14 +42,43 @@ int main()
 
     //////////////////////////////////////////////////////////////////////////////
     //k range to solve (logarithmic scale)
-    double k0 = 1e-6, k1 = 1;
-    std::vector<double> kplot(1000);
-    for(size_t n = 0; n < kplot.size(); n++)
-        kplot[n] = k0 * exp(static_cast<double>(n) * 1.0 * (log(k1) - log(k0)) / static_cast<double>(kplot.size()));
-
-    for(auto k : kplot)
+    double kmin = 1e-6, kmax = 1e0;
+    std::map<double,double> PPS_Scalar;
+    PPS_Scalar[log(kmin)] = log(ms.Find_PPS_Scalar(kmin));
+    PPS_Scalar[log(kmax)] = log(ms.Find_PPS_Scalar(kmax));
+    auto iter = PPS_Scalar.begin();
+    while (iter != std::prev(PPS_Scalar.end()))
     {
-        std::cout<< k << "  " << ms.Find_PPS_Scalar(k) << "  " << ms.Find_PPS_Tensor(k) << std::endl;
+        auto x0 = iter->first;
+        auto y0 = iter->second;
+        auto iter_ = std::next(iter);
+        auto x3 = iter_->first;
+        auto y3 = iter_->second;
+
+        auto x1 = 2.0*x0/3.0 + x3/3.0;
+        auto x2 = x0/3.0 + 2.0*x3/3.0;
+        auto y1 = log(ms.Find_PPS_Scalar(exp(x1))); 
+        auto y2 = log(ms.Find_PPS_Scalar(exp(x2))); 
+
+        auto y1_ = 2.0*y0/3.0 + y3/3.0;
+        auto y2_ = y0/3.0 + 2.0*y3/3.0;
+
+        PPS_Scalar[x1]=y1;
+        PPS_Scalar[x2]=y2;
+
+        if ( std::abs(x2-x1) < dlogk or
+                (std::abs(y1-y1_) < PPS_err and std::abs(y2-y2_) < PPS_err
+           ))
+        {
+            iter = iter_;
+            std::cout << exp(x0) << " " << exp(y0) << std::endl;
+            std::cout << exp(x1) << " " << exp(y1) << std::endl;
+            std::cout << exp(x2) << " " << exp(y2) << std::endl;
+        }
+        if (iter == std::prev(PPS_Scalar.end()))
+        {
+            std::cout << exp(x3) << " " << exp(y3) << std::endl;
+        }
     }
 
     return 0;
