@@ -44,12 +44,12 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k, double alpha)
     //Setting Vacuum
     double aH_r = Bsol.aH(N_r);
     double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
-    Eigen::Vector2cd Q_i;
+    Eigen::Vector2cd Q_i, v_k;
     
     if(vacuum == BD)
     {
-        Q_i[0] = std::sqrt(aH_r / (2 * k));
-        Q_i[1] = Q_i[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
+        v_k[0] = std::sqrt(1.0 / (2 * k));
+        v_k[1] = - I * k * v_k[0];
     }
     else if(vacuum == AV)
     {
@@ -62,14 +62,15 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k, double alpha)
         std::complex<double> H0_1 = J_1 + I * Y_1;
         std::complex<double> H1_1 = J_1 - I * Y_1;
         
-        std::complex<double> v = 0.5 * std::sqrt(M_PI * eta_r) * (cosh(alpha) * H0_0 + sinh(alpha) * H1_0);
-        std::complex<double> v_p = cosh(alpha) * (0.25 * std::sqrt(M_PI / eta_r) * H0_0 - 0.5 * k * std::sqrt(M_PI * eta_r) * H0_1)
+        v_k[0] = 0.5 * std::sqrt(M_PI * eta_r) * (cosh(alpha) * H0_0 + sinh(alpha) * H1_0);
+        v_k[1] = cosh(alpha) * (0.25 * std::sqrt(M_PI / eta_r) * H0_0 - 0.5 * k * std::sqrt(M_PI * eta_r) * H0_1)
             + sinh(alpha) * (0.25 * std::sqrt(M_PI / eta_r) * H1_0 - 0.5 * k * std::sqrt(M_PI * eta_r) * H1_1);
-        Q_i[0] = std::sqrt(aH_r) * v;
-        Q_i[1] = v_p / std::sqrt(aH_r) + 0.5 * std::sqrt(aH_r) * (1 - epsilon) * v;
     }
     else
         throw std::runtime_error("Initial conditions unknown");
+    
+    Q_i[0] = std::sqrt(aH_r) * v_k[0];
+    Q_i[1] = v_k[1] / std::sqrt(aH_r) + 0.5 * std::sqrt(aH_r) * (1 - epsilon) * v_k[0];
     
     return Q_i;
 }
