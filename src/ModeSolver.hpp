@@ -10,7 +10,7 @@
 
 const std::complex<double> I(0, 1);
 
-enum VacuumChoice { BD, HD, RST };
+enum VacuumChoice { BD, HD, RST, AV };
 enum TransitionChoice {neg_exp, lin, pos_exp};
 enum PSChoice {scalar, tensor};
 
@@ -36,13 +36,13 @@ class ModeSolver : public BasicModeSolver
     public:
         BackgroundSolution Bsol;
         
-        double N_r, PPS_error;
+        double N_r, PPS_error, alpha;
         VacuumChoice vacuum;
         
         ModeSolver(BackgroundSolution _Bsol);
         
-        void Initial_Conditions(VacuumChoice _vacuum, double _N_r);
-        Eigen::Vector2cd Initial_Q(double k);
+        void Initial_Conditions(VacuumChoice _vacuum, double _N_r, double _alpha = 0);
+        Eigen::Vector2cd Initial_Q(double k, double _alpha);
         Eigen::Vector2cd Evolve(Eigen::Vector2cd Q, PSChoice _PSChoice, double k, double N_i, double& N_f);
         
         virtual double Find_PPS_Scalar(double k) override;

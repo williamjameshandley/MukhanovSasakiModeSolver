@@ -1,11 +1,12 @@
 #include "ModeSolver.hpp"
 
-ModeSolver::ModeSolver(BackgroundSolution _Bsol): Bsol{_Bsol}, N_r{0}, PPS_error{5e-3}, vacuum{BD} {}
+ModeSolver::ModeSolver(BackgroundSolution _Bsol): Bsol{_Bsol}, N_r{0}, PPS_error{1e-5}, vacuum{BD} {}
 
-void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r)
+void ModeSolver::Initial_Conditions(VacuumChoice _vacuum, double _N_r, double _alpha)
 {
     vacuum = _vacuum;
     N_r = Bsol.N_end - _N_r;
+    alpha = _alpha;
 }
 
 double ModeSolver::Find_PPS_Scalar(double k)
@@ -13,7 +14,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     //Scale k
     k *= Bsol.aH_star / 0.05;
     //Initial Q
-    Eigen::Vector2cd Q_i = Initial_Q(k);
+    Eigen::Vector2cd Q_i = Initial_Q(k, alpha);
     //Evolve Q
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
@@ -28,7 +29,7 @@ double ModeSolver::Find_PPS_Tensor(double k)
     //Scale k
     k *= Bsol.aH_star / 0.05;
     //Initial Q
-    Eigen::Vector2cd Q_i = Initial_Q(k);
+    Eigen::Vector2cd Q_i = Initial_Q(k, alpha);
     //Evolve Q
     double N_final = Bsol.N_end;
     Eigen::Vector2cd Q_f = Evolve(Q_i, tensor, k, N_r, N_final);
@@ -38,17 +39,35 @@ double ModeSolver::Find_PPS_Tensor(double k)
     return 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
 
-Eigen::Vector2cd ModeSolver::Initial_Q(double k)
+Eigen::Vector2cd ModeSolver::Initial_Q(double k, double alpha)
 {
     //Setting Vacuum
     double aH_r = Bsol.aH(N_r);
     double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
     Eigen::Vector2cd Q_i;
     
-    Q_i[0] = std::sqrt(aH_r / (2 * k));
-    
     if(vacuum == BD)
+    {
+        Q_i[0] = std::sqrt(aH_r / (2 * k));
         Q_i[1] = Q_i[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
+    }
+    else if(vacuum == AV)
+    {
+        double eta_r = Bsol.eta(N_r);
+        double J_0, Y_0, J_1, Y_1;
+        bessel0(k * eta_r,&J_0,&Y_0);
+        bessel1(k * eta_r,&J_1,&Y_1);
+        std::complex<double> H0_0 = J_0 + I * Y_0;
+        std::complex<double> H1_0 = J_0 - I * Y_0;
+        std::complex<double> H0_1 = J_1 + I * Y_1;
+        std::complex<double> H1_1 = J_1 - I * Y_1;
+        
+        std::complex<double> v = 0.5 * std::sqrt(M_PI * eta_r) * (cosh(alpha) * H0_0 + sinh(alpha) * H1_0);
+        std::complex<double> v_p = cosh(alpha) * (0.25 * std::sqrt(M_PI / eta_r) * H0_0 - 0.5 * k * std::sqrt(M_PI * eta_r) * H0_1)
+            + sinh(alpha) * (0.25 * std::sqrt(M_PI / eta_r) * H1_0 - 0.5 * k * std::sqrt(M_PI * eta_r) * H1_1);
+        Q_i[0] = std::sqrt(aH_r) * v;
+        Q_i[1] = v_p / std::sqrt(aH_r) + 0.5 * std::sqrt(aH_r) * (1 - epsilon) * v;
+    }
     else
         throw std::runtime_error("Initial conditions unknown");
     
@@ -121,7 +140,6 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
                 else                   
                 {Q_0 = Q_pos_2; iter->second.i = niter->second.i = ModeSolver::Transition::pos;}
                 ++++iter;
-                if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
         }
         else if(w2_i < 0 and w2_f < 0)
@@ -143,14 +161,13 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
                 else                   
                 {Q_0 = Q_neg_2; iter->second.i = niter->second.i = ModeSolver::Transition::neg;}
                 ++++iter;
-                if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
         }
+ 
         else if(err_lin < PPS_error)
         {
             Q_0 = Q_lin_2;
             ++++iter;
-            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
         }
     }
 
@@ -186,7 +203,7 @@ Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
 
     Eigen::Matrix2d A1, A;
     
-    if(x0 < 25 and x1 < 25)
+    if(x0 < 200 and x1 < 200)
     {
         double Ai0, Bi0, Aip0, Bip0, Ai1, Bi1, Aip1, Bip1;
         airy(x0, &Ai0, &Aip0, &Bi0, &Bip0);
@@ -232,7 +249,7 @@ Eigen::Matrix2d ModeSolver::Modified_Bessel_Mat(double a, double b, double N0, d
     
     Eigen::Matrix2d MB;
     
-    if(x0 < 20 and x1 < 20)
+    if(x0 < 200 and x1 < 200)
     {
         double I0_0 = i0(x0), I1_0 = i1(x0), K0_0 = k0(x0), K1_0 = k1(x0);
         double I0_1 = i0(x1), I1_1 = i1(x1), K0_1 = k0(x1), K1_1 = k1(x1);

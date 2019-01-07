@@ -27,7 +27,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     auto phi_p = find_root<double>(f,0,100.,lim);
 
     auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
-    std::vector<double> x0 = {phi_p, dphi_p};
+    std::vector<double> x0 = {phi_p, dphi_p, 0};
 
     //Find Scalar Extrema
     double n = 0;
@@ -38,7 +38,6 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, Extrema_Scalar, static_cast<void*>(ptrs));
         if(n < N_end) Bsol.N_extrema.push_back(n);
     }
-
     //Find Tensor Extrema
     n = 0;
     x = x0;
@@ -53,10 +52,11 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
     Bsol.dphi_H = Solve_Variable(0, N_end, x0, phi_dot_H, {}, ptrs, lim);
     Bsol.aH = Solve_Variable(0, N_end, x0, aH, {}, ptrs, lim);
+    Bsol.eta = Solve_Variable(0, N_end, x0, eta, {}, ptrs, lim);
 
     Bsol.aH_star = Bsol.aH(N_end - N_star);
     Bsol.N_end = N_end;
-
+    
     return Bsol;
 }
 
@@ -72,7 +72,7 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
     _Var[N_i] = {NAN,NAN}; _Var[N_f] = {NAN,NAN};
     for (auto N : N_extrema) if (N>N_i and N<N_f) _Var[N] = {NAN,NAN};
 
-    auto desolver = dlsodar(2, 0, 1e5);
+    auto desolver = dlsodar(3, 0, 1e8);
     auto n = N_i; 
     auto x = x0;
     for(auto &v : _Var)
@@ -80,10 +80,10 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
         desolver.integrate(n, v.first, &x[0], equations_n, nullptr, static_cast<void*>(ptrs));
         v.second.first = Var(n, &x[0], pot);
     }
-
+    
     //Fill as necessary
     auto iter = _Var.begin();
-    desolver = dlsodar(2, 0, 1e5);
+    desolver = dlsodar(3, 0, 1e8);
     n = N_i; x = x0;
     while(iter != std::prev(_Var.end()))
     {
@@ -108,6 +108,11 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
     }
 
     return _Var;
+}
+
+double eta(const double n, const double x[], Potential* pot)
+{
+    return x[2];
 }
 
 double phi_dot_H(const double n, const double x[], Potential* pot)
@@ -164,6 +169,7 @@ void equations_n(double dx_dn[], const double n, const double x[], void* data)
     auto pot = static_cast<Potential*> (ptr[0]);
     dx_dn[0] = x[1];
     dx_dn[1] = - ((3 - 0.5 * x[1] * x[1] - 0.5 * pot->dV(x[0]) * x[1] / pot->V(x[0])) * x[1] + 3 * pot->dV(x[0]) / pot->V(x[0]));
+    dx_dn[2] = exp(-n) / H(n, x, pot);
 }
 
 void inflating(double g[], const double n, const double x[], void* data)

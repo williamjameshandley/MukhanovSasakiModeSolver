@@ -9,6 +9,7 @@
 #include "interpolation.hpp"
 
 void equations_n(double dx_dn[], const double n, const double x[], void* data);
+double eta(const double n, const double x[], Potential* pot);
 double H(const double n, const double x[], Potential* pot);
 double phi_dot_H(const double n, const double x[], Potential* pot);
 double aH(const double n, const double x[], Potential* pot);
@@ -28,6 +29,7 @@ struct BackgroundSolution
     SemiLogInterpolator<double, double> omega_2_tensor;
     SemiLogInterpolator<double, double> aH;
     SemiLogInterpolator<double, double> dphi_H;
+    SemiLogInterpolator<double, double> eta;
     std::vector<double> N_extrema;
     std::vector<double> N_extrema_tensor;
     double aH_star;
