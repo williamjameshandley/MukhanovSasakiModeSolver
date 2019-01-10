@@ -100,4 +100,10 @@ class NumericModeSolver : public BasicModeSolver
 };
 
 inline double Q_err(Eigen::Vector2cd Q,Eigen::Vector2cd Q0)
-{return std::max( abs((abs(Q0[0])-abs(Q[0]))/abs(Q0[0])), abs((abs(Q0[1])-abs(Q[1]))/abs(Q0[1])));}
+{
+    auto abserr = std::max( abs(Q0[0]-Q[0]), abs(Q0[1]-Q[1]));
+    auto relerr = std::max( abs(Q0[0]-Q[0])/abs(Q0[0]), abs(Q0[1]-Q[1])/abs(Q0[1]));
+    return std::max( abserr, relerr);
+}
+//{return std::max( abs(Q0[0]-Q[0])/abs(Q0[0]), abs(Q0[1]-Q[1])/abs(Q0[1]));}
+//{return std::max( abs((abs(Q0[0])-abs(Q[0]))/abs(Q0[0])), abs((abs(Q0[1])-abs(Q[1]))/abs(Q0[1])));}

@@ -9,28 +9,36 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     ptrs[0] = static_cast<void*> (pot);
     double params[2];
     ptrs[1] = static_cast<void*> (params);
-    auto N_tot = N_star + N_dagger, N_end=0.;
+    auto N_tot = N_star + N_dagger, N_end=0., N_start=0.;
 
-    auto f = [&pot, &ptrs, N_tot, &N_end](double phi_p) -> double
+    auto f = [&pot, &ptrs, N_tot, &N_end, &N_start](double phi_p) -> double
     {
         double n = 0;
-        auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
+        auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p));
         std::vector<double> x = {phi_p, dphi_p};
+        //dlsodar(int neq_, int ng_, int max_steps_)
         dlsodar desolver(2, 1, 1e5);
+        //void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data){
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
-        auto N_start = n;
+        N_start = n;
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
         N_end = n;
         return (N_end - N_start) - N_tot;
     };
 
-    auto phi_p = find_root<double>(f,0,100.,lim);
+    // redirect stdout to null for the root finding step to avoid DLSODAR warnings to contaminate the output
+    freopen ("/dev/null", "w", stdout);
+//    std::cout.setstate(std::ios_base::failbit);
+    auto phi_p = find_root<double>(f,0,100.,lim*1e-2);
+//    std::cout.clear();
+    fclose(stdout);
+    freopen("/dev/tty", "w", stdout);
 
-    auto dphi_p = - sqrt(2 / (pot->V(phi_p) + 1./3));
+    auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p));
     std::vector<double> x0 = {phi_p, dphi_p};
 
     //Find Scalar Extrema
-    double n = 0;
+    double n = N_start;
     auto x = x0;
     dlsodar desolver(2, 2, 1e5);
     while(n < N_end)
@@ -56,6 +64,7 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
 
     Bsol.aH_star = Bsol.aH(N_end - N_star);
     Bsol.N_end = N_end;
+    Bsol.N_start = N_start;
 
     return Bsol;
 }

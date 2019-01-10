@@ -32,6 +32,7 @@ struct BackgroundSolution
     std::vector<double> N_extrema_tensor;
     double aH_star;
     double N_end;
+    double N_start;
 };
 
 
