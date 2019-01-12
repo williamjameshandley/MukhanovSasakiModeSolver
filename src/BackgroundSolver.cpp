@@ -1,4 +1,5 @@
 #include "BackgroundSolver.hpp"
+#include <unistd.h>
 #include <limits>
 #include "utils.hpp"
 
@@ -27,12 +28,14 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     };
 
     // redirect stdout to null for the root finding step to avoid DLSODAR warnings to contaminate the output
-    freopen ("/dev/null", "w", stdout);
-//    std::cout.setstate(std::ios_base::failbit);
+    int old_stdout = dup(1);  // Preserve original file descriptor for stdout.
+    FILE *DataFile;
+    DataFile = fopen( "tmp.txt", "w" );  // Open file where to redirect the warnings.
+    dup2( fileno( DataFile ), 1 );
     auto phi_p = find_root<double>(f,0,100.,lim*1e-2);
-//    std::cout.clear();
-    fclose(stdout);
-    freopen("/dev/tty", "w", stdout);
+    fflush( stdout ); // Flush stdout stream buffer so it goes to correct file.
+    fclose( DataFile );
+    dup2( old_stdout, 1 ); // Restore original stdout
 
     auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p));
     std::vector<double> x0 = {phi_p, dphi_p};

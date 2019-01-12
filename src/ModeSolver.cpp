@@ -101,7 +101,26 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 
         iter->second.i = niter->second.i = ModeSolver::Transition::lin;
 
-        if(w2_i > 0 and w2_f > 0)
+        if(N_f - N_i < 1e-8) 
+//        if(w2_i == w2_m or w2_m == w2_f)
+        {
+//            std::cout << "            !err_lin = " << err_lin << std::endl;
+//            std::cout << "            w2_i = " << w2_i << std::endl;
+//            std::cout << "            w2_m = " << w2_m << std::endl;
+//            std::cout << "            w2_f = " << w2_f << std::endl;
+//            std::cout << "            N_i = " << N_i << std::endl;
+//            std::cout << "            N_m = " << N_m << std::endl;
+//            std::cout << "            N_f = " << N_f << std::endl;
+//            std::cout << "            Q_0 = " << Q_0 << std::endl;
+//            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
+//            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
+//            std::cout << "            err_lin = " << err_lin << std::endl;
+//            std::cout << " " << std::endl;
+            Q_0 = Q_lin_2;
+            ++++iter;
+            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+        }
+        else if(w2_i > 0 and w2_m > 0 and w2_f > 0)
         {
             if (not iter->second.M_pos.size()) 
                 iter->second.M_pos = pos_exp_step(w2_i, w2_f, N_i, N_f);
@@ -114,17 +133,37 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
             Eigen::VectorXcd Q_pos_2 = niter->second.M_pos * iter->second.M_pos  * Q_0;
 
             double err_pos = Q_err(Q_pos_2,Q_pos_1);
+//            std::cout << "            w2_i = " << w2_i << std::endl;
+//            std::cout << "            w2_m = " << w2_m << std::endl;
+//            std::cout << "            w2_f = " << w2_f << std::endl;
+//            std::cout << "            N_i = " << N_i << std::endl;
+//            std::cout << "            N_m = " << N_m << std::endl;
+//            std::cout << "            N_f = " << N_f << std::endl;
+//            std::cout << "            Q_0 = " << Q_0 << std::endl;
+//            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
+//            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
+//            std::cout << "            Q_pos_1 = " << Q_pos_1 << std::endl;
+//            std::cout << "            Q_pos_2 = " << Q_pos_2 << std::endl;
+//            std::cout << "            err_lin = " << err_lin << std::endl;
+//            std::cout << "            err_pos = " << err_pos << std::endl;
+//            std::cout << " " << std::endl;
 
             if(err_lin < PPS_error or err_pos < PPS_error)
             {
-                if (err_lin < err_pos) Q_0 = Q_lin_2;
-                else                   
-                {Q_0 = Q_pos_2; iter->second.i = niter->second.i = ModeSolver::Transition::pos;}
+                if (err_pos < err_lin or std::isnan(err_lin))
+                {
+                    Q_0 = Q_pos_2; 
+                    iter->second.i = niter->second.i = ModeSolver::Transition::pos;
+                }
+                else 
+                {
+                    Q_0 = Q_lin_2;
+                }
                 ++++iter;
                 if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
         }
-        else if(w2_i < 0 and w2_f < 0)
+        else if(w2_i < 0 and w2_m < 0 and w2_f < 0)
         {
             if (not iter->second.M_neg.size()) 
                 iter->second.M_neg = neg_exp_step(w2_i, w2_f, N_i, N_f);
@@ -136,12 +175,31 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
             Eigen::VectorXcd Q_neg_2 = niter->second.M_neg  * iter->second.M_neg * Q_0;
 
             double err_neg = Q_err(Q_neg_2,Q_neg_1);
+//            std::cout << "            Q_neg_1 = " << Q_neg_1 << std::endl;
+//            std::cout << "            w2_i = " << w2_i << std::endl;
+//            std::cout << "            w2_m = " << w2_m << std::endl;
+//            std::cout << "            N_i = " << N_i << std::endl;
+//            std::cout << "            N_m = " << N_m << std::endl;
+//            std::cout << "            M_neg_im = " << iter->second.M_neg << std::endl;
+//            std::cout << "            M_neg_mf = " << niter->second.M_neg << std::endl;
+//            std::cout << "            Q_neg_2 = " << Q_neg_2 << std::endl;
+//            std::cout << "            err_lin = " << err_lin << std::endl;
+//            std::cout << "            err_neg = " << err_neg << std::endl;
+//            std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
+//            std::cout << "            err_neg < PPS_err = " << (err_neg < PPS_error) << std::endl;
+//            std::cout << "            err_lin < err_neg = " << (err_lin < err_neg) << std::endl;
 
             if(err_lin < PPS_error or err_neg < PPS_error)
             {
-                if (err_lin < err_neg) Q_0 = Q_lin_2;
-                else                   
-                {Q_0 = Q_neg_2; iter->second.i = niter->second.i = ModeSolver::Transition::neg;}
+                if (err_neg < err_lin or std::isnan(err_lin))
+                {
+                    Q_0 = Q_neg_2; 
+                    iter->second.i = niter->second.i = ModeSolver::Transition::neg;
+                }
+                else
+                {
+                    Q_0 = Q_lin_2;
+                }
                 ++++iter;
                 if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
@@ -166,14 +224,16 @@ Eigen::MatrixXd ModeSolver::lin_step(double w_2_i, double w_2_f, double N_i, dou
 
 Eigen::MatrixXd ModeSolver::pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f)
 {
-    double b_log = 0.5 * (log(w_2_f) - log(w_2_i)) / (N_f - N_i);
+    //double b_log = 0.5 * (log(w_2_f) - log(w_2_i)) / (N_f - N_i);
+    double b_log = 0.5 * log(w_2_f / w_2_i) / (N_f - N_i);
     double a_log = 0.5 * log(w_2_i) - b_log * N_i;
     return Bessel_Mat(a_log, b_log, N_i, N_f);
 }
 
 Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f)
 {
-    double b_log = 0.5 * (log(-w_2_f) - log(-w_2_i)) / (N_f - N_i);
+    //double b_log = 0.5 * (log(-w_2_f) - log(-w_2_i)) / (N_f - N_i);
+    double b_log = 0.5 * log(w_2_f / w_2_i) / (N_f - N_i);
     double a_log = 0.5 * log(-w_2_i) - b_log * N_i;
     return Modified_Bessel_Mat(a_log, b_log, N_i, N_f);
 }
