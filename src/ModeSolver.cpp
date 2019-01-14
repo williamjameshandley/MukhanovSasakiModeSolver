@@ -35,7 +35,10 @@ double ModeSolver::Find_PPS_Tensor(double k)
     //Find F
     double F = std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
     
-    return 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
+    return 2 * 4 * (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
+    // Prefactor 4 from Bunch-Davies initial conditions:
+    // T_k= 2 /a/sqrt(2k) for tensor modes as opposed to R_k= 1 /z/sqrt(2k) for scalar modes.
+    // Prefactor 2 for the two polarization states.
 }
 
 Eigen::Vector2cd ModeSolver::Initial_Q(double k)
