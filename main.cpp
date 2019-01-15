@@ -8,10 +8,17 @@
 
 int main(int argc, char** argv)
 {
-    if (argc != 4) return -1;
+    if (argc != 11) return -1;
     std::cout.precision(18);
     //Choose Potential and set potential_ptr which is passed to background solver
-    double mass = exp(atof(argv[1])) * 1e-6;
+    double mass = exp(atof(argv[3])) * 1e-6;
+    double custom4 = atof(argv[4]);
+    double custom5 = atof(argv[5]);
+    double custom6 = atof(argv[6]);
+    double custom7 = atof(argv[7]);
+    double custom8 = atof(argv[8]);
+    double custom9 = atof(argv[9]);
+    double custom10 = atof(argv[10]);
     Polynomial pot(mass); // (m)
     //Poly_Step pot(6.48757e-6, 2e-3, 5e-2, 14.5); // (m, A, Delta, phi_0)
     //Starobinsky pot(1.2e-5); // (m)
@@ -32,7 +39,7 @@ int main(int argc, char** argv)
     //Background Initial Conditions
     //double N_star = 55, N_dagger = 7;
     double N_dagger = atof(argv[2]);
-    double N_star = atof(argv[3]);
+    double N_star = atof(argv[1]);
 //    double logk_test = atof(argv[4]);
 
     //Solve Background Variables
