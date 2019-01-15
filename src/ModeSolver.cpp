@@ -16,7 +16,9 @@ double ModeSolver::Find_PPS_Scalar(double k)
     Eigen::Vector2cd Q_i = Initial_Q(k);
     //Evolve Q
     double N_final = Bsol.N_end;
+    //std::cout << "    before Evolve" << std::endl;
     Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
+    //std::cout << "    after Evolve" << std::endl;
     //Find F
     double F = Bsol.dphi_H(N_final) * std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
     
@@ -104,7 +106,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 
         iter->second.i = niter->second.i = ModeSolver::Transition::lin;
 
-        if(N_f - N_i < 1e-8) 
+        if(N_f - N_i < 1e-8 or w2_i == w2_m or w2_m == w2_f) 
 //        if(w2_i == w2_m or w2_m == w2_f)
         {
 //            std::cout << "            !err_lin = " << err_lin << std::endl;
@@ -119,7 +121,12 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 //            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
 //            std::cout << "            err_lin = " << err_lin << std::endl;
 //            std::cout << " " << std::endl;
-            Q_0 = Q_lin_2;
+            if(w2_i != w2_m and w2_m != w2_f)
+            {
+                Q_0 = Q_lin_2;
+//                std::cout << "            w2 not the same for i, m and f." << std::endl;
+//                std::cout << " " << std::endl;
+            }
             ++++iter;
             if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
         }
@@ -191,6 +198,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 //            std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
 //            std::cout << "            err_neg < PPS_err = " << (err_neg < PPS_error) << std::endl;
 //            std::cout << "            err_lin < err_neg = " << (err_lin < err_neg) << std::endl;
+//            std::cout << " " << std::endl;
 
             if(err_lin < PPS_error or err_neg < PPS_error)
             {
