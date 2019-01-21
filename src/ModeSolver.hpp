@@ -49,6 +49,7 @@ class ModeSolver : public BasicModeSolver
         virtual double Find_PPS_Tensor(double k) override;
         
         double w_2(double N, double k, PSChoice _PSChoice);
+        Eigen::Matrix2d Trig_Mat(double w2, double N0, double N1);
         Eigen::Matrix2d Airy_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Bessel_Mat(double a, double b, double N0, double N1);
         Eigen::Matrix2d Modified_Bessel_Mat(double a, double b, double N0, double N1);
@@ -57,14 +58,15 @@ class ModeSolver : public BasicModeSolver
         Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
         Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
 
+        Eigen::MatrixXd cst_step(double w2, double N_i, double N_f);
         Eigen::MatrixXd lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
         Eigen::MatrixXd pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
         Eigen::MatrixXd neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
     
         struct Transition {
-            enum type {lin, pos, neg};
+            enum type {cst, lin, pos, neg};
             double w2;
-            Eigen::Matrix2d M_lin, M_pos, M_neg;
+            Eigen::Matrix2d M_cst, M_lin, M_pos, M_neg;
             type i;
         };
 

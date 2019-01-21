@@ -92,7 +92,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
         double w2_m = w_2(N_m, k, _PSChoice);
         niter = T.insert(niter,{N_m,{w2_m, {}, {}, {}, {}}});
 
-        if (not iter->second.M_pos.size()) 
+        if (not iter->second.M_lin.size()) 
             iter->second.M_lin = lin_step(w2_i, w2_f, N_i, N_f);
 
         Eigen::Vector2cd Q_lin_1 = iter->second.M_lin * Q_0;
@@ -106,29 +106,114 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 
         iter->second.i = niter->second.i = ModeSolver::Transition::lin;
 
-        if(N_f - N_i < 1e-8 or w2_i == w2_m or w2_m == w2_f) 
-//        if(w2_i == w2_m or w2_m == w2_f)
+//        if(N_f - N_i < 1e-8 or w2_i == w2_m or w2_m == w2_f) 
+////        if(w2_i == w2_m or w2_m == w2_f)
+//        {
+////            std::cout << "            !err_lin = " << err_lin << std::endl;
+////            std::cout << "            w2_i = " << w2_i << std::endl;
+////            std::cout << "            w2_m = " << w2_m << std::endl;
+////            std::cout << "            w2_f = " << w2_f << std::endl;
+////            std::cout << "            N_i = " << N_i << std::endl;
+////            std::cout << "            N_m = " << N_m << std::endl;
+////            std::cout << "            N_f = " << N_f << std::endl;
+////            std::cout << "            Q_0 = " << Q_0 << std::endl;
+////            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
+////            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
+////            std::cout << "            err_lin = " << err_lin << std::endl;
+////            std::cout << " " << std::endl;
+//            if(w2_i != w2_m and w2_m != w2_f)
+//            {
+//                Q_0 = Q_lin_2;
+////                std::cout << "            w2 not the same for i, m and f." << std::endl;
+////                std::cout << " " << std::endl;
+//            }
+//            ++++iter;
+//            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+//        }
+        if(w2_i == w2_m or w2_m == w2_f) 
         {
-//            std::cout << "            !err_lin = " << err_lin << std::endl;
-//            std::cout << "            w2_i = " << w2_i << std::endl;
-//            std::cout << "            w2_m = " << w2_m << std::endl;
-//            std::cout << "            w2_f = " << w2_f << std::endl;
-//            std::cout << "            N_i = " << N_i << std::endl;
-//            std::cout << "            N_m = " << N_m << std::endl;
-//            std::cout << "            N_f = " << N_f << std::endl;
-//            std::cout << "            Q_0 = " << Q_0 << std::endl;
-//            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
-//            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
-//            std::cout << "            err_lin = " << err_lin << std::endl;
-//            std::cout << " " << std::endl;
-            if(w2_i != w2_m and w2_m != w2_f)
+            if (not iter->second.M_cst.size()) 
+                iter->second.M_cst = cst_step(w2_i, N_i, N_f);
+
+            Eigen::VectorXcd Q_cst_1 = iter->second.M_cst * Q_0;
+
+            if (w2_i == w2_f)
             {
-                Q_0 = Q_lin_2;
-//                std::cout << "            w2 not the same for i, m and f." << std::endl;
+//                std::cout << "            w2_i = " << w2_i << std::endl;
+//                std::cout << "            w2_m = " << w2_m << std::endl;
+//                std::cout << "            w2_f = " << w2_f << std::endl;
+//                std::cout << "            N_i = " << N_i << std::endl;
+//                std::cout << "            N_m = " << N_m << std::endl;
+//                std::cout << "            N_f = " << N_f << std::endl;
+//                std::cout << "            Q_0     = " << Q_0     << std::endl;
+//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
+//                std::cout << "            err_lin = " << err_lin << std::endl;
 //                std::cout << " " << std::endl;
+                Q_0 = Q_cst_1;
+                iter->second.i = niter->second.i = ModeSolver::Transition::cst;
+                ++++iter;
+                if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
             }
-            ++++iter;
-            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+            else if (w2_i == w2_m)
+            {
+                iter->second.M_cst = cst_step(w2_i, N_i, N_m);
+                Eigen::VectorXcd Q_cst_2 = niter->second.M_lin * iter->second.M_cst * Q_0;
+                double err_cst = Q_err(Q_cst_2,Q_cst_1);
+//                std::cout << "            w2_i = " << w2_i << std::endl;
+//                std::cout << "            w2_m = " << w2_m << std::endl;
+//                std::cout << "            w2_f = " << w2_f << std::endl;
+//                std::cout << "            N_i = " << N_i << std::endl;
+//                std::cout << "            N_m = " << N_m << std::endl;
+//                std::cout << "            N_f = " << N_f << std::endl;
+//                std::cout << "            Q_0     = " << Q_0     << std::endl;
+//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
+//                std::cout << "            Q_cst_2 = " << Q_cst_1 << std::endl;
+//                std::cout << "            M_cst_im = " << iter->second.M_cst << std::endl;
+//                std::cout << "            M_cst_mf = " << niter->second.M_cst << std::endl;
+//                std::cout << "            err_lin = " << err_lin << std::endl;
+//                std::cout << "            err_cst = " << err_cst << std::endl;
+//                std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
+//                std::cout << "            err_cst < PPS_err = " << (err_cst < PPS_error) << std::endl;
+//                std::cout << "            err_lin < err_cst = " << (err_lin < err_cst) << std::endl;
+//                std::cout << " " << std::endl;
+                if(err_cst < PPS_error)
+                {
+                    Q_0 = Q_cst_2; 
+                    iter->second.i = niter->second.i = ModeSolver::Transition::cst;
+                    ++++iter;
+                    if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+                }
+            }
+            else if (w2_m == w2_f)
+            {
+                niter->second.M_cst = cst_step(w2_f, N_m, N_f);
+                Eigen::VectorXcd Q_cst_2 = niter->second.M_cst * iter->second.M_lin * Q_0;
+                double err_cst = Q_err(Q_cst_2,Q_cst_1);
+//                std::cout << "            w2_i = " << w2_i << std::endl;
+//                std::cout << "            w2_m = " << w2_m << std::endl;
+//                std::cout << "            w2_f = " << w2_f << std::endl;
+//                std::cout << "            N_i = " << N_i << std::endl;
+//                std::cout << "            N_m = " << N_m << std::endl;
+//                std::cout << "            N_f = " << N_f << std::endl;
+//                std::cout << "            Q_0     = " << Q_0     << std::endl;
+//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
+//                std::cout << "            Q_cst_2 = " << Q_cst_1 << std::endl;
+//                std::cout << "            M_cst_im = " << iter->second.M_cst << std::endl;
+//                std::cout << "            M_cst_mf = " << niter->second.M_cst << std::endl;
+//                std::cout << "            err_lin = " << err_lin << std::endl;
+//                std::cout << "            err_cst = " << err_cst << std::endl;
+//                std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
+//                std::cout << "            err_cst < PPS_err = " << (err_cst < PPS_error) << std::endl;
+//                std::cout << "            err_lin < err_cst = " << (err_lin < err_cst) << std::endl;
+//                std::cout << " " << std::endl;
+                if(err_cst < PPS_error)
+                {
+                    Q_0 = Q_cst_2; 
+                    iter->second.i = niter->second.i = ModeSolver::Transition::cst;
+                    ++++iter;
+                    if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+                }
+            }
         }
         else if(w2_i > 0 and w2_m > 0 and w2_f > 0)
         {
@@ -226,6 +311,11 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
     return Q_0;
 }
 
+Eigen::MatrixXd ModeSolver::cst_step(double w2, double N_i, double N_f)
+{
+    return Trig_Mat(w2, N_i, N_f);
+}
+
 Eigen::MatrixXd ModeSolver::lin_step(double w_2_i, double w_2_f, double N_i, double N_f)
 {
     double b_lin = (w_2_f - w_2_i) / (N_f - N_i);
@@ -247,6 +337,14 @@ Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i,
     double b_log = 0.5 * log(w_2_f / w_2_i) / (N_f - N_i);
     double a_log = 0.5 * log(-w_2_i) - b_log * N_i;
     return Modified_Bessel_Mat(a_log, b_log, N_i, N_f);
+}
+
+Eigen::Matrix2d ModeSolver::Trig_Mat(double w2, double N0, double N1)
+{
+    Eigen::Matrix2d C;
+    C <<   sin(w2*N0)*sin(w2*N1) + cos(w2*N0)*cos(w2*N1),       (cos(w2*N0)*sin(w2*N1) - sin(w2*N0)*cos(w2*N1)) / w2,
+          (sin(w2*N0)*cos(w2*N1) - sin(w2*N1)*cos(w2*N0)) * w2,  sin(w2*N0)*sin(w2*N1) + cos(w2*N0)*cos(w2*N1);
+    return C;
 }
 
 Eigen::Matrix2d ModeSolver::Airy_Mat(double a, double b, double N0, double N1)
