@@ -132,23 +132,10 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 //        }
         if(w2_i == w2_m or w2_m == w2_f) 
         {
-            if (not iter->second.M_cst.size()) 
-                iter->second.M_cst = cst_step(w2_i, N_i, N_f);
-
-            Eigen::VectorXcd Q_cst_1 = iter->second.M_cst * Q_0;
-
-            if (w2_i == w2_f)
+            if (w2_i == w2_m and w2_m == w2_f)
             {
-//                std::cout << "            w2_i = " << w2_i << std::endl;
-//                std::cout << "            w2_m = " << w2_m << std::endl;
-//                std::cout << "            w2_f = " << w2_f << std::endl;
-//                std::cout << "            N_i = " << N_i << std::endl;
-//                std::cout << "            N_m = " << N_m << std::endl;
-//                std::cout << "            N_f = " << N_f << std::endl;
-//                std::cout << "            Q_0     = " << Q_0     << std::endl;
-//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
-//                std::cout << "            err_lin = " << err_lin << std::endl;
-//                std::cout << " " << std::endl;
+                iter->second.M_cst = cst_step(w2_i, N_i, N_f);
+                Eigen::VectorXcd Q_cst_1 = iter->second.M_cst * Q_0;
                 Q_0 = Q_cst_1;
                 iter->second.i = niter->second.i = ModeSolver::Transition::cst;
                 ++++iter;
@@ -158,54 +145,26 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
             {
                 iter->second.M_cst = cst_step(w2_i, N_i, N_m);
                 Eigen::VectorXcd Q_cst_2 = niter->second.M_lin * iter->second.M_cst * Q_0;
-                double err_cst = Q_err(Q_cst_2,Q_cst_1);
-//                std::cout << "            w2_i = " << w2_i << std::endl;
-//                std::cout << "            w2_m = " << w2_m << std::endl;
-//                std::cout << "            w2_f = " << w2_f << std::endl;
-//                std::cout << "            N_i = " << N_i << std::endl;
-//                std::cout << "            N_m = " << N_m << std::endl;
-//                std::cout << "            N_f = " << N_f << std::endl;
-//                std::cout << "            Q_0     = " << Q_0     << std::endl;
-//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
-//                std::cout << "            Q_cst_2 = " << Q_cst_1 << std::endl;
-//                std::cout << "            M_cst_im = " << iter->second.M_cst << std::endl;
-//                std::cout << "            M_cst_mf = " << niter->second.M_cst << std::endl;
-//                std::cout << "            err_lin = " << err_lin << std::endl;
-//                std::cout << "            err_cst = " << err_cst << std::endl;
-//                std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
-//                std::cout << "            err_cst < PPS_err = " << (err_cst < PPS_error) << std::endl;
-//                std::cout << "            err_lin < err_cst = " << (err_lin < err_cst) << std::endl;
-//                std::cout << " " << std::endl;
+                double err_cst = Q_err(Q_cst_2,Q_lin_1);
                 if(err_cst < PPS_error)
                 {
                     Q_0 = Q_cst_2; 
                     iter->second.i = niter->second.i = ModeSolver::Transition::cst;
                     ++++iter;
                     if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
+                }
+                else
+                {
+                    Q_0 = iter->second.M_cst * Q_0;
+                    iter->second.i = ModeSolver::Transition::cst;
+                    ++iter;
                 }
             }
             else if (w2_m == w2_f)
             {
                 niter->second.M_cst = cst_step(w2_f, N_m, N_f);
                 Eigen::VectorXcd Q_cst_2 = niter->second.M_cst * iter->second.M_lin * Q_0;
-                double err_cst = Q_err(Q_cst_2,Q_cst_1);
-//                std::cout << "            w2_i = " << w2_i << std::endl;
-//                std::cout << "            w2_m = " << w2_m << std::endl;
-//                std::cout << "            w2_f = " << w2_f << std::endl;
-//                std::cout << "            N_i = " << N_i << std::endl;
-//                std::cout << "            N_m = " << N_m << std::endl;
-//                std::cout << "            N_f = " << N_f << std::endl;
-//                std::cout << "            Q_0     = " << Q_0     << std::endl;
-//                std::cout << "            Q_cst_1 = " << Q_cst_1 << std::endl;
-//                std::cout << "            Q_cst_2 = " << Q_cst_1 << std::endl;
-//                std::cout << "            M_cst_im = " << iter->second.M_cst << std::endl;
-//                std::cout << "            M_cst_mf = " << niter->second.M_cst << std::endl;
-//                std::cout << "            err_lin = " << err_lin << std::endl;
-//                std::cout << "            err_cst = " << err_cst << std::endl;
-//                std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
-//                std::cout << "            err_cst < PPS_err = " << (err_cst < PPS_error) << std::endl;
-//                std::cout << "            err_lin < err_cst = " << (err_lin < err_cst) << std::endl;
-//                std::cout << " " << std::endl;
+                double err_cst = Q_err(Q_cst_2,Q_lin_1);
                 if(err_cst < PPS_error)
                 {
                     Q_0 = Q_cst_2; 
@@ -214,6 +173,12 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
                     if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
                 }
             }
+        }
+        else if((N_f - N_i) / N_i < 1e-8)// and err_lin < PPS_error * 100) 
+        {
+            Q_0 = Q_lin_2;
+            ++++iter;
+            if (std::log(k) < N_f + std::log(Bsol.aH(Bsol.N_end)) - Bsol.N_end + std::log(1e-3)) break;
         }
         else if(w2_i > 0 and w2_m > 0 and w2_f > 0)
         {
@@ -228,12 +193,15 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
             Eigen::VectorXcd Q_pos_2 = niter->second.M_pos * iter->second.M_pos  * Q_0;
 
             double err_pos = Q_err(Q_pos_2,Q_pos_1);
+//            std::cout << "        pos:" << std::endl;
 //            std::cout << "            w2_i = " << w2_i << std::endl;
 //            std::cout << "            w2_m = " << w2_m << std::endl;
 //            std::cout << "            w2_f = " << w2_f << std::endl;
 //            std::cout << "            N_i = " << N_i << std::endl;
 //            std::cout << "            N_m = " << N_m << std::endl;
 //            std::cout << "            N_f = " << N_f << std::endl;
+//            std::cout << "            M_pos_im = " << iter->second.M_pos << std::endl;
+//            std::cout << "            M_pos_mf = " << niter->second.M_pos << std::endl;
 //            std::cout << "            Q_0 = " << Q_0 << std::endl;
 //            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
 //            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
@@ -241,6 +209,7 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
 //            std::cout << "            Q_pos_2 = " << Q_pos_2 << std::endl;
 //            std::cout << "            err_lin = " << err_lin << std::endl;
 //            std::cout << "            err_pos = " << err_pos << std::endl;
+//            std::cout << " " << std::endl;
 //            std::cout << " " << std::endl;
 
             if(err_lin < PPS_error or err_pos < PPS_error)
@@ -270,19 +239,23 @@ Eigen::Vector2cd ModeSolver::Evolve(Eigen::Vector2cd Q_0, PSChoice _PSChoice, do
             Eigen::VectorXcd Q_neg_2 = niter->second.M_neg  * iter->second.M_neg * Q_0;
 
             double err_neg = Q_err(Q_neg_2,Q_neg_1);
-//            std::cout << "            Q_neg_1 = " << Q_neg_1 << std::endl;
+//            std::cout << "        neg:" << std::endl;
 //            std::cout << "            w2_i = " << w2_i << std::endl;
 //            std::cout << "            w2_m = " << w2_m << std::endl;
+//            std::cout << "            w2_f = " << w2_f << std::endl;
 //            std::cout << "            N_i = " << N_i << std::endl;
 //            std::cout << "            N_m = " << N_m << std::endl;
+//            std::cout << "            N_f = " << N_f << std::endl;
 //            std::cout << "            M_neg_im = " << iter->second.M_neg << std::endl;
 //            std::cout << "            M_neg_mf = " << niter->second.M_neg << std::endl;
+//            std::cout << "            Q_0 = " << Q_0 << std::endl;
+//            std::cout << "            Q_lin_1 = " << Q_lin_1 << std::endl;
+//            std::cout << "            Q_lin_2 = " << Q_lin_2 << std::endl;
+//            std::cout << "            Q_neg_1 = " << Q_neg_1 << std::endl;
 //            std::cout << "            Q_neg_2 = " << Q_neg_2 << std::endl;
 //            std::cout << "            err_lin = " << err_lin << std::endl;
 //            std::cout << "            err_neg = " << err_neg << std::endl;
-//            std::cout << "            err_lin < PPS_err = " << (err_lin < PPS_error) << std::endl;
-//            std::cout << "            err_neg < PPS_err = " << (err_neg < PPS_error) << std::endl;
-//            std::cout << "            err_lin < err_neg = " << (err_lin < err_neg) << std::endl;
+//            std::cout << " " << std::endl;
 //            std::cout << " " << std::endl;
 
             if(err_lin < PPS_error or err_neg < PPS_error)
@@ -341,9 +314,10 @@ Eigen::MatrixXd ModeSolver::neg_exp_step(double w_2_i, double w_2_f, double N_i,
 
 Eigen::Matrix2d ModeSolver::Trig_Mat(double w2, double N0, double N1)
 {
+    double w = sqrt(w2);
     Eigen::Matrix2d C;
-    C <<   sin(w2*N0)*sin(w2*N1) + cos(w2*N0)*cos(w2*N1),       (cos(w2*N0)*sin(w2*N1) - sin(w2*N0)*cos(w2*N1)) / w2,
-          (sin(w2*N0)*cos(w2*N1) - sin(w2*N1)*cos(w2*N0)) * w2,  sin(w2*N0)*sin(w2*N1) + cos(w2*N0)*cos(w2*N1);
+    C <<      cos(w * (N1 - N0)),    sin(w * (N1 - N0)) / w,
+          w * sin(w * (N1 - N0)),    cos(w * (N1 - N0));
     return C;
 }
 

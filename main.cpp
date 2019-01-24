@@ -78,6 +78,7 @@ int main(int argc, char** argv)
 //    std::cout << ms.Find_PPS_Tensor(exp(logk_test)) << std::endl;
 
 
+//    std::cout << "k  = " << 1e-6 << std::endl;
     double kmin = 1e-6, kmax = 1e0;
     std::map<double,double> PPS_Scalar;
     std::map<double,double> PPS_Tensor;
