@@ -9,13 +9,14 @@ TEST_CASE("range","[PPS][Scalar]")
 {
     
     //Set Potential and ptr
-    Poly_Step pot(6.48757e-6, 1e-3, 5e-3, 15.5);
+    //Poly_Step pot(6.48757e-6, 1e-3, 5e-3, 15.5);
+    Polynomial pot(6e-6);
     auto potential_ptr = static_cast<Potential*> (&pot);
     
     //Background Initial Conditions
     double N_star = 55, N_dagger = 7;
 
-    double err=1e-3;
+    double err=1e-5;
     
     //Solve Background Variables
     auto sols = solve_equations(err*1e-1,potential_ptr, N_star, N_dagger);
@@ -23,8 +24,9 @@ TEST_CASE("range","[PPS][Scalar]")
     //////////////////////////////////////////////////////////////////////////////
     //k range
     double k0 = 1e-6, k1 = 0.2;
-    //Vacuum Setting Time (no. e-folds before end of inflation)
-    double N_r = sols.N_end - 2;
+    //Vacuum Setting Time (Number of e-folds before end of inflation)
+    //double N_r = sols.N_end - 2;
+    double N_r = N_star + N_dagger;  // N_end-N_r is the starting point of the mode evolution, i.e. for N_r=N_tot at the start of inflation.
     
     //Initialize ModeSolver with background solutions
     ModeSolver ms(sols);

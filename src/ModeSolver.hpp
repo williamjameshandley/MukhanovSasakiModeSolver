@@ -58,10 +58,10 @@ class ModeSolver : public BasicModeSolver
         Eigen::Matrix2d Bessel_gen(double p, double x1, double x0);
         Eigen::Matrix2d Modified_Bessel_gen(double p, double x1, double x0);
 
-        Eigen::MatrixXd cst_step(double w2, double N_i, double N_f);
-        Eigen::MatrixXd lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
-        Eigen::MatrixXd pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
-        Eigen::MatrixXd neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::Matrix2d cst_step(double w2, double N_i, double N_f);
+        Eigen::Matrix2d lin_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::Matrix2d pos_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
+        Eigen::Matrix2d neg_exp_step(double w_2_i, double w_2_f, double N_i, double N_f);
     
         struct Transition {
             enum type {cst, lin, pos, neg};

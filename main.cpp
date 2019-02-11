@@ -12,14 +12,14 @@ int main(int argc, char** argv)
     std::cout.precision(18);
     //Choose Potential and set potential_ptr which is passed to background solver
     double mass = exp(atof(argv[3])) * 1e-6;
-    double custom4 = atof(argv[4]);
+    double lambda = atof(argv[4]);
     double custom5 = atof(argv[5]);
     double custom6 = atof(argv[6]);
     double custom7 = atof(argv[7]);
     double custom8 = atof(argv[8]);
     double custom9 = atof(argv[9]);
     double custom10 = atof(argv[10]);
-    Polynomial pot(mass); // (m)
+    Polynomial pot(mass, lambda); // (m)
     //Poly_Step pot(6.48757e-6, 2e-3, 5e-2, 14.5); // (m, A, Delta, phi_0)
     //Starobinsky pot(1.2e-5); // (m)
     //AxionMonodromy pot(1.4e-5, 4./3, 12.38, 0.01, 0.05, -1./3, 0); //(m, p, phi0, f0, b, p_f, gamma0)

@@ -21,9 +21,9 @@ struct Polynomial : public Potential
     double m;
     double lambda;
 
-    double V(double phi)   { return 0.5 * m * m * phi * phi + (1.0/24) * lambda * phi * phi * phi * phi; }
-    double dV(double phi)  { return m * m * phi + (1.0/6) * lambda * phi * phi * phi; }
-    double ddV(double phi) { return m * m + (1.0/2) * lambda * phi * phi; }
+    double V(double phi)    { return 0.5 * m * m * phi * phi + (1.0/24) * lambda * phi * phi * phi * phi; }
+    double dV(double phi)   { return m * m * phi + (1.0/6) * lambda * phi * phi * phi; }
+    double ddV(double phi)  { return m * m + (1.0/2) * lambda * phi * phi; }
     double dddV(double phi) { return lambda * phi; }
     virtual ~Polynomial() {}
 };
