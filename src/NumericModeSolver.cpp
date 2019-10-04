@@ -212,7 +212,6 @@ NumericModeSolver::NumericModeSolver(Potential* _pot, double _N_star, double _N_
         }
     }
     
-    
     //Find aH_star
     params[0] = N_end - N_star;
     auto t = t0;
@@ -275,7 +274,7 @@ double NumericModeSolver::Find_PPS_Scalar(double k)
     
     //Set Vacuum Initial Conditions
     auto R0 = 1.0 / (Z * std::sqrt(2 * k));
-    auto dR0 = (-1.0 * I * k * std::exp(- n_IC) - dZ_Z) * R0;
+    auto dR0 = 0;//(-1.0 * I * k * std::exp(- n_IC) - dZ_Z) * R0;
     
     auto det = R1_IC * dR2_IC - R2_IC * dR1_IC;
     auto A = (R0 * dR2_IC - R2_IC * dR0) / det;

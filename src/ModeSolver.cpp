@@ -20,7 +20,7 @@ double ModeSolver::Find_PPS_Scalar(double k)
     Eigen::Vector2cd Q_f = Evolve(Q_i, scalar, k, N_r, N_final);
     //std::cout << "    after Evolve" << std::endl;
     //Find F
-    double F = Bsol.dphi_H(N_final) * std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
+    double F = Bsol.dphi(N_final) * std::exp(N_final + 0.5 * std::log(Bsol.aH(N_final)));
     
     return (std::pow(k, 3) / (2 * M_PI * M_PI)) * std::pow(abs(Q_f[0] / F), 2);
 }
@@ -47,13 +47,22 @@ Eigen::Vector2cd ModeSolver::Initial_Q(double k)
 {
     //Setting Vacuum
     double aH_r = Bsol.aH(N_r);
-    double epsilon = 0.5 * std::pow(Bsol.dphi_H(N_r), 2);
+    double dlog_aH_r = Bsol.dlog_aH(N_r);
+    double dphi_r = Bsol.dphi(N_r);
+    double ddphi_r = Bsol.ddphi(N_r);
+    double epsilon = 0.5 * std::pow(Bsol.dphi(N_r), 2);
     Eigen::Vector2cd Q_i;
     
-    Q_i[0] = std::sqrt(aH_r / (2 * k));
-    
     if(vacuum == BD)
+    {
+        Q_i[0] = std::sqrt(aH_r / (2 * k));
         Q_i[1] = Q_i[0] * (0.5 * (1 - epsilon) + (-I * k / aH_r));
+    }
+    else if(vacuum == discrete)
+    {
+        Q_i[0] = std::sqrt(aH_r) * std::exp(N_r) * dphi_r;
+        Q_i[1] = Q_i[0] * (1 + 0.5 * dlog_aH_r + ddphi_r / dphi_r);
+    }
     else
         throw std::runtime_error("Initial conditions unknown");
     

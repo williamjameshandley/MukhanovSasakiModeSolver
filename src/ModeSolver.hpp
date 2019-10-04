@@ -10,7 +10,7 @@
 
 const std::complex<double> I(0, 1);
 
-enum VacuumChoice { BD, HD, RST };
+enum VacuumChoice { BD, HD, RST, discrete};
 enum TransitionChoice {neg_exp, lin, pos_exp};
 enum PSChoice {scalar, tensor};
 

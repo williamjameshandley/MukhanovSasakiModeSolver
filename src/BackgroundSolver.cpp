@@ -11,15 +11,14 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     double params[2];
     ptrs[1] = static_cast<void*> (params);
     auto N_tot = N_star + N_dagger, N_end=0., N_start=0.;
+    auto N_evol_start = 1;
 
-    auto f = [&pot, &ptrs, N_tot, &N_end, &N_start](double phi_p) -> double
+    auto f = [&pot, &ptrs, N_tot, &N_end, &N_start, &N_evol_start](double phi_p) -> double
     {
         double n = 0;
-        auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p));
+        auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p) * std::exp(6*(n - N_evol_start)));
         std::vector<double> x = {phi_p, dphi_p};
-        //dlsodar(int neq_, int ng_, int max_steps_)
         dlsodar desolver(2, 1, 1e5);
-        //void dlsodar::_integrate(double &t, double tout, double q[], Field f_func, Jacobian j_func, Root g_func, void *data){
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
         N_start = n;
         desolver.integrate(n, std::numeric_limits<double>::max(), &x[0], equations_n, inflating, static_cast<void*> (ptrs));
@@ -36,12 +35,11 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
     fflush( stdout ); // Flush stdout stream buffer so it goes to correct file.
     fclose( DataFile );
     dup2( old_stdout, 1 ); // Restore original stdout
-
-    auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p));
+    auto dphi_p = - sqrt(6. - 18. * pot->V(phi_p) * std::exp(6*(- N_evol_start)));
     std::vector<double> x0 = {phi_p, dphi_p};
-
+    
     //Find Scalar Extrema
-    double n = N_start;
+    double n = 0;
     auto x = x0;
     dlsodar desolver(2, 2, 1e5);
     while(n < N_end)
@@ -62,12 +60,16 @@ BackgroundSolution solve_equations(double lim, Potential* pot, double N_star, do
 
     Bsol.omega_2 = Solve_Variable(0, N_end, x0, omega_2, Bsol.N_extrema, ptrs, lim);
     Bsol.omega_2_tensor = Solve_Variable(0, N_end, x0, omega_2_tensor, Bsol.N_extrema_tensor, ptrs, lim);
-    Bsol.dphi_H = Solve_Variable(0, N_end, x0, phi_dot_H, {}, ptrs, lim);
+    Bsol.phi = Solve_Variable(0, N_end, x0, phi, {}, ptrs, lim);
+    Bsol.dphi = Solve_Variable(0, N_end, x0, dphi, {}, ptrs, lim);
+    Bsol.ddphi = Solve_Variable(0, N_end, x0, ddphi, {}, ptrs, lim);
     Bsol.aH = Solve_Variable(0, N_end, x0, aH, {}, ptrs, lim);
+    Bsol.dlog_aH = Solve_Variable(0, N_end, x0, dlog_aH, {}, ptrs, lim);
 
     Bsol.aH_star = Bsol.aH(N_end - N_star);
     Bsol.N_end = N_end;
     Bsol.N_start = N_start;
+    Bsol.N_evol_start = N_evol_start;
 
     return Bsol;
 }
@@ -122,16 +124,29 @@ SemiLogInterpolator<double, double> Solve_Variable(double N_i, double N_f, std::
     return _Var;
 }
 
-double phi_dot_H(const double n, const double x[], Potential* pot)
+
+double phi(const double n, const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return phi;
+}
+
+double dphi(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
     return dphi;
 }
 
+double ddphi(const double n, const double x[], Potential* pot)
+{
+    double phi = x[0], dphi = x[1];
+    return  - ((3 - 0.5 * dphi * dphi - 0.5 * pot->dV(phi) * dphi / pot->V(phi)) * dphi + 3 * pot->dV(phi) / pot->V(phi));
+}
+
 double aH(const double n, const double x[], Potential* pot)
 {
     double phi = x[0], dphi = x[1];
-    return std::exp(n + std::log(H(n, x, pot)));
+    return std::exp((n - 1.0) + std::log(H(n, x, pot)));
 }
 
 double dlog_aH(const double n, const double x[], Potential* pot)
@@ -182,8 +197,8 @@ void inflating(double g[], const double n, const double x[], void* data)
 {
     auto ptr = static_cast<void**>(data);
     auto pot = static_cast<Potential*> (ptr[0]);
-
-    g[0] = pot->V(x[0]) - x[1]*x[1]*H(n, &x[0], pot)*H(n, &x[0], pot);
+    
+    g[0] = 1 - 0.5 * x[1] * x[1];
 }
 
 void Extrema_Scalar(double g[], const double n, const double x[], void* data)
